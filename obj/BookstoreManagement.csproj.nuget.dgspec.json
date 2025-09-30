@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\tito7\\OneDrive\\Máy tính\\CNTT _ Thai_Tuan\\C_Sharp\\BookstoreManagement(.NET)\\BookstoreManagement\\BookstoreManagement.csproj": {}
+    "C:\\Users\\tito7\\OneDrive\\Máy tính\\CNTT _ Thai_Tuan\\C_Sharp\\BookstoreManagement\\BookstoreManagement\\BookstoreManagement.csproj": {}
   },
   "projects": {
-    "C:\\Users\\tito7\\OneDrive\\Máy tính\\CNTT _ Thai_Tuan\\C_Sharp\\BookstoreManagement(.NET)\\BookstoreManagement\\BookstoreManagement.csproj": {
+    "C:\\Users\\tito7\\OneDrive\\Máy tính\\CNTT _ Thai_Tuan\\C_Sharp\\BookstoreManagement\\BookstoreManagement\\BookstoreManagement.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\tito7\\OneDrive\\Máy tính\\CNTT _ Thai_Tuan\\C_Sharp\\BookstoreManagement(.NET)\\BookstoreManagement\\BookstoreManagement.csproj",
+        "projectUniqueName": "C:\\Users\\tito7\\OneDrive\\Máy tính\\CNTT _ Thai_Tuan\\C_Sharp\\BookstoreManagement\\BookstoreManagement\\BookstoreManagement.csproj",
         "projectName": "BookstoreManagement",
-        "projectPath": "C:\\Users\\tito7\\OneDrive\\Máy tính\\CNTT _ Thai_Tuan\\C_Sharp\\BookstoreManagement(.NET)\\BookstoreManagement\\BookstoreManagement.csproj",
+        "projectPath": "C:\\Users\\tito7\\OneDrive\\Máy tính\\CNTT _ Thai_Tuan\\C_Sharp\\BookstoreManagement\\BookstoreManagement\\BookstoreManagement.csproj",
         "packagesPath": "C:\\Users\\tito7\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\tito7\\OneDrive\\Máy tính\\CNTT _ Thai_Tuan\\C_Sharp\\BookstoreManagement(.NET)\\BookstoreManagement\\obj\\",
+        "outputPath": "C:\\Users\\tito7\\OneDrive\\Máy tính\\CNTT _ Thai_Tuan\\C_Sharp\\BookstoreManagement\\BookstoreManagement\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\tito7\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -34,7 +34,13 @@
           "warnAsError": [
             "NU1605"
           ]
-        }
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net7.0": {
@@ -50,6 +56,24 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[7.0.20, 7.0.20]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[7.0.20, 7.0.20]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[7.0.20, 7.0.20]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[7.0.20, 7.0.20]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -58,7 +82,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.401\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305\\RuntimeIdentifierGraph.json"
         }
       }
     }
