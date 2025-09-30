@@ -1,0 +1,59 @@
+📖 Bookstore Management – Setup Guide
+1️⃣ Yêu cầu hệ thống
+
+.NET SDK: 6.0 trở lên
+
+SQL Server (Express / Developer / LocalDB đều được)
+
+Entity Framework Core Tools (để chạy migration), chưa có thì cài bằng cách:
+Terminal:
+>> dotnet tool install --global dotnet-ef
+
+2️⃣ Clone dự án
+https://github.com/tuan171204/BookstoreManagement.git
+cd <your-repo>
+
+3️⃣ Cấu hình chuỗi kết nối
+Trong file appsettings.json, sửa lại ConnectionStrings:DefaultConnection cho phù hợp với SQL Server trên máy:
+
+"ConnectionStrings": {
+  "DefaultConnection": "Server=<để tên Server MSSQL trên máy>;Database=BookstoreDB;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True"
+}
+
+# Nếu dùng SQL Authentication thay vì Window Authentication, thay Trusted_Connection=True bằng User Id=sa;Password=your_password;.
+
+
+4️⃣ Tạo database và apply migrations
+
+- Chạy lệnh trong thư mục solution:
++ Dùng VS tím: Mở Package Manager Console
++ Dùng VS xanh / IDE khác: Chạy lệnh trong terminal
+>> dotnet ef database update
+
+Lệnh này sẽ:
+- Tạo mới database BookstoreDB (nếu chưa có).
+- Apply toàn bộ migrations để dựng schema (Users, Roles, Permissions, RolePermissions, …).
+
+5️⃣ Nếu có thay đổi model và muốn cập nhật database:
+>> dotnet ef migrations add "UpdateSomething"
+>> dotnet ef database update
+
+6️⃣ Chạy dự án
+>> dotnet run
+- Dự án thường chạy trên localhost cổng 5177
+
+7️⃣ Kiểm tra database
+
+Sau khi chạy dotnet ef database update, kiểm tra trong SQL Server Management Studio (SSMS) sẽ thấy các bảng:
+- Users (AppUser)
+- Roles (AppRole)
+- UserRoles, UserClaims, UserLogins, UserTokens, RoleClaims (các bảng của ASP.NET Identity tự tạo không có trong thiết kế)
+- Permissions
+- RolePermissions
+- Các bảng business khác (Orders, ImportTickets, ExportTickets, …)
+
+8️⃣ Troubleshooting
+Nếu không apply được migration
+Xoá thư mục Migrations/ rồi chạy lại:
+>> dotnet ef migrations add "Init"
+>> dotnet ef database update
