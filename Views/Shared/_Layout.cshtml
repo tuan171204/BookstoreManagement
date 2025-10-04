@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,30 +9,104 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/BookstoreManagement.styles.css" asp-append-version="true" />
 </head>
+
+<style>
+    .navbar {
+        height: 100px !important;
+        padding: 15px !important;
+        background-color: #1976D2 !important;
+    }
+
+    .nav-item,
+    .nav-item>form>button[type="submit"] {
+        font-size: 20px !important;
+    }
+
+    ul.navbar-nav {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+    }
+</style>
+
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">BookstoreManagement</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
+
+                @* Nếu người dùng đã đăng nhập *@
+                @if (User.Identity?.IsAuthenticated ?? false)
+                {
+                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                        <ul class="navbar-nav w-100">
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="Index">Sách</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="">Khách
+                                    hàng</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="">Nhân viên</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="">Nhà cung
+                                    cấp</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="">Kho</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="">Bán hàng</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="">Báo cáo</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="">Khuyến
+                                    mãi</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="">Cài đặt</a>
+                            </li>
+
+                            @* Nút đăng xuất bên phải ( test logout ) *@
+                            <li class="nav-item">
+                                <form asp-controller="Account" asp-action="Logout" method="post"
+                                    class="d-flex flex-row align-items-center">
+                                    <i class="fa-solid fa-arrow-right-from-bracket text-light" style="font-size: 24px"></i>
+                                    <button type="submit" class="nav-link btn text-light" style="text-decoration:none;">Đăng
+                                        xuất</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+
+                @* Nếu người dùng chưa đăng nhập *@
+                else
+                {
+                    <a class="navbar-brand text-light" style="font-size: 26px;" asp-controller="Home"
+                        asp-action="Index">BookstoreManagement</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                        <ul class="navbar-nav flex-grow-1 justify-content-end">
+                            <li class="nav-item d-flex flex-row align-items-center">
+                                <i class="fa-solid fa-user text-light"></i>
+                                <a class="nav-link text-light" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                            </li>
+                        </ul>
+                    </div>
+                }
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+    <div class="container-fluid text-dark p-4">
+        <main role="main">
             @RenderBody()
         </main>
     </div>
@@ -44,6 +119,8 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://kit.fontawesome.com/5ca8a4e942.js" crossorigin="anonymous"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+
 </html>

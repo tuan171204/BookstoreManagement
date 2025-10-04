@@ -13,7 +13,7 @@ builder.Services.AddDbContext<BookstoreContext>(
 	options => options.UseSqlServer(builder.Configuration.GetConnectionString("BookstoreConnectionString") ??
 	 throw new InvalidOperationException("Connection string 'BookstoreContext' not found.")));
 
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+builder.Services.AddIdentity<AppUser, AppRole>()
 	.AddEntityFrameworkStores<BookstoreContext>()
 	.AddDefaultTokenProviders();
 
@@ -44,9 +44,9 @@ if (builder.Environment.IsDevelopment())
 	{
 		options.Cookie.HttpOnly = true;
 		options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-		options.LoginPath = "/login/";
-		options.LogoutPath = "/logout/";
-		options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+		options.LoginPath = "/Account/Login"; // Trang đăng nhập
+		options.LogoutPath = "/Account/Logout";
+		options.AccessDeniedPath = "/Account/AccessDenied"; // Trang khi bị cấm truy cập
 		options.SlidingExpiration = true;
 	});
 
@@ -97,6 +97,63 @@ if (builder.Environment.IsProduction())
 
 var app = builder.Build();
 
+
+// --- Seed dữ liệu người dùng mặc định ---
+using (var scope = app.Services.CreateScope())
+{
+	var services = scope.ServiceProvider;
+
+	try
+	{
+		var userManager = services.GetRequiredService<UserManager<AppUser>>();
+		var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
+
+		// Tạo role "Admin" nếu chưa có
+		if (!await roleManager.RoleExistsAsync("Admin"))
+		{
+			await roleManager.CreateAsync(new AppRole
+			{
+				Name = "Admin",
+				Description = "Quản trị hệ thống",
+				CreatedAt = DateTime.Now
+			});
+		}
+
+		// Tạo user admin nếu chưa có
+		string adminEmail = "admin@bookstore.com";
+		var adminUser = await userManager.FindByEmailAsync(adminEmail);
+		if (adminUser == null)
+		{
+			var user = new AppUser
+			{
+				UserName = adminEmail,
+				Email = adminEmail,
+				FullName = "Administrator",
+				IsActive = true,
+				CreatedAt = DateTime.Now
+			};
+
+			var result = await userManager.CreateAsync(user, "123456");
+			if (result.Succeeded)
+			{
+				await userManager.AddToRoleAsync(user, "Admin");
+				Console.WriteLine("Đã tạo tài khoản Admin mặc định!");
+			}
+			else
+			{
+				Console.WriteLine("Lỗi khi tạo tài khoản Admin:");
+				foreach (var err in result.Errors)
+					Console.WriteLine($" - {err.Description}");
+			}
+		}
+	}
+	catch (Exception ex)
+	{
+		Console.WriteLine($"Seed dữ liệu lỗi: {ex.Message}");
+	}
+}
+
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -105,12 +162,15 @@ if (!app.Environment.IsDevelopment())
 	app.UseHsts();
 }
 
+
 app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllerRoute(
