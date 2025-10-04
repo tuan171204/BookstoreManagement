@@ -3,12 +3,29 @@
 }
 
 <style>
+    body {
+        background-color: #fff;
+    }
+
+    .login-logo {
+        display: block;
+        margin: auto;
+        width: 200px;
+        height: auto;
+    }
+
     label,
     button,
     .login-btn,
     .form-group,
-    .form-group {
+    .form-group input {
         font-size: 20px;
+    }
+
+    .form-group input {
+        border: 1px solid #9c9c9c;
+        outline: #1976D2 !important;
+        padding: 10px;
     }
 
     .login-form {
@@ -22,16 +39,21 @@
         flex-direction: column !important;
         gap: 10px !important;
     }
-    }
 
     .login-btn {
-        padding: 10px 0px;
+        padding: 15px 0px !important;
+    }
+
+    .form-group a {
+        color: #1976D2 !important;
+        font-style: inherit;
+        text-decoration: inherit;
     }
 </style>
 
-<h2 class="text-center mt-5 mb-5"> Đăng nhập </h2>
+<img src="~/images/bookstore_logo1.jpg" alt="Logo" class="login-logo" />
 
-<form method="post" asp-action="Login" class="login-form container w-50 ">
+<form method="post" asp-action="Login" class="login-form container w-50">
     @Html.AntiForgeryToken()
 
     <div class="form-group mb-3">
@@ -46,6 +68,10 @@
     </div>
 
     <button class="login-btn btn btn-primary w-100">Đăng nhập</button>
+
+    <div class="form-group mb-3">
+        <a asp-controller="Home" asp-action="Index">Quên mật khẩu ?</a>
+    </div>
 
     @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
     {
