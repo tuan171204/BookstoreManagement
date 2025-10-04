@@ -1,0 +1,54 @@
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<style>
+    label,
+    button,
+    .login-btn,
+    .form-group,
+    .form-group {
+        font-size: 20px;
+    }
+
+    .login-form {
+        display: flex;
+        flex-direction: column !important;
+        gap: 20px !important;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    }
+
+    .login-btn {
+        padding: 10px 0px;
+    }
+</style>
+
+<h2 class="text-center mt-5 mb-5"> Đăng nhập </h2>
+
+<form method="post" asp-action="Login" class="login-form container w-50 ">
+    @Html.AntiForgeryToken()
+
+    <div class="form-group mb-3">
+        <label>Email</label>
+        <input class="form-control" name="email" placeholder="Nhập email" required />
+        <span class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Mật khẩu</label>
+        <input class="form-control" type="password" name="password" placeholder="Nhập mật khẩu" required />
+    </div>
+
+    <button class="login-btn btn btn-primary w-100">Đăng nhập</button>
+
+    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+    {
+        <div class="text-danger">@error.ErrorMessage</div>
+    }
+</form>
