@@ -1,6 +1,11 @@
-<div class=" sidebar col-1">
+@{
+    var feature = TempData["CurrentFeature"]?.ToString();
+}
 
-    <button class="function-button">
+
+<div class=" sidebar col-1">
+    @* Hàm onclick được cài đặt trong site.js *@
+    <button class="function-button" data-bs-toggle="modal" data-bs-target="#featureModal" data-feature="@feature">
         <img src="~/images/plus_icon.png" alt="Logo" class="function-button-image" />
     </button>
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
 
 namespace BookstoreManagement.Models;
@@ -7,6 +8,7 @@ namespace BookstoreManagement.Models;
 // Custom ASP.NET Identity User class
 public partial class AppUser : IdentityUser
 {
+    [Column(TypeName = "nvarchar(100)")]
     public string? FullName { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

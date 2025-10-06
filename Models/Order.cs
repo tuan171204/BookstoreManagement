@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookstoreManagement.Models;
 
@@ -23,6 +24,7 @@ public partial class Order
 
     public decimal FinalAmount { get; set; }
 
+[Column(TypeName = "nvarchar(100)")]
     public string Status { get; set; } = null!;
 
     public DateTime? CreatedAt { get; set; }

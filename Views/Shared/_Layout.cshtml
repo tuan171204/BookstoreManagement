@@ -19,22 +19,39 @@
         <partial name="_Navbar" />
     </header>
     <div class="content-frame">
-        <div class="row main-row">
-            @* Sidebar các nút chức năng *@
-            <partial name="_Sidebar" />
 
+        @* Layout khi người dùng đã đăng nhập *@
+        @if (User.Identity?.IsAuthenticated ?? false)
+        {
+            <div class="row main-row">
+                @* Sidebar các nút chức năng *@
+                <partial name="_Sidebar" />
 
-            @* Nội dung chức năng *@
-            <div class="content-container col-11">
-                <div class="content">
+                @* Nội dung chức năng *@
+                <div class="content-container col-11">
+                    <div class="content">
+                        @RenderBody()
+                    </div>
+                </div>
+
+            </div>
+
+            @* Modal thêm *@
+            <partial name="_ModalForm" />
+
+            @* Footer *@
+            <partial name="_Footer" />
+        }
+
+        @* Layout khi chưa đăng nhập *@
+        else
+        {
+            <div class="content-container col-12" style="background: #fff !important;">
+                <div class="content" style="background: #fff !important;height: 100vh !important;">
                     @RenderBody()
                 </div>
             </div>
-
-        </div>
-
-        @* Footer *@
-        <partial name="_Footer" />
+        }
     </div>
 
 

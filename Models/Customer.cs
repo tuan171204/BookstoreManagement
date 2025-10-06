@@ -1,18 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookstoreManagement.Models;
 
 public partial class Customer
 {
-    public required string CustomerId { get; set; }
+    public string? CustomerId { get; set; }
 
+    [Required(ErrorMessage = "Họ tên không được bỏ trống")]
+    [StringLength(100, MinimumLength = 6, ErrorMessage = "Họ tên 6 - 100 ký tự")]
+    [Column(TypeName = "nvarchar(100)")]
     public string FullName { get; set; } = null!;
 
-    public string? Phone { get; set; }
+    [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
+    public required string Phone { get; set; }
 
+    [EmailAddress(ErrorMessage = "Email không hợp lệ")]
     public string? Email { get; set; }
 
+    [Column(TypeName = "nvarchar(255)")]
     public string? Address { get; set; }
 
     public DateTime? CreatedAt { get; set; }

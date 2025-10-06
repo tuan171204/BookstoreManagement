@@ -42,15 +42,5 @@ button.accept-policy[b-ib1ixawaew] {
   line-height: inherit;
 }
 
-.content-frame[b-ib1ixawaew] {
-  display: flex;
-  flex-direction: column;
-  height: calc(100% - 20px);
-}
 
-.main-row[b-ib1ixawaew] {
-  flex: 1;
-  height: 100%;
-  width: 100%;
-}
 

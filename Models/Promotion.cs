@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookstoreManagement.Models;
 
@@ -7,6 +8,7 @@ public partial class Promotion
 {
     public int PromotionId { get; set; }
 
+    [Column(TypeName = "nvarchar(100)")]
     public string Name { get; set; } = null!;
 
     public int TypeId { get; set; }

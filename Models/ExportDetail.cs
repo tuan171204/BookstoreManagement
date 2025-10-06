@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookstoreManagement.Models;
 
@@ -17,6 +18,7 @@ public partial class ExportDetail
 
     public decimal? Subtotal { get; set; }
 
+    [Column(TypeName = "nvarchar(255)")]
     public string? Note { get; set; }
 
     public virtual Book Book { get; set; } = null!;

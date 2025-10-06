@@ -4,6 +4,7 @@ using BookstoreManagement.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookstoreManagement.Migrations
 {
     [DbContext(typeof(BookstoreContext))]
-    partial class BookstoreContextModelSnapshot : ModelSnapshot
+    [Migration("20251006151442_Fix")]
+    partial class Fix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,7 +37,7 @@ namespace BookstoreManagement.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
@@ -74,7 +77,7 @@ namespace BookstoreManagement.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("FullName")
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -138,7 +141,7 @@ namespace BookstoreManagement.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("varchar(100)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime");
@@ -199,7 +202,7 @@ namespace BookstoreManagement.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime");
@@ -265,13 +268,13 @@ namespace BookstoreManagement.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(255)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("varchar(100)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime");
@@ -308,7 +311,7 @@ namespace BookstoreManagement.Migrations
                     b.Property<string>("Note")
                         .HasMaxLength(255)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime");
@@ -317,7 +320,7 @@ namespace BookstoreManagement.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("varchar(100)");
 
                     b.HasKey("CodeId")
                         .HasName("PK__Code__C6DE2C3566AC2DA9");
@@ -337,7 +340,7 @@ namespace BookstoreManagement.Migrations
                     b.Property<string>("Address")
                         .HasMaxLength(255)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -353,7 +356,7 @@ namespace BookstoreManagement.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("varchar(100)");
 
                     b.Property<bool?>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -402,7 +405,7 @@ namespace BookstoreManagement.Migrations
                     b.Property<string>("Note")
                         .HasMaxLength(255)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
@@ -452,13 +455,13 @@ namespace BookstoreManagement.Migrations
                     b.Property<string>("Note")
                         .HasMaxLength(255)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasMaxLength(50)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("varchar(50)");
 
                     b.Property<int?>("ReferenceId")
                         .HasColumnType("int")
@@ -469,7 +472,7 @@ namespace BookstoreManagement.Migrations
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(100)")
+                        .HasColumnType("varchar(20)")
                         .HasDefaultValue("Pending");
 
                     b.Property<int?>("TotalQuantity")
@@ -527,7 +530,7 @@ namespace BookstoreManagement.Migrations
                     b.Property<string>("Note")
                         .HasMaxLength(255)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
@@ -574,7 +577,7 @@ namespace BookstoreManagement.Migrations
                     b.Property<string>("Note")
                         .HasMaxLength(255)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int?>("PaymentMethodId")
                         .HasColumnType("int")
@@ -585,7 +588,7 @@ namespace BookstoreManagement.Migrations
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(100)")
+                        .HasColumnType("varchar(20)")
                         .HasDefaultValue("Pending");
 
                     b.Property<int>("SupplierId")
@@ -670,7 +673,7 @@ namespace BookstoreManagement.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("varchar(20)");
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18, 2)");
@@ -750,7 +753,7 @@ namespace BookstoreManagement.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(255)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("PermissionName")
                         .IsRequired()
@@ -806,7 +809,7 @@ namespace BookstoreManagement.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("varchar(100)");
 
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime");
@@ -840,7 +843,7 @@ namespace BookstoreManagement.Migrations
                     b.Property<string>("Address")
                         .HasMaxLength(255)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -851,7 +854,7 @@ namespace BookstoreManagement.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("varchar(100)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime");
@@ -902,12 +905,12 @@ namespace BookstoreManagement.Migrations
                     b.Property<string>("Address")
                         .HasMaxLength(255)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("ContactInfo")
                         .HasMaxLength(255)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -923,7 +926,7 @@ namespace BookstoreManagement.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("varchar(100)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime");
