@@ -52,7 +52,7 @@ ul.navbar-nav {
 .content-frame {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 77px);
+  height: calc(100vh - 87px);
 }
 
 .main-row {
@@ -64,7 +64,7 @@ ul.navbar-nav {
 .sidebar {
   align-items: center;
   padding-left: 20px;
-  height: calc(100vh - 180px);
+  height: calc(100vh - 160px);
   background-color: #f8f9fa;
   display: flex;
   flex-direction: column;
@@ -72,17 +72,19 @@ ul.navbar-nav {
 }
 
 .content-container {
-  height: calc(100vh - 180px);
+  height: calc(100vh - 150px);
   background-color: #D9D9D9 !important;
-  padding: 10px 10px 15px 15px;
+  padding: 15px 0px 30px 15px;
 }
 
 .content {
   box-shadow: -6px 11px 23px -4px rgba(0, 0, 0, 0.25);
   -webkit-box-shadow: -6px 11px 23px -4px rgba(0, 0, 0, 0.25);
   -moz-box-shadow: -6px 11px 23px -4px rgba(0, 0, 0, 0.25);
-  background: #e9e9e9;
+  background: #fff;
   height: 100%;
+  padding: 20px;
+
 }
 
 .function-button {
@@ -119,6 +121,7 @@ ul.navbar-nav {
   width: 100%;
   white-space: nowrap;
   line-height: 60px;
+  background: #fff;
 }
 
 .nav-link.active {
