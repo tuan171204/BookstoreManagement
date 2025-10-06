@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookstoreManagement.Models;
 
@@ -11,8 +12,10 @@ public partial class Code
 
     public int Key { get; set; }
 
+[Column(TypeName = "nvarchar(100)")]
     public string Value { get; set; } = null!;
 
+[Column(TypeName = "nvarchar(255)")]
     public string? Note { get; set; }
 
     public DateTime? CreatedAt { get; set; }

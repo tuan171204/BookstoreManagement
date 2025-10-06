@@ -1,0 +1,40 @@
+@{
+    var featureName = ViewContext.RouteData.Values["controller"]?.ToString();
+    var featureDisplayNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+
+{
+{ "Home", "Trang chủ" },
+{ "Book", "sách" },
+{ "Customer", "khách hàng" },
+{ "Employee", "nhân viên" },
+{ "Supplier", "nhà cung cấp" },
+{ "Inventory", "kho" },
+{ "Sales", "bán hàng" },
+{ "Report", "báo cáo" },
+{ "Promotion", "khuyến mãi" },
+{ "Setting", "cài đặt" }
+};
+
+    var featureDisplayName = featureDisplayNames.ContainsKey(featureName ?? "")
+    ? featureDisplayNames[featureName!]
+    : featureName ?? "chức năng";
+}
+
+<div class="modal fade" id="featureModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Thêm mới @featureDisplayName</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Nội dung Modal -->
+            <div class="modal-body" id="ModalBody">
+                <p class="text-muted text-center">Đang tải biểu mẫu...</p>
+            </div>
+
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>

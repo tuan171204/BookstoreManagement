@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookstoreManagement.Models;
 
@@ -7,6 +8,7 @@ public partial class Book
 {
     public int BookId { get; set; }
 
+    [Column(TypeName = "nvarchar(100)")]
     public string Title { get; set; } = null!;
 
     public int AuthorId { get; set; }
@@ -19,6 +21,7 @@ public partial class Book
 
     public int? StockQuantity { get; set; }
 
+[Column(TypeName = "nvarchar(255)")]
     public string? Description { get; set; }
 
     public int? LowStockThreshold { get; set; }

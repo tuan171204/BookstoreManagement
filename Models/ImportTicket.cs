@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookstoreManagement.Models;
 
@@ -17,12 +18,14 @@ public partial class ImportTicket
 
     public decimal? TotalCost { get; set; }
 
+    [Column(TypeName = "nvarchar(100)")]
     public string Status { get; set; } = null!;
 
     public int? PaymentMethodId { get; set; }
 
     public string? DocumentNumber { get; set; }
 
+    [Column(TypeName = "nvarchar(255)")]
     public string? Note { get; set; }
 
     public DateTime? CreatedAt { get; set; }
