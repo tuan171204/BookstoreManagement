@@ -1,0 +1,83 @@
+<nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow">
+    <div class="container-fluid">
+
+        @* Nếu người dùng đã đăng nhập *@
+        @if (User.Identity?.IsAuthenticated ?? false)
+        {
+            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <ul class="navbar-nav w-100">
+                    <li class="nav-item">
+                        <a class="nav-link text-white
+                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Book" ? "active" : "")"
+                            asp-area="" asp-controller="Book" asp-action="Index">Sách</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white
+                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Customer" ? "active" : "")"
+                            asp-area="" asp-controller="Customer" asp-action="Index">Khách hàng</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white
+                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Employee" ? "active" : "")"
+                            asp-area="" asp-controller="Employee" asp-action="Index">Nhân viên</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white
+                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Warehouse" ? "active" : "")"
+                            asp-area="" asp-controller="Warehouse" asp-action="Index">Kho</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white
+                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Sales" ? "active" : "")"
+                            asp-area="" asp-controller="Sales" asp-action="Index">Bán hàng</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white
+                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" ? "active" : "")"
+                            asp-area="" asp-controller="Report" asp-action="Index">Báo cáo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white
+                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Promotion" ? "active" : "")"
+                            asp-area="" asp-controller="Promotion" asp-action="Index">Khuyến mãi</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white
+                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Setting" ? "active" : "")"
+                            asp-area="" asp-controller="Setting" asp-action="Index">Cài đặt</a>
+                    </li>
+
+                    @* Nút đăng xuất bên phải ( test logout ) *@
+                    <li class="nav-item">
+                        <form asp-controller="Account" asp-action="Logout" method="post"
+                            class="d-flex flex-row align-items-center">
+                            <i class="fa-solid fa-arrow-right-from-bracket text-light" style="font-size: 24px"></i>
+                            <button type="submit" class="nav-link btn text-light" style="text-decoration:none;">Đăng
+                                xuất</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        }
+
+        @* Nếu người dùng chưa đăng nhập *@
+        else
+        {
+            <a class="navbar-brand text-light" style="font-size: 26px;" asp-controller="Home"
+                asp-action="Index">BookstoreManagement</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <ul class="navbar-nav flex-grow-1 justify-content-end">
+                    <li class="nav-item d-flex flex-row align-items-center">
+                        <i class="fa-solid fa-user text-light"></i>
+                        <a class="nav-link text-light" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                    </li>
+                </ul>
+            </div>
+        }
+    </div>
+</nav>

@@ -1,28 +1,8 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Trang chủ";
 }
 
 <style>
-    .content-frame {
-        display: flex;
-        flex-direction: column;
-        height: calc(100vh - 77px);
-    }
-
-    .main-row {
-        flex: 1;
-        height: 100%;
-        width: 100%;
-    }
+    
 </style>
 
-<div class="content-frame">
-    <div class="row main-row">
-        @* Sidebar các nút chức năng *@
-        @await Html.PartialAsync("_Sidebar")
-
-
-        @* Nội dung chức năng *@
-        @await Html.PartialAsync("_Content")
-    </div>
-</div>

@@ -560,10 +560,10 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
             }
         }
 
-         modelBuilder.Entity<IdentityUserLogin<string>>(entity =>
-        {
-            entity.HasKey(l => new { l.LoginProvider, l.ProviderKey });
-        });
+        modelBuilder.Entity<IdentityUserLogin<string>>(entity =>
+       {
+           entity.HasKey(l => new { l.LoginProvider, l.ProviderKey });
+       });
 
         modelBuilder.Entity<IdentityUserRole<string>>(entity =>
         {

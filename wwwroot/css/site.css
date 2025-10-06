@@ -28,6 +28,27 @@ html {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
+.navbar {
+  height: 100px !important;
+  padding: 15px !important;
+  background-color: #1976D2 !important;
+}
+
+main {
+  height: calc(100vh - 100px);
+}
+
+.nav-item,
+.nav-item>form>button[type="submit"] {
+  font-size: 20px !important;
+}
+
+ul.navbar-nav {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
 .content-frame {
   display: flex;
   flex-direction: column;
@@ -43,7 +64,7 @@ html {
 .sidebar {
   align-items: center;
   padding-left: 20px;
-  height: calc(100% - 100px);
+  height: calc(100vh - 180px);
   background-color: #f8f9fa;
   display: flex;
   flex-direction: column;
@@ -51,7 +72,7 @@ html {
 }
 
 .content-container {
-  height: calc(100% - 100px);
+  height: calc(100vh - 180px);
   background-color: #D9D9D9 !important;
   padding: 10px 10px 15px 15px;
 }
@@ -88,8 +109,22 @@ html {
   object-fit: contain;
 }
 
+
 .footer {
   box-shadow: -1px -3px 23px 0px rgba(0, 0, 0, 0.25);
   -webkit-box-shadow: -1px -3px 23px 0px rgba(0, 0, 0, 0.25);
   -moz-box-shadow: -1px -3px 23px 0px rgba(0, 0, 0, 0.25);
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 60px;
+}
+
+.nav-link.active {
+  background-color: #ffffff !important;
+  color: #0d6efd !important;
+  border-radius: 6px;
+  font-weight: 600;
+  padding: 10px;
 }
