@@ -1,0 +1,15 @@
+@using Microsoft.AspNetCore.Identity
+@using BookstoreManagement.Models
+@inject SignInManager<AppUser> SignInManager
+@inject UserManager<AppUser> UserManager
+
+
+
+<footer class="footer font-bold row py-2 px-4">
+    <div class="timeStamp col-6">
+        @DateTime.Now.ToString("hh: mm tt")
+    </div>
+    <div class="userInfo col-6 d-flex justify-content-end">
+        User: @await UserManager.GetUserAsync(User)
+    </div>
+</footer>

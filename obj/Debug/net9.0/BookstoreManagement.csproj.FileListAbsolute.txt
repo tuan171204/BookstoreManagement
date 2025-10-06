@@ -437,6 +437,6 @@ C:\Users\tito7\OneDrive\Máy tính\CNTT _ Thai_Tuan\C_Sharp\BookstoreManagement\
 C:\Users\tito7\OneDrive\Máy tính\CNTT _ Thai_Tuan\C_Sharp\BookstoreManagement\BookstoreManagement\obj\Debug\net9.0\compressed\nezrqnk58p-muycvpuwrr.gz
 C:\Users\tito7\OneDrive\Máy tính\CNTT _ Thai_Tuan\C_Sharp\BookstoreManagement\BookstoreManagement\obj\Debug\net9.0\compressed\v0zgfp0y55-87fc7y1x7t.gz
 C:\Users\tito7\OneDrive\Máy tính\CNTT _ Thai_Tuan\C_Sharp\BookstoreManagement\BookstoreManagement\obj\Debug\net9.0\compressed\yfc7ypekbg-mlv21k5csn.gz
-C:\Users\tito7\OneDrive\Máy tính\CNTT _ Thai_Tuan\C_Sharp\BookstoreManagement\BookstoreManagement\obj\Debug\net9.0\compressed\x3naztt3kq-su6rki315l.gz
-C:\Users\tito7\OneDrive\Máy tính\CNTT _ Thai_Tuan\C_Sharp\BookstoreManagement\BookstoreManagement\obj\Debug\net9.0\compressed\dix6iiyvd9-su6rki315l.gz
-C:\Users\tito7\OneDrive\Máy tính\CNTT _ Thai_Tuan\C_Sharp\BookstoreManagement\BookstoreManagement\obj\Debug\net9.0\compressed\vgr6ydh5l0-3vtbkoyh9j.gz
+C:\Users\tito7\OneDrive\Máy tính\CNTT _ Thai_Tuan\C_Sharp\BookstoreManagement\BookstoreManagement\obj\Debug\net9.0\compressed\vgr6ydh5l0-hzspipg9x1.gz
+C:\Users\tito7\OneDrive\Máy tính\CNTT _ Thai_Tuan\C_Sharp\BookstoreManagement\BookstoreManagement\obj\Debug\net9.0\compressed\x3naztt3kq-0p07zoeh23.gz
+C:\Users\tito7\OneDrive\Máy tính\CNTT _ Thai_Tuan\C_Sharp\BookstoreManagement\BookstoreManagement\obj\Debug\net9.0\compressed\dix6iiyvd9-0p07zoeh23.gz
