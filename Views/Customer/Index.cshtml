@@ -9,9 +9,6 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Quản lý khách hàng";
-
-    var currentUser = await UserManager.GetUserAsync(User);
-    var isActive = currentUser?.IsActive ?? false;
 }
 
 
@@ -35,7 +32,16 @@
                 <td>@customer.FullName</td>
                 <td>@customer.Phone</td>
                 <td>@customer.Email</td>
-                <td>@((customer.IsActive ?? false) ? "Hoạt động" : "Khóa")</td>
+                <td>
+                    @if (customer.IsActive ?? false)
+                    {
+                        <span class="badge bg-success">Hoạt động</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Tạm khóa</span>
+                    }
+                </td>
             </tr>
         }
     </tbody>

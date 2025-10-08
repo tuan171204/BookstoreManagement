@@ -1,7 +1,96 @@
+@using Microsoft.AspNetCore.Identity
+@using BookstoreManagement.Models;
+@inject UserManager<AppUser> UserManager;
+
+
+@* IEnumerable<T> = List kiểu <T> *@
+@model IEnumerable<BookstoreManagement.Models.AppUser>
+
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Quản lý nhân viên";
+
+    var roleDisplayNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+{
+{ "Manager", "Quản lý" },
+{ "Employee", "Nhân viên" }
+};
 }
 
-<h2>@ViewData["Title"]</h2>
-<p>Đây là trang quản lý nhân viên.</p>
+
+
+<h2 class="content-title">@ViewData["Title"]</h2>
+<partial name="_InputTextbox" />
+
+<table class="table table-hover text-center employee-table">
+    <thead>
+        <tr>
+            <th>Họ tên</th>
+            <th>Số điện thoại</th>
+            <th>Email</th>
+            <th>Chức vụ</th>
+            <th>Tình trạng</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (AppUser employee in Model)
+        {
+            <tr>
+                <td>@employee.FullName</td>
+                <td>@employee.PhoneNumber</td>
+                <td>@employee.Email</td>
+                <td>
+                    @{
+                        var roles = await UserManager.GetRolesAsync(employee);
+                        var roleName = roles.FirstOrDefault() ?? "Chưa có";
+                        var displayName = roleDisplayNames.ContainsKey(roleName) ? roleDisplayNames[roleName] : roleName;
+                    }
+                    @displayName
+                </td>
+                <td>
+                    @if (!employee.IsActive)
+                    {
+                        <span class="badge bg-danger">Tạm khóa</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Hoạt động</span>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+<script>
+    // Lấy tất cả các hàng trong bảng
+    const rows = document.querySelectorAll(".employee-table tbody tr");
+
+    // Biến để nhớ hàng đang được chọn
+    let selectedRow = null;
+
+    rows.forEach(row => {
+        row.addEventListener("click", (event) => {
+            event.stopPropagation();
+
+            // Bỏ chọn hàng trước đó
+            if (selectedRow) {
+                selectedRow.classList.remove("active-row");
+            }
+
+            // Đánh dấu hàng hiện tại
+            row.classList.add("active-row");
+            selectedRow = row;
+        });
+    });
+
+    // Khi click ra ngoài bảng thì bỏ chọn
+    document.addEventListener("click", (event) => {
+        const isClickInsideTable = event.target.closest(".employee-table");
+        if (!isClickInsideTable && selectedRow) {
+            selectedRow.classList.remove("active-row");
+            selectedRow = null;
+        }
+    });
+</script>

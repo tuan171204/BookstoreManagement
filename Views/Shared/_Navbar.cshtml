@@ -7,54 +7,44 @@
             <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                 <ul class="navbar-nav w-100">
                     <li class="nav-item">
-                        <a class="nav-link text-white
-                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Book" ? "active" : "")"
+                        <a class="nav-link text-white @(ViewContext.RouteData.Values["controller"]?.ToString() == "Book" ? "active" : "")"
                             asp-area="" asp-controller="Book" asp-action="Index">Sách</a>
                     </li>
+
                     <li class="nav-item">
-                        <a class="nav-link text-white
-                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Customer" ? "active" : "")"
+                        <a class="nav-link text-white @(ViewContext.RouteData.Values["controller"]?.ToString() == "Customer" ? "active" : "")"
                             asp-area="" asp-controller="Customer" asp-action="Index">Khách hàng</a>
                     </li>
+
+                    @* Chỉ Role Admin mới được truy cập *@
+                    @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-white @(ViewContext.RouteData.Values["controller"]?.ToString() == "Employee" ? "active" : "")"
+                                asp-area="" asp-controller="Employee" asp-action="Index">Nhân viên</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" ? "active" : "")"
+                                asp-area="" asp-controller="Report" asp-action="Index">Báo cáo</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white @(ViewContext.RouteData.Values["controller"]?.ToString() == "Promotion" ? "active" : "")"
+                                asp-area="" asp-controller="Promotion" asp-action="Index">Khuyến mãi</a>
+                        </li>
+                    }
+
                     <li class="nav-item">
-                        <a class="nav-link text-white
-                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Employee" ? "active" : "")"
-                            asp-area="" asp-controller="Employee" asp-action="Index">Nhân viên</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Warehouse" ? "active" : "")"
+                        <a class="nav-link text-white @(ViewContext.RouteData.Values["controller"]?.ToString() == "Warehouse" ? "active" : "")"
                             asp-area="" asp-controller="Warehouse" asp-action="Index">Kho</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white
-                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Sales" ? "active" : "")"
+                        <a class="nav-link text-white @(ViewContext.RouteData.Values["controller"]?.ToString() == "Sales" ? "active" : "")"
                             asp-area="" asp-controller="Sales" asp-action="Index">Bán hàng</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" ? "active" : "")"
-                            asp-area="" asp-controller="Report" asp-action="Index">Báo cáo</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Promotion" ? "active" : "")"
-                            asp-area="" asp-controller="Promotion" asp-action="Index">Khuyến mãi</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                                @(ViewContext.RouteData.Values["controller"]?.ToString() == "Setting" ? "active" : "")"
-                            asp-area="" asp-controller="Setting" asp-action="Index">Cài đặt</a>
-                    </li>
 
-                    @* Nút đăng xuất bên phải ( test logout ) *@
                     <li class="nav-item">
-                        <form asp-controller="Account" asp-action="Logout" method="post"
-                            class="d-flex flex-row align-items-center">
-                            <i class="fa-solid fa-arrow-right-from-bracket text-light" style="font-size: 24px"></i>
-                            <button type="submit" class="nav-link btn text-light" style="text-decoration:none;">Đăng
-                                xuất</button>
-                        </form>
+                        <a class="nav-link text-white @(ViewContext.RouteData.Values["controller"]?.ToString() == "Setting" ? "active" : "")"
+                            asp-area="" asp-controller="Setting" asp-action="Index">Cài đặt</a>
                     </li>
                 </ul>
             </div>
