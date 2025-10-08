@@ -1,5 +1,7 @@
 using BookstoreManagement.Models;
+using BookstoreManagement.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +18,8 @@ builder.Services.AddDbContext<BookstoreContext>(
 builder.Services.AddIdentity<AppUser, AppRole>()
 	.AddEntityFrameworkStores<BookstoreContext>()
 	.AddDefaultTokenProviders();
+
+builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 
 // set biến môi trường ASPNETCORE_ENVIRONMENT=Development/Production trong Properties/launchSettings.json
@@ -120,32 +124,32 @@ using (var scope = app.Services.CreateScope())
 		}
 
 		// Tạo user admin nếu chưa có
-		string adminEmail = "admin@bookstore.com";
-		var adminUser = await userManager.FindByEmailAsync(adminEmail);
-		if (adminUser == null)
-		{
-			var user = new AppUser
-			{
-				UserName = adminEmail,
-				Email = adminEmail,
-				FullName = "Administrator",
-				IsActive = true,
-				CreatedAt = DateTime.Now
-			};
+		// string adminEmail = "admin@bookstore.com";
+		// var adminUser = await userManager.FindByEmailAsync(adminEmail);
+		// if (adminUser == null)
+		// {
+		// 	var user = new AppUser
+		// 	{
+		// 		UserName = adminEmail,
+		// 		Email = adminEmail,
+		// 		FullName = "Administrator",
+		// 		IsActive = true,
+		// 		CreatedAt = DateTime.Now
+		// 	};
 
-			var result = await userManager.CreateAsync(user, "123456");
-			if (result.Succeeded)
-			{
-				await userManager.AddToRoleAsync(user, "Admin");
-				Console.WriteLine("Đã tạo tài khoản Admin mặc định!");
-			}
-			else
-			{
-				Console.WriteLine("Lỗi khi tạo tài khoản Admin:");
-				foreach (var err in result.Errors)
-					Console.WriteLine($" - {err.Description}");
-			}
-		}
+		// 	var result = await userManager.CreateAsync(user, "123456");
+		// 	if (result.Succeeded)
+		// 	{
+		// 		await userManager.AddToRoleAsync(user, "Admin");
+		// 		Console.WriteLine("Đã tạo tài khoản Admin mặc định!");
+		// 	}
+		// 	else
+		// 	{
+		// 		Console.WriteLine("Lỗi khi tạo tài khoản Admin:");
+		// 		foreach (var err in result.Errors)
+		// 			Console.WriteLine($" - {err.Description}");
+		// 	}
+		// }
 	}
 	catch (Exception ex)
 	{

@@ -10,6 +10,8 @@ public class PartialController : Controller
             // Trả về View/Features tương ứng/_CreateForm.cshtml và đặt vào body của _ModalForm.cshtml
             case "Customer":
                 return PartialView("~/Views/Customer/_CreateForm.cshtml");
+            case "Employee":
+                return PartialView("~/Views/Employee/_CreateForm.cshtml");
             case "Book":
                 return PartialView("~/Views/Book/_CreateForm.cshtml");
             case "Sales":
