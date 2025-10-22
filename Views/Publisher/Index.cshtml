@@ -1,0 +1,118 @@
+@model IEnumerable<BookstoreManagement.ViewModels.Publisher.PublisherViewModel>
+
+@{
+    ViewData["Title"] = "Quản lý Nhà xuất bản";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="bi bi-building"></i> Quản lý Nhà xuất bản</h2>
+                <div>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Thêm nhà xuất bản
+                    </a>
+                    <a asp-controller="Book" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-book"></i> Quản lý Sách
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="row g-3">
+                <div class="col-md-10">
+                    <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" 
+                           class="form-control" placeholder="Tìm kiếm theo tên, địa chỉ..." />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Tìm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Publishers Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tên nhà xuất bản</th>
+                            <th>Địa chỉ</th>
+                            <th>Số lượng sách</th>
+                            <th>Ngày tạo</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td><strong>@item.Name</strong></td>
+                                    <td>@item.Address</td>
+                                    <td>
+                                        <span class="badge bg-info">@item.BooksCount sách</span>
+                                    </td>
+                                    <td>@item.CreatedAt?.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-action="Details" asp-route-id="@item.PublisherId" 
+                                               class="btn btn-info" title="Chi tiết">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@item.PublisherId" 
+                                               class="btn btn-warning" title="Sửa">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-danger" title="Xóa"
+                                                    onclick="showDeleteModal(@item.PublisherId, '@Url.Action("Delete", "Publisher")', '@item.Name')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                                    <p class="mt-2 text-muted">Không tìm thấy nhà xuất bản nào</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @await Html.PartialAsync("_Pagination")
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_DeleteModal")
+
+@section Scripts {
+    <form id="deleteForm">
+        @Html.AntiForgeryToken()
+    </form>
+}

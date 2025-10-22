@@ -1,0 +1,101 @@
+@model BookstoreManagement.ViewModels.Promotion.PromotionCreateViewModel
+
+@{
+    ViewData["Title"] = "Thêm khuyến mãi mới";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Thêm khuyến mãi mới</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        
+                        <div class="row g-3">
+                            <!-- Tên khuyến mãi -->
+                            <div class="col-md-12">
+                                <label asp-for="Name" class="form-label"></label>
+                                <input asp-for="Name" class="form-control" placeholder="Nhập tên chương trình khuyến mãi" />
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+
+                            <!-- Loại khuyến mãi -->
+                            <div class="col-md-6">
+                                <label asp-for="TypeId" class="form-label"></label>
+                                <select asp-for="TypeId" class="form-select" asp-items="Model.PromotionTypes">
+                                    <option value="">-- Chọn loại khuyến mãi --</option>
+                                </select>
+                                <span asp-validation-for="TypeId" class="text-danger"></span>
+                            </div>
+
+                            <!-- Phần trăm giảm giá -->
+                            <div class="col-md-6">
+                                <label asp-for="DiscountPercent" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="DiscountPercent" class="form-control" type="number" step="0.01" />
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <span asp-validation-for="DiscountPercent" class="text-danger"></span>
+                            </div>
+
+                            <!-- Ngày bắt đầu -->
+                            <div class="col-md-6">
+                                <label asp-for="StartDate" class="form-label"></label>
+                                <input asp-for="StartDate" class="form-control" type="datetime-local" />
+                                <span asp-validation-for="StartDate" class="text-danger"></span>
+                            </div>
+
+                            <!-- Ngày kết thúc -->
+                            <div class="col-md-6">
+                                <label asp-for="EndDate" class="form-label"></label>
+                                <input asp-for="EndDate" class="form-control" type="datetime-local" />
+                                <span asp-validation-for="EndDate" class="text-danger"></span>
+                            </div>
+
+                            <!-- Số tiền mua tối thiểu -->
+                            <div class="col-md-6">
+                                <label asp-for="MinPurchaseAmount" class="form-label"></label>
+                                <input asp-for="MinPurchaseAmount" class="form-control" type="number" step="1000" />
+                                <span asp-validation-for="MinPurchaseAmount" class="text-danger"></span>
+                            </div>
+
+                            <!-- Sách tặng kèm -->
+                            <div class="col-md-6">
+                                <label asp-for="GiftBookId" class="form-label"></label>
+                                <select asp-for="GiftBookId" class="form-select" asp-items="Model.Books">
+                                    <option value="">-- Không có --</option>
+                                </select>
+                                <span asp-validation-for="GiftBookId" class="text-danger"></span>
+                            </div>
+
+                            <!-- Trạng thái -->
+                            <div class="col-md-12">
+                                <div class="form-check">
+                                    <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                    <label asp-for="IsActive" class="form-check-label"></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Lưu
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -111,6 +111,7 @@ using (var scope = app.Services.CreateScope())
 	{
 		var userManager = services.GetRequiredService<UserManager<AppUser>>();
 		var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
+		var context = services.GetRequiredService<BookstoreContext>();
 
 		// Tạo role "Admin" nếu chưa có
 		if (!await roleManager.RoleExistsAsync("Admin"))
@@ -123,33 +124,48 @@ using (var scope = app.Services.CreateScope())
 			});
 		}
 
-		// Tạo user admin nếu chưa có
-		// string adminEmail = "admin@bookstore.com";
-		// var adminUser = await userManager.FindByEmailAsync(adminEmail);
-		// if (adminUser == null)
-		// {
-		// 	var user = new AppUser
-		// 	{
-		// 		UserName = adminEmail,
-		// 		Email = adminEmail,
-		// 		FullName = "Administrator",
-		// 		IsActive = true,
-		// 		CreatedAt = DateTime.Now
-		// 	};
+		// Seed PromotionType codes
+		if (!context.Codes.Any(c => c.Entity == "PromotionType"))
+		{
+			var promotionTypes = new[]
+			{
+				new Code { Entity = "PromotionType", Key = 1, Value = "Giảm giá theo phần trăm", CreatedAt = DateTime.Now },
+				new Code { Entity = "PromotionType", Key = 2, Value = "Giảm giá cố định", CreatedAt = DateTime.Now },
+				new Code { Entity = "PromotionType", Key = 3, Value = "Tặng sách", CreatedAt = DateTime.Now },
+				new Code { Entity = "PromotionType", Key = 4, Value = "Mua X tặng Y", CreatedAt = DateTime.Now }
+			};
+			context.Codes.AddRange(promotionTypes);
+			await context.SaveChangesAsync();
+			Console.WriteLine("Đã seed PromotionType codes!");
+		}
 
-		// 	var result = await userManager.CreateAsync(user, "123456");
-		// 	if (result.Succeeded)
-		// 	{
-		// 		await userManager.AddToRoleAsync(user, "Admin");
-		// 		Console.WriteLine("Đã tạo tài khoản Admin mặc định!");
-		// 	}
-		// 	else
-		// 	{
-		// 		Console.WriteLine("Lỗi khi tạo tài khoản Admin:");
-		// 		foreach (var err in result.Errors)
-		// 			Console.WriteLine($" - {err.Description}");
-		// 	}
-		// }
+		// Tạo user admin nếu chưa có
+		string adminEmail = "admin@bookstore.com";
+		var adminUser = await userManager.FindByEmailAsync(adminEmail);
+		if (adminUser == null)
+		{
+			var user = new AppUser
+			{
+				UserName = adminEmail,
+				Email = adminEmail,
+				FullName = "Administrator",
+				IsActive = true,
+				CreatedAt = DateTime.Now
+			};
+
+			var result = await userManager.CreateAsync(user, "123456");
+			if (result.Succeeded)
+			{
+				await userManager.AddToRoleAsync(user, "Admin");
+				Console.WriteLine("Đã tạo tài khoản Admin mặc định!");
+			}
+			else
+			{
+				Console.WriteLine("Lỗi khi tạo tài khoản Admin:");
+				foreach (var err in result.Errors)
+					Console.WriteLine($" - {err.Description}");
+			}
+		}
 	}
 	catch (Exception ex)
 	{
