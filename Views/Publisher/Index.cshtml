@@ -1,23 +1,20 @@
-@model IEnumerable<BookstoreManagement.ViewModels.Book.BookViewModel>
+@model IEnumerable<BookstoreManagement.ViewModels.Publisher.PublisherViewModel>
 
 @{
-    ViewData["Title"] = "Quản lý Sách";
+    ViewData["Title"] = "Quản lý Nhà xuất bản";
 }
 
 <div class="container-fluid py-4">
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
-                <h2><i class="bi bi-book"></i> Quản lý Sách</h2>
+                <h2><i class="bi bi-building"></i> Quản lý Nhà xuất bản</h2>
                 <div>
                     <a asp-action="Create" class="btn btn-primary">
-                        <i class="bi bi-plus-circle"></i> Thêm sách mới
+                        <i class="bi bi-plus-circle"></i> Thêm nhà xuất bản
                     </a>
-                    <a asp-controller="Author" asp-action="Index" class="btn btn-outline-secondary">
-                        <i class="bi bi-person"></i> Quản lý Tác giả
-                    </a>
-                    <a asp-controller="Publisher" asp-action="Index" class="btn btn-outline-secondary">
-                        <i class="bi bi-building"></i> Quản lý NXB
+                    <a asp-controller="Book" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-book"></i> Quản lý Sách
                     </a>
                 </div>
             </div>
@@ -32,40 +29,15 @@
         </div>
     }
 
-    <!-- Search and Filter -->
+    <!-- Search -->
     <div class="card mb-4">
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Tìm kiếm</label>
+                <div class="col-md-10">
                     <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control"
-                        placeholder="Tên sách, tác giả, NXB..." />
+                        placeholder="Tìm kiếm theo tên, địa chỉ..." />
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">Tác giả</label>
-                    <select name="authorId" class="form-select">
-                        <option value="">-- Tất cả --</option>
-                        @foreach (var item in ViewBag.Authors as SelectList)
-                        {
-                            <option value="@item.Value" selected="@(item.Value == ViewData["AuthorId"]?.ToString())">
-                                @item.Text
-                            </option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Nhà xuất bản</label>
-                    <select name="publisherId" class="form-select">
-                        <option value="">-- Tất cả --</option>
-                        @foreach (var item in ViewBag.Publishers as SelectList)
-                        {
-                            <option value="@item.Value" selected="@(item.Value == ViewData["PublisherId"]?.ToString())">
-                                @item.Text
-                            </option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
+                <div class="col-md-2">
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-search"></i> Tìm
                     </button>
@@ -74,20 +46,17 @@
         </div>
     </div>
 
-    <!-- Books Table -->
+    <!-- Publishers Table -->
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead class="table-light">
                         <tr>
-                            <th>Tên sách</th>
-                            <th>Tác giả</th>
-                            <th>Nhà xuất bản</th>
-                            <th>Năm XB</th>
-                            <th>Giá</th>
-                            <th>Tồn kho</th>
-                            <th>Trạng thái</th>
+                            <th>Tên nhà xuất bản</th>
+                            <th>Địa chỉ</th>
+                            <th>Số lượng sách</th>
+                            <th>Ngày tạo</th>
                             <th class="text-center">Thao tác</th>
                         </tr>
                     </thead>
@@ -97,33 +66,15 @@
                             @foreach (var item in Model)
                             {
                                 <tr>
+                                    <td><strong>@item.Name</strong></td>
+                                    <td>@item.Address</td>
                                     <td>
-                                        <strong>@item.Title</strong>
-                                        @if (item.StockQuantity <= item.LowStockThreshold)
-                                        {
-                                            <span class="badge bg-warning text-dark ms-2">
-                                                <i class="bi bi-exclamation-triangle"></i> Sắp hết
-                                            </span>
-                                        }
+                                        <span class="badge bg-info">@item.BooksCount sách</span>
                                     </td>
-                                    <td>@item.AuthorName</td>
-                                    <td>@item.PublisherName</td>
-                                    <td>@item.PublicationYear</td>
-                                    <td>@item.Price.ToString("N0") ₫</td>
-                                    <td>
-                                        <span
-                                            class="badge @(item.StockQuantity > item.LowStockThreshold ? "bg-success" : "bg-danger")">
-                                            @item.StockQuantity
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge @(item.IsDeleted == true ? "bg-secondary" : "bg-success")">
-                                            @item.Status
-                                        </span>
-                                    </td>
+                                    <td>@item.CreatedAt?.ToString("dd/MM/yyyy")</td>
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm">
-                                            <a asp-action="Details" asp-route-id="@item.BookId" class="btn btn-info"
+                                            <a asp-action="Details" asp-route-id="@item.PublisherId" class="btn btn-info"
                                                 title="Chi tiết">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                                     fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
@@ -133,7 +84,7 @@
                                                         d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0" />
                                                 </svg>
                                             </a>
-                                            <a asp-action="Edit" asp-route-id="@item.BookId" class="btn btn-warning"
+                                            <a asp-action="Edit" asp-route-id="@item.PublisherId" class="btn btn-warning"
                                                 title="Sửa">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                                     fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
@@ -144,7 +95,7 @@
                                                 </svg>
                                             </a>
                                             <button type="button" class="btn btn-danger" title="Xóa"
-                                                onclick="showDeleteModal(@item.BookId, '@Url.Action("Delete", "Book")', '@item.Title')">
+                                                onclick="showDeleteModal(@item.PublisherId, '@Url.Action("Delete", "Publisher")', '@item.Name')">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                                     fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                                                     <path
@@ -161,9 +112,9 @@
                         else
                         {
                             <tr>
-                                <td colspan="8" class="text-center py-4">
+                                <td colspan="5" class="text-center py-4">
                                     <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
-                                    <p class="mt-2 text-muted">Không tìm thấy sách nào</p>
+                                    <p class="mt-2 text-muted">Không tìm thấy nhà xuất bản nào</p>
                                 </td>
                             </tr>
                         }
@@ -171,19 +122,14 @@
                 </table>
             </div>
 
-            <!-- Pagination -->
             @await Html.PartialAsync("_Pagination")
         </div>
     </div>
 </div>
 
-<!-- Delete Modal -->
 @await Html.PartialAsync("_DeleteModal")
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
     <form id="deleteForm">
         @Html.AntiForgeryToken()
     </form>
