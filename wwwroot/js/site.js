@@ -13,16 +13,29 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("[data-feature]").forEach(btn => {
         btn.addEventListener("click", async () => {
             const feature = btn.dataset.feature;
+            const action = btn.dataset.action;
 
-            // Gọi đến Controller lấy dữ liệu động ( xem chi tiết trong Partial Controller hàm GetAddForm )
-            const response = await fetch(`/Partial/GetAddForm?feature=${feature}`);
-            const html = await response.text();
-            modalBody.innerHTML = html;
+            switch (action) {
+                case 'add':
+                    // Gọi đến Controller lấy dữ liệu động ( xem chi tiết trong Partial Controller hàm GetAddForm )
+                    const response = await fetch(`/Partial/GetAddForm?feature=${feature}`);
+                    const html = await response.text();
+                    modalBody.innerHTML = html;
 
-            bsModal.show();
+                    bsModal.show();
 
-            // Kích hoạt validation + ajax submit
-            bindAjaxForm();
+                    // Kích hoạt validation + ajax submit
+                    bindAjaxForm();
+
+                    break;
+                case 'delete':
+                    console.log('this is delete action');
+                    break;
+                case 'update':
+                    break;
+                case 'refresh':
+                    break;
+            }
         });
     });
 

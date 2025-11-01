@@ -10729,19 +10729,24 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\tito7\\.nuget\\packages\\": {}
+    "C:\\Users\\HP\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\tito7\\OneDrive\\Máy tính\\CNTT _ Thai_Tuan\\C_Sharp\\BookstoreManagement\\BookstoreManagement\\BookstoreManagement.csproj",
+      "projectUniqueName": "C:\\BookstoreManagement\\BookstoreManagement.csproj",
       "projectName": "BookstoreManagement",
-      "projectPath": "C:\\Users\\tito7\\OneDrive\\Máy tính\\CNTT _ Thai_Tuan\\C_Sharp\\BookstoreManagement\\BookstoreManagement\\BookstoreManagement.csproj",
-      "packagesPath": "C:\\Users\\tito7\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\tito7\\OneDrive\\Máy tính\\CNTT _ Thai_Tuan\\C_Sharp\\BookstoreManagement\\BookstoreManagement\\obj\\",
+      "projectPath": "C:\\BookstoreManagement\\BookstoreManagement.csproj",
+      "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
+      "outputPath": "C:\\BookstoreManagement\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "C:\\Users\\tito7\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\HP\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -10749,6 +10754,8 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Telerik": {},
+        "C:\\Telerik\\wrappers\\aspnetcore\\Binaries\\AspNet.Core": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -10893,7 +10900,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files (x86)\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
