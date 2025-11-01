@@ -438,4 +438,4 @@ C:\BookstoreManagement\obj\Debug\net9.0\refint\BookstoreManagement.dll
 C:\BookstoreManagement\obj\Debug\net9.0\BookstoreManagement.pdb
 C:\BookstoreManagement\obj\Debug\net9.0\BookstoreManagement.genruntimeconfig.cache
 C:\BookstoreManagement\obj\Debug\net9.0\ref\BookstoreManagement.dll
-C:\BookstoreManagement\obj\Debug\net9.0\compressed\qm7qwg1fpf-sik2pfu2pu.gz
+C:\BookstoreManagement\obj\Debug\net9.0\compressed\qm7qwg1fpf-66rmkilhh4.gz

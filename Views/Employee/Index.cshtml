@@ -21,7 +21,8 @@
 
 <h2 class="content-title">@ViewData["Title"]</h2>
 <partial name="_InputTextbox" />
-
+<button id="delete-Employee-btn" style="display: none;"></button>
+@Html.AntiForgeryToken()
 <table class="table table-hover text-center employee-table">
     <thead>
         <tr>
@@ -35,7 +36,7 @@
     <tbody>
         @foreach (AppUser employee in Model)
         {
-            <tr>
+            <tr data-id="@employee.Id">
                 <td>@employee.FullName</td>
                 <td>@employee.PhoneNumber</td>
                 <td>@employee.Email</td>
@@ -93,4 +94,40 @@
             selectedRow = null;
         }
     });
+
+    document.querySelector("#delete-Employee-btn").addEventListener("click", async (e) => {
+        e.preventDefault();
+        if (!selectedRow) {
+            alert("Vui lòng chọn một nhân viên để xóa!");
+            return;
+        }
+
+        const id = selectedRow.dataset.id;
+        const confirmDelete = confirm("Bạn có chắc chắn muốn xóa nhân viên này không?");
+        if (!confirmDelete) return;
+
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            const response = await fetch(`/Employee/Delete/${id}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "RequestVerificationToken": token
+                }
+            });
+
+            const result = await response.json();
+
+            alert(result.message);
+            if (result.success) {
+                selectedRow = null;
+                location.reload();
+            }
+
+        } catch (error) {
+            console.error("Lỗi khi xóa:", error);
+            alert("Đã xảy ra lỗi khi xóa nhân viên!");
+        }
+    })
 </script>

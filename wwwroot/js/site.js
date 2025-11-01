@@ -29,7 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     break;
                 case 'delete':
-                    console.log('this is delete action');
+                    dlt_btn = document.querySelector(`#delete-${feature}-btn`);
+                    dlt_btn.click()
                     break;
                 case 'update':
                     break;

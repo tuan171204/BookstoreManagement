@@ -85,5 +85,25 @@ namespace BookstoreManagement.Controllers
 
             return Json(new { success = true, message = "Thêm nhân viên thành công!" });
         }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+                return Json(new { success = false, message = "Không tìm thấy nhân viên!" });
+
+            if (user.UserName == User.Identity?.Name)
+                return Json(new { success = false, message = "Bạn không thể tự xóa chính mình!" });
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+                return Json(new { success = false, message = "Xóa thất bại: " + string.Join(", ", result.Errors.Select(e => e.Description)) });
+
+            return Json(new { success = true, message = "Xóa nhân viên thành công!" });
+        }
+
     }
 }
