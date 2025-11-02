@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace BookstoreManagement.Controllers
 {
+
     [Authorize(Roles = "Admin,Manager")] // chỉ role Admin hoặc Manager được truy cập
     public class EmployeeController : Controller
     {
@@ -38,7 +39,13 @@ namespace BookstoreManagement.Controllers
                                    select u)
                       .Distinct()
                       .ToListAsync();
-
+            ViewBag.Roles = _roleManager.Roles
+                            .Select(r => new SelectListItem
+                            {
+                                Value = r.Name,
+                                Text = r.Name == "Employee" ? "Nhân viên" : r.Name == "Manager" ? "Quản lý" : r.Name
+                            })
+                            .ToList();
             return View(employees);
         }
 
@@ -127,12 +134,12 @@ namespace BookstoreManagement.Controllers
             };
 
             ViewBag.Roles = _roleManager.Roles
-                .Select(r => new SelectListItem
-                {
-                    Value = r.Name,
-                    Text = r.Name == "Employee" ? "Nhân viên" : r.Name == "Manager" ? "Quản lý" : r.Name
-                })
-                .ToList();
+                            .Select(r => new SelectListItem
+                            {
+                                Value = r.Name,
+                                Text = r.Name == "Employee" ? "Nhân viên" : r.Name == "Manager" ? "Quản lý" : r.Name
+                            })
+                            .ToList();
 
             return PartialView("~/Views/Employee/_UpdateForm.cshtml", vm);
         }
@@ -165,6 +172,58 @@ namespace BookstoreManagement.Controllers
             await _userManager.AddToRoleAsync(user, model.RoleName);
 
             return Json(new { success = true, message = "Cập nhật nhân viên thành công!" });
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GetList(string inputTxt, string selectedRole, string selectedStatus)
+        {
+
+            TempData["CurrentFeature"] = "Employee";
+
+            var query = from u in _context.Users
+                        join ur in _context.UserRoles on u.Id equals ur.UserId
+                        join r in _context.Roles on ur.RoleId equals r.Id
+                        where r.Name != "Admin"
+                        select u;
+
+            // Lọc theo input
+            if (!string.IsNullOrEmpty(inputTxt))
+            {
+                query = query.Where(u => u.Email.Contains(inputTxt)
+                                       || u.FullName.Contains(inputTxt)
+                                       || u.Address.Contains(inputTxt));
+            }
+
+            // Lọc theo role
+            if (!string.IsNullOrEmpty(selectedRole))
+            {
+                query = query.Where(u => _context.UserRoles
+                                .Where(ur => ur.UserId == u.Id)
+                                .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+                                .Any(rn => rn == selectedRole));
+            }
+
+            // Lọc theo trạng thái
+            if (!string.IsNullOrEmpty(selectedStatus))
+            {
+                bool isActive = selectedStatus == "1";
+                query = query.Where(u => u.IsActive == isActive);
+            }
+
+            var employees = await query.Distinct().ToListAsync();
+
+            ViewBag.Roles = _roleManager.Roles
+                            .Select(r => new SelectListItem
+                            {
+                                Value = r.Name,
+                                Text = r.Name == "Employee" ? "Nhân viên" :
+                                       r.Name == "Manager" ? "Quản lý" : r.Name
+                            })
+                            .ToList();
+
+            return View("Index", employees);
         }
 
     }

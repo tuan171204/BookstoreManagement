@@ -11,173 +11,293 @@
     ViewData["Title"] = "Quản lý nhân viên";
 
     var roleDisplayNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-{
-{ "Manager", "Quản lý" },
-{ "Employee", "Nhân viên" }
-};
+    {
+        { "Manager", "Quản lý" },
+        { "Employee", "Nhân viên" }
+    };
+    var rolesFilter = ViewBag.Roles as List<SelectListItem> ?? new List<SelectListItem>();
 }
 
+<style>
+    /* Bao bọc bảng để scroll cả dọc lẫn ngang nếu cần */
+    .table-wrapper {
+        max-height: 250px;
+        overflow: auto; /* scroll cả X và Y */
+        border: 1px solid #dee2e6;
+        border-radius: .25rem;
+    }
 
+    /* Cố định header */
+    .table-wrapper thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 20;
+    }
+
+    /* Bảng responsive */
+    .table-wrapper table {
+        width: 100%;
+        margin-bottom: 0;
+        table-layout: fixed;
+    }
+
+    /* .table-wrapper table th,
+    .table-wrapper table td {
+        word-wrap: break-word;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    } */
+
+    /* Hover row */
+    .employee-table tbody tr:hover {
+        background-color: #f1f3f5;
+        cursor: pointer;
+    }
+
+</style>
 
 <h2 class="content-title">@ViewData["Title"]</h2>
 <partial name="_InputTextbox" />
 <button id="delete-Employee-btn" style="display: none;"></button>
 <button id="update-Employee-btn" style="display: none;"></button>
-@Html.AntiForgeryToken()
-<table class="table table-hover text-center employee-table">
-    <thead>
-        <tr>
-            <th>Họ tên</th>
-            <th>Số điện thoại</th>
-            <th>Email</th>
-            <th>Chức vụ</th>
-            <th>Tình trạng</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (AppUser employee in Model)
+<div class="filter-block d-flex flex-wrap gap-3 mb-4 p-3 border rounded">
+    <select id="roleFilter" class="form-select" style="width: 180px;">
+        <option value="">-- Chức vụ --</option>
+        @foreach (var role in rolesFilter)
         {
-            <tr data-id="@employee.Id">
-                <td>@employee.FullName</td>
-                <td>@employee.PhoneNumber</td>
-                <td>@employee.Email</td>
-                <td>
-                    @{
-                        var roles = await UserManager.GetRolesAsync(employee);
-                        var roleName = roles.FirstOrDefault() ?? "Chưa có";
-                        var displayName = roleDisplayNames.ContainsKey(roleName) ? roleDisplayNames[roleName] : roleName;
-                    }
-                    @displayName
-                </td>
-                <td>
-                    @if (!employee.IsActive)
-                    {
-                        <span class="badge bg-danger">Tạm khóa</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-success">Hoạt động</span>
-                    }
-                </td>
-            </tr>
+            if(role.Value != "Admin"){
+                <option value="@role.Value">@role.Text</option>
+            }
         }
-    </tbody>
-</table>
+    </select>
+
+    <select id="statusFilter" class="form-select" style="width: 140px;">
+        <option value="">-- Tình trạng --</option>
+        <option value="1">Hoạt động</option>
+        <option value="0">Tạm khóa</option>
+    </select>
+</div>
+
+<div class="table-wrapper">
+    @Html.AntiForgeryToken()
+    <table class="table table-hover text-center employee-table">
+        <thead>
+            <tr>
+                <th>Họ tên</th>
+                <th>Số điện thoại</th>
+                <th>Email</th>
+                <th>Chức vụ</th>
+                <th>Tình trạng</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (AppUser employee in Model)
+            {
+                <tr data-id="@employee.Id">
+                    <td>@employee.FullName</td>
+                    <td>@employee.PhoneNumber</td>
+                    <td>@employee.Email</td>
+                    <td>
+                        @{
+                            var roles = await UserManager.GetRolesAsync(employee);
+                            var roleName = roles.FirstOrDefault() ?? "Chưa có";
+                            var displayName = roleDisplayNames.ContainsKey(roleName) ? roleDisplayNames[roleName] : roleName;
+                        }
+                        @displayName
+                    </td>
+                    <td>
+                        @if (!employee.IsActive)
+                        {
+                            <span class="badge bg-danger">Tạm khóa</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Hoạt động</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
 
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
 
         // Lấy tất cả các hàng trong bảng
-    const rows = document.querySelectorAll(".employee-table tbody tr");
-    const modalElement = document.getElementById("featureModal");
-    const modalBody = document.getElementById("ModalBody");
-    const bsModal = new bootstrap.Modal(modalElement);
-    // Biến để nhớ hàng đang được chọn
-    let selectedRow = null;
-
-    rows.forEach(row => {
-        row.addEventListener("click", (event) => {
-            event.stopPropagation();
-
-            // Bỏ chọn hàng trước đó
-            if (selectedRow) {
-                selectedRow.classList.remove("active-row");
-            }
-
-            // Đánh dấu hàng hiện tại
-            row.classList.add("active-row");
-            selectedRow = row;
-        });
-    });
-
-    // Khi click ra ngoài bảng thì bỏ chọn
-    document.addEventListener("click", (event) => {
-        const isClickInsideTable = event.target.closest(".employee-table");
-        if (!isClickInsideTable && selectedRow) {
-            selectedRow.classList.remove("active-row");
-            selectedRow = null;
-        }
-    });
-
-    document.querySelector("#delete-Employee-btn").addEventListener("click", async (e) => {
-        e.preventDefault();
-        if (!selectedRow) {
-            alert("Vui lòng chọn một nhân viên để xóa!");
-            return;
-        }
-        const id = selectedRow.dataset.id;
-        const confirmDelete = confirm("Bạn có chắc chắn muốn xóa nhân viên này không?");
-        if (!confirmDelete) return;
-
-        try {
-            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-            const response = await fetch(`/Employee/Delete/${id}`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "RequestVerificationToken": token
-                }
-            });
-
-            const result = await response.json();
-
-            alert(result.message);
-            if (result.success) {
-                selectedRow = null;
-                location.reload();
-            }
-
-        } catch (error) {
-            console.error("Lỗi khi xóa:", error);
-            alert("Đã xảy ra lỗi khi xóa nhân viên!");
-        }
-    })
-
-    document.querySelector("#update-Employee-btn").addEventListener("click", async (e) => {
-        e.preventDefault()
-        if (!selectedRow) {
-            alert("Vui lòng chọn một nhân viên để cập nhật!");
-            return;
-        }
-        const id = selectedRow.dataset.id;
-        const response = await fetch(`/Employee/GetUpdateForm/?id=${id}`);
-        const html = await response.text();
-        modalBody.innerHTML = html;
-        bindAjaxForm();
-    })
-
-     function bindAjaxForm() {
+        const rows = document.querySelectorAll(".employee-table tbody tr");
+        const modalElement = document.getElementById("featureModal");
         const modalBody = document.getElementById("ModalBody");
-        const form = modalBody.querySelector("form");
-        if (!form) return;
+        const bsModal = new bootstrap.Modal(modalElement);
+        // Biến để nhớ hàng đang được chọn
+        let selectedRow = null;
 
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
+        rows.forEach(row => {
+            row.addEventListener("click", (event) => {
+                event.stopPropagation();
 
-            const formData = new FormData(form);
-            const response = await fetch(form.action, {
-                method: "POST",
-                body: formData
-            });
-
-            const contentType = response.headers.get("content-type");
-
-            if (contentType && contentType.includes("text/html")) {
-                // Lỗi validation => load lại form có lỗi
-                modalBody.innerHTML = await response.text();
-                bindAjaxForm(); // Gắn lại sự kiện submit
-            } else {
-                const result = await response.json();
-                if (result.success) {
-                    bsModal.hide();
-                    alert(result.message);
-                    location.reload(); // Hoặc cập nhật bảng bằng JS
+                // Bỏ chọn hàng trước đó
+                if (selectedRow) {
+                    selectedRow.classList.remove("active-row");
                 }
+
+                // Đánh dấu hàng hiện tại
+                row.classList.add("active-row");
+                selectedRow = row;
+            });
+        });
+
+        // Khi click ra ngoài bảng thì bỏ chọn
+        document.addEventListener("click", (event) => {
+            const isClickInsideTable = event.target.closest(".employee-table");
+            if (!isClickInsideTable && selectedRow) {
+                selectedRow.classList.remove("active-row");
+                selectedRow = null;
             }
         });
-    }
+
+        document.querySelector("#delete-Employee-btn").addEventListener("click", async (e) => {
+            e.preventDefault();
+            if (!selectedRow) {
+                alert("Vui lòng chọn một nhân viên để xóa!");
+                return;
+            }
+            const id = selectedRow.dataset.id;
+            const confirmDelete = confirm("Bạn có chắc chắn muốn xóa nhân viên này không?");
+            if (!confirmDelete) return;
+
+            try {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                const response = await fetch(`/Employee/Delete/${id}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "RequestVerificationToken": token
+                    }
+                });
+
+                const result = await response.json();
+
+                alert(result.message);
+                if (result.success) {
+                    selectedRow = null;
+                    location.reload();
+                }
+
+            } catch (error) {
+                console.error("Lỗi khi xóa:", error);
+                alert("Đã xảy ra lỗi khi xóa nhân viên!");
+            }
+        })
+
+        document.querySelector("#update-Employee-btn").addEventListener("click", async (e) => {
+            e.preventDefault()
+            if (!selectedRow) {
+                alert("Vui lòng chọn một nhân viên để cập nhật!");
+                return;
+            }
+            const id = selectedRow.dataset.id;
+            const response = await fetch(`/Employee/GetUpdateForm/?id=${id}`);
+            const html = await response.text();
+            modalBody.innerHTML = html;
+            bindAjaxForm();
+        })
+
+        function bindAjaxForm() {
+            const modalBody = document.getElementById("ModalBody");
+            const form = modalBody.querySelector("form");
+            if (!form) return;
+
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    body: formData
+                });
+
+                const contentType = response.headers.get("content-type");
+
+                if (contentType && contentType.includes("text/html")) {
+                    // Lỗi validation => load lại form có lỗi
+                    modalBody.innerHTML = await response.text();
+                    bindAjaxForm(); // Gắn lại sự kiện submit
+                } else {
+                    const result = await response.json();
+                    if (result.success) {
+                        bsModal.hide();
+                        alert(result.message);
+                        location.reload(); // Hoặc cập nhật bảng bằng JS
+                    }
+                }
+            });
+        }
+
+        // const form = document.querySelector("#searchFormForEmployee")
+        // form.addEventListener("submit", async (e) => {
+        //     const inputTxt = form.querySelector("input[name='inputTxt']").value;
+        //     const selectedRole = document.querySelector("#roleFilter").value
+        //     const selectedStatus = document.querySelector("#statusFilter").value
+        //     const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+        //     const token = tokenInput ? tokenInput.value : "";
+
+        //     await fetch('@Url.Action("GetList", "Employee")', {
+        //         method: "POST",
+        //         headers: {
+        //             "Content-Type": "application/json",
+        //             "RequestVerificationToken": token
+        //         },
+        //         body: JSON.stringify({
+        //             inputTxt: inputTxt,
+        //             selectedRole: selectedRole,
+        //             selectedStatus: selectedStatus
+        //         })
+        //     })
+        // })
+
+        document.querySelector("#searchBtn").addEventListener("click", function(e){
+            e.preventDefault(); // tránh form submit mặc định nếu đang trong form
+
+            // Lấy các giá trị từ input/select
+            const inputTxt = document.querySelector("input[name='inputTxt']").value;
+            const selectedRole = document.querySelector("#roleFilter").value;
+            const selectedStatus = document.querySelector("#statusFilter").value;
+
+            // Tạo form ẩn
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = "/Employee/GetList";
+            form.style.display = "none";
+
+            // CSRF token nếu cần
+            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+            if(tokenInput){
+                const token = document.createElement("input");
+                token.type = "hidden";
+                token.name = "__RequestVerificationToken";
+                token.value = tokenInput.value;
+                form.appendChild(token);
+            }
+
+            // Thêm các tham số
+            const params = { inputTxt, selectedRole, selectedStatus };
+            for(const key in params){
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = key;
+                input.value = params[key];
+                form.appendChild(input);
+            }
+
+            // Thêm form vào body và submit
+            document.body.appendChild(form);
+            form.submit();
+        });
+
 
     })
 </script>
