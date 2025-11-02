@@ -42,13 +42,6 @@
         table-layout: fixed;
     }
 
-    /* .table-wrapper table th,
-    .table-wrapper table td {
-        word-wrap: break-word;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    } */
-
     /* Hover row */
     .employee-table tbody tr:hover {
         background-color: #f1f3f5;
@@ -259,11 +252,11 @@
         //     })
         // })
 
-        document.querySelector("#searchBtn").addEventListener("click", function(e){
+        document.querySelector("#searchFormForEmployee #searchBtn").addEventListener("click", function(e){
             e.preventDefault(); // tránh form submit mặc định nếu đang trong form
 
             // Lấy các giá trị từ input/select
-            const inputTxt = document.querySelector("input[name='inputTxt']").value;
+            const inputTxt = document.querySelector("#searchFormForEmployee input[name='inputTxt']").value;
             const selectedRole = document.querySelector("#roleFilter").value;
             const selectedStatus = document.querySelector("#statusFilter").value;
 

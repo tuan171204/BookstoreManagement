@@ -11,71 +11,231 @@
     ViewData["Title"] = "Quản lý khách hàng";
 }
 
+<style>
+    /* Bao bọc bảng để scroll cả dọc lẫn ngang nếu cần */
+    .table-wrapper {
+        max-height: 350px;
+        overflow: auto; /* scroll cả X và Y */
+        border: 1px solid #dee2e6;
+        border-radius: .25rem;
+    }
 
+        /* Cố định header */
+        .table-wrapper thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 20;
+        }
+
+        /* Bảng responsive */
+        .table-wrapper table {
+            width: 100%;
+            margin-bottom: 0;
+            table-layout: fixed;
+        }
+
+    /* Hover row */
+    .employee-table tbody tr:hover {
+        background-color: #f1f3f5;
+        cursor: pointer;
+    }
+
+</style>
 
 <h2 class="content-title">@ViewData["Title"]</h2>
 <partial name="_InputTextbox" />
 
-<table class="table table-hover text-center customer-table">
-    <thead>
-        <tr>
-            <th>Họ tên</th>
-            <th>Số điện thoại</th>
-            <th>Email</th>
-            <th>Tình trạng</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (Customer customer in Model)
-        {
+<button id="delete-Customer-btn" style="display: none;"></button>
+<button id="update-Customer-btn" style="display: none;"></button>
+
+<div class="table-wrapper">
+    @Html.AntiForgeryToken()
+    <table class="table table-hover text-center customer-table">
+        <thead>
             <tr>
-                <td>@customer.FullName</td>
-                <td>@customer.Phone</td>
-                <td>@customer.Email</td>
-                <td>
-                    @if (customer.IsActive ?? false)
-                    {
-                        <span class="badge bg-success">Hoạt động</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-danger">Tạm khóa</span>
-                    }
-                </td>
+                <th>Họ tên</th>
+                <th>Số điện thoại</th>
+                <th>Email</th>
+                <th>Tình trạng</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (Customer customer in Model)
+            {
+                <tr data-id="@customer.CustomerId">
+                    <td>@customer.FullName</td>
+                    <td>@customer.Phone</td>
+                    <td>@customer.Email</td>
+                    <td>
+                        @if (!customer.IsActive)
+                        {
+                            <span class="badge bg-danger">Tạm khóa</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Hoạt động</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
 
 
 <script>
-    // Lấy tất cả các hàng trong bảng
-    const rows = document.querySelectorAll(".customer-table tbody tr");
 
-    // Biến để nhớ hàng đang được chọn
-    let selectedRow = null;
+    document.addEventListener("DOMContentLoaded", () => {
+         // Lấy tất cả các hàng trong bảng
+        const rows = document.querySelectorAll(".customer-table tbody tr");
+        const modalElement = document.getElementById("featureModal");
+        const modalBody = document.getElementById("ModalBody");
+        const bsModal = new bootstrap.Modal(modalElement);
 
-    rows.forEach(row => {
-        row.addEventListener("click", (event) => {
-            event.stopPropagation();
+        // Biến để nhớ hàng đang được chọn
+        let selectedRow = null;
 
-            // Bỏ chọn hàng trước đó
-            if (selectedRow) {
+        rows.forEach(row => {
+            row.addEventListener("click", (event) => {
+                event.stopPropagation();
+
+                // Bỏ chọn hàng trước đó
+                if (selectedRow) {
+                    selectedRow.classList.remove("active-row");
+                }
+
+                // Đánh dấu hàng hiện tại
+                row.classList.add("active-row");
+                selectedRow = row;
+            });
+        });
+
+        // Khi click ra ngoài bảng thì bỏ chọn
+        document.addEventListener("click", (event) => {
+            const isClickInsideTable = event.target.closest(".customer-table");
+            if (!isClickInsideTable && selectedRow) {
                 selectedRow.classList.remove("active-row");
+                selectedRow = null;
+            }
+        });
+
+        document.querySelector("#delete-Customer-btn").addEventListener("click", async (e) => {
+            e.preventDefault();
+            if (!selectedRow) {
+                alert("Vui lòng chọn một khách hàng để xóa!");
+                return;
+            }
+            const id = selectedRow.dataset.id;
+            const confirmDelete = confirm("Bạn có chắc chắn muốn xóa khách hàng này không?");
+            if (!confirmDelete) return;
+
+            try {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                const response = await fetch(`/Customer/Delete/${id}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "RequestVerificationToken": token
+                    }
+                });
+
+                const result = await response.json();
+
+                alert(result.message);
+                if (result.success) {
+                    selectedRow = null;
+                    location.reload();
+                }
+
+            } catch (error) {
+                console.error("Lỗi khi xóa:", error);
+                alert("Đã xảy ra lỗi khi xóa khách hàng!");
+            }
+        })
+
+        document.querySelector("#update-Customer-btn").addEventListener("click", async (e) => {
+            e.preventDefault()
+            if (!selectedRow) {
+                alert("Vui lòng chọn một khách hàng để cập nhật!");
+                return;
+            }
+            const id = selectedRow.dataset.id;
+            const response = await fetch(`/Customer/GetUpdateForm/?id=${id}`);
+            const html = await response.text();
+            modalBody.innerHTML = html;
+            bindAjaxForm();
+        })
+
+        function bindAjaxForm() {
+            const modalBody = document.getElementById("ModalBody");
+            const form = modalBody.querySelector("form");
+            if (!form) return;
+
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    body: formData
+                });
+
+                const contentType = response.headers.get("content-type");
+
+                if (contentType && contentType.includes("text/html")) {
+                    // Lỗi validation => load lại form có lỗi
+                    modalBody.innerHTML = await response.text();
+                    bindAjaxForm(); // Gắn lại sự kiện submit
+                } else {
+                    const result = await response.json();
+                    if (result.success) {
+                        bsModal.hide();
+                        alert(result.message);
+                        location.reload(); // Hoặc cập nhật bảng bằng JS
+                    }
+                }
+            });
+        }
+
+        document.querySelector("#searchFormForCustomer #searchBtn").addEventListener("click", function(e){
+            e.preventDefault(); // tránh form submit mặc định nếu đang trong form
+
+            // Lấy các giá trị từ input/select
+            const inputTxt = document.querySelector("#searchFormForCustomer input[name='inputTxt']").value;
+
+            // Tạo form ẩn
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = "/Customer/GetList";
+            form.style.display = "none";
+
+            // CSRF token nếu cần
+            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+            if(tokenInput){
+                const token = document.createElement("input");
+                token.type = "hidden";
+                token.name = "__RequestVerificationToken";
+                token.value = tokenInput.value;
+                form.appendChild(token);
             }
 
-            // Đánh dấu hàng hiện tại
-            row.classList.add("active-row");
-            selectedRow = row;
-        });
-    });
+            // Thêm các tham số
+            const params = { inputTxt };
+            for(const key in params){
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = key;
+                input.value = params[key];
+                form.appendChild(input);
+            }
 
-    // Khi click ra ngoài bảng thì bỏ chọn
-    document.addEventListener("click", (event) => {
-        const isClickInsideTable = event.target.closest(".customer-table");
-        if (!isClickInsideTable && selectedRow) {
-            selectedRow.classList.remove("active-row");
-            selectedRow = null;
-        }
-    });
+            // Thêm form vào body và submit
+            document.body.appendChild(form);
+            form.submit();
+        });
+
+    })
+
 </script>

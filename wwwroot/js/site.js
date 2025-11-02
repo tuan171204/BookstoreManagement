@@ -60,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                     break;
                 case 'refresh':
+                    location.reload();
                     break;
             }
         });

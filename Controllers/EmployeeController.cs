@@ -82,6 +82,8 @@ namespace BookstoreManagement.Controllers
                 UserName = model.Email,
                 Email = model.Email,
                 FullName = model.FullName,
+                PhoneNumber = model.PhoneNumber,
+                Address = model.Address,
                 IsActive = true,
                 CreatedAt = DateTime.Now
             };
@@ -191,7 +193,7 @@ namespace BookstoreManagement.Controllers
             // Lọc theo input
             if (!string.IsNullOrEmpty(inputTxt))
             {
-                query = query.Where(u => u.Email.Contains(inputTxt)
+                query = query.Where(u => (u.Email.Contains("@") && u.Email.Substring(0, u.Email.IndexOf("@")).Contains(inputTxt))
                                        || u.FullName.Contains(inputTxt)
                                        || u.Address.Contains(inputTxt));
             }
