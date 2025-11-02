@@ -1,7 +1,9 @@
 using BookstoreManagement.Models;
+using BookstoreManagement.ViewModels.Employee;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
@@ -98,11 +100,71 @@ namespace BookstoreManagement.Controllers
             if (user.UserName == User.Identity?.Name)
                 return Json(new { success = false, message = "Bạn không thể tự xóa chính mình!" });
 
-            var result = await _userManager.DeleteAsync(user);
+            user.IsActive = false;
+            var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
                 return Json(new { success = false, message = "Xóa thất bại: " + string.Join(", ", result.Errors.Select(e => e.Description)) });
 
             return Json(new { success = true, message = "Xóa nhân viên thành công!" });
+        }
+
+        public async Task<IActionResult> GetUpdateForm(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var vm = new EmployeeViewModel
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                Address = user.Address,
+                RoleName = roles.FirstOrDefault() ?? "Employee",
+                IsActive = user.IsActive
+            };
+
+            ViewBag.Roles = _roleManager.Roles
+                .Select(r => new SelectListItem
+                {
+                    Value = r.Name,
+                    Text = r.Name == "Employee" ? "Nhân viên" : r.Name == "Manager" ? "Quản lý" : r.Name
+                })
+                .ToList();
+
+            return PartialView("~/Views/Employee/_UpdateForm.cshtml", vm);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Update(EmployeeViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return PartialView("_UpdateForm", model);
+            }
+
+            var user = await _userManager.FindByIdAsync(model.Id);
+            if (user == null) return NotFound();
+
+            user.FullName = model.FullName;
+            user.Email = model.Email;
+            user.PhoneNumber = model.PhoneNumber;
+            user.Address = model.Address;
+            user.IsActive = model.IsActive;
+            user.UpdatedAt = DateTime.Now;
+
+            await _userManager.UpdateAsync(user);
+
+            // cập nhật vai trò
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            await _userManager.AddToRoleAsync(user, model.RoleName);
+
+            return Json(new { success = true, message = "Cập nhật nhân viên thành công!" });
         }
 
     }

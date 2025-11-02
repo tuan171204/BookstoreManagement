@@ -3,20 +3,24 @@
   "WorkspaceRootPath": "C:\\BookstoreManagement\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|c:\\bookstoremanagement\\views\\employee\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|solutionrelative:views\\employee\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|c:\\bookstoremanagement\\views\\employee\\_updateform.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|solutionrelative:views\\employee\\_updateform.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|c:\\bookstoremanagement\\controllers\\employeecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|solutionrelative:controllers\\employeecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|c:\\bookstoremanagement\\views\\employee\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|solutionrelative:views\\employee\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|c:\\bookstoremanagement\\wwwroot\\js\\site.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
       "RelativeMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|solutionrelative:wwwroot\\js\\site.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|c:\\bookstoremanagement\\controllers\\partialcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|solutionrelative:controllers\\partialcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|c:\\bookstoremanagement\\views\\employee\\_createform.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|solutionrelative:views\\employee\\_createform.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|c:\\bookstoremanagement\\views\\shared\\_sidebar.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
@@ -27,8 +31,12 @@
       "RelativeMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|solutionrelative:views\\shared\\_modalform.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|c:\\bookstoremanagement\\views\\employee\\_createform.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|solutionrelative:views\\employee\\_createform.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|c:\\bookstoremanagement\\viewmodels\\employee\\employeeviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|solutionrelative:viewmodels\\employee\\employeeviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|c:\\bookstoremanagement\\controllers\\partialcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|solutionrelative:controllers\\partialcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{C19F7650-213C-4C99-AF40-A536228FE41F}|BookstoreManagement.csproj|c:\\bookstoremanagement\\models\\bookstorecontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -45,6 +53,23 @@
           "SelectedChildIndex": 1,
           "Children": [
             {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "_UpdateForm.cshtml",
+              "DocumentMoniker": "C:\\BookstoreManagement\\Views\\Employee\\_UpdateForm.cshtml",
+              "RelativeDocumentMoniker": "Views\\Employee\\_UpdateForm.cshtml",
+              "ToolTip": "C:\\BookstoreManagement\\Views\\Employee\\_UpdateForm.cshtml",
+              "RelativeToolTip": "Views\\Employee\\_UpdateForm.cshtml",
+              "ViewState": "AgIAAA8AAAAAAAAAAAAAACkAAAAKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-11-01T22:33:46.939Z",
+              "EditorCaption": ""
+            },
+            {
               "$type": "Document",
               "DocumentIndex": 1,
               "Title": "EmployeeController.cs",
@@ -52,93 +77,27 @@
               "RelativeDocumentMoniker": "Controllers\\EmployeeController.cs",
               "ToolTip": "C:\\BookstoreManagement\\Controllers\\EmployeeController.cs",
               "RelativeToolTip": "Controllers\\EmployeeController.cs",
-              "ViewState": "AgIAAFAAAAAAAAAAAAAmwFgAAAASAAAAAAAAAA==",
+              "ViewState": "AgIAAIEAAAAAAAAAAAAAAJsAAAApAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-11-01T16:48:55.425Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "Index.cshtml",
               "DocumentMoniker": "C:\\BookstoreManagement\\Views\\Employee\\Index.cshtml",
               "RelativeDocumentMoniker": "Views\\Employee\\Index.cshtml",
               "ToolTip": "C:\\BookstoreManagement\\Views\\Employee\\Index.cshtml",
               "RelativeToolTip": "Views\\Employee\\Index.cshtml",
-              "ViewState": "AgIAAGgAAAAAAAAAAAAmwHAAAAAfAAAAAAAAAA==",
+              "ViewState": "AgIAAJ4AAAAAAAAAAAAswLMAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
               "WhenOpened": "2025-11-01T16:44:20.128Z",
               "EditorCaption": ""
             },
             {
-              "$type": "Bookmark",
-              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "BookstoreContext.cs",
-              "DocumentMoniker": "C:\\BookstoreManagement\\Models\\BookstoreContext.cs",
-              "RelativeDocumentMoniker": "Models\\BookstoreContext.cs",
-              "ToolTip": "C:\\BookstoreManagement\\Models\\BookstoreContext.cs",
-              "RelativeToolTip": "Models\\BookstoreContext.cs",
-              "ViewState": "AgIAADEAAAAAAAAAAAA4wDoAAAACAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-01T15:08:11.778Z"
-            },
-            {
               "$type": "Document",
               "DocumentIndex": 5,
-              "Title": "_ModalForm.cshtml",
-              "DocumentMoniker": "C:\\BookstoreManagement\\Views\\Shared\\_ModalForm.cshtml",
-              "RelativeDocumentMoniker": "Views\\Shared\\_ModalForm.cshtml",
-              "ToolTip": "C:\\BookstoreManagement\\Views\\Shared\\_ModalForm.cshtml",
-              "RelativeToolTip": "Views\\Shared\\_ModalForm.cshtml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAAjAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2025-11-01T15:05:16.319Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "_CreateForm.cshtml",
-              "DocumentMoniker": "C:\\BookstoreManagement\\Views\\Employee\\_CreateForm.cshtml",
-              "RelativeDocumentMoniker": "Views\\Employee\\_CreateForm.cshtml",
-              "ToolTip": "C:\\BookstoreManagement\\Views\\Employee\\_CreateForm.cshtml",
-              "RelativeToolTip": "Views\\Employee\\_CreateForm.cshtml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAA8AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2025-11-01T15:02:05.168Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "PartialController.cs",
-              "DocumentMoniker": "C:\\BookstoreManagement\\Controllers\\PartialController.cs",
-              "RelativeDocumentMoniker": "Controllers\\PartialController.cs",
-              "ToolTip": "C:\\BookstoreManagement\\Controllers\\PartialController.cs",
-              "RelativeToolTip": "Controllers\\PartialController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAcAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-01T15:01:38.082Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "site.js",
-              "DocumentMoniker": "C:\\BookstoreManagement\\wwwroot\\js\\site.js",
-              "RelativeDocumentMoniker": "wwwroot\\js\\site.js",
-              "ToolTip": "C:\\BookstoreManagement\\wwwroot\\js\\site.js",
-              "RelativeToolTip": "wwwroot\\js\\site.js",
-              "ViewState": "AgIAAAwAAAAAAAAAAAAUwB4AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2025-11-01T15:00:55.078Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
               "Title": "_Sidebar.cshtml",
               "DocumentMoniker": "C:\\BookstoreManagement\\Views\\Shared\\_Sidebar.cshtml",
               "RelativeDocumentMoniker": "Views\\Shared\\_Sidebar.cshtml",
@@ -147,6 +106,84 @@
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
               "WhenOpened": "2025-11-01T15:00:32.597Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "_ModalForm.cshtml",
+              "DocumentMoniker": "C:\\BookstoreManagement\\Views\\Shared\\_ModalForm.cshtml",
+              "RelativeDocumentMoniker": "Views\\Shared\\_ModalForm.cshtml",
+              "ToolTip": "C:\\BookstoreManagement\\Views\\Shared\\_ModalForm.cshtml",
+              "RelativeToolTip": "Views\\Shared\\_ModalForm.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-11-01T15:05:16.319Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "site.js",
+              "DocumentMoniker": "C:\\BookstoreManagement\\wwwroot\\js\\site.js",
+              "RelativeDocumentMoniker": "wwwroot\\js\\site.js",
+              "ToolTip": "C:\\BookstoreManagement\\wwwroot\\js\\site.js",
+              "RelativeToolTip": "wwwroot\\js\\site.js",
+              "ViewState": "AgIAAAIAAAAAAAAAAAAAwAkAAAA2AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-11-01T15:00:55.078Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "_CreateForm.cshtml",
+              "DocumentMoniker": "C:\\BookstoreManagement\\Views\\Employee\\_CreateForm.cshtml",
+              "RelativeDocumentMoniker": "Views\\Employee\\_CreateForm.cshtml",
+              "ToolTip": "C:\\BookstoreManagement\\Views\\Employee\\_CreateForm.cshtml",
+              "RelativeToolTip": "Views\\Employee\\_CreateForm.cshtml",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAABcAAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-11-01T15:02:05.168Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "EmployeeViewModel.cs",
+              "DocumentMoniker": "C:\\BookstoreManagement\\ViewModels\\Employee\\EmployeeViewModel.cs",
+              "RelativeDocumentMoniker": "ViewModels\\Employee\\EmployeeViewModel.cs",
+              "ToolTip": "C:\\BookstoreManagement\\ViewModels\\Employee\\EmployeeViewModel.cs",
+              "RelativeToolTip": "ViewModels\\Employee\\EmployeeViewModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-01T23:14:48.751Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "PartialController.cs",
+              "DocumentMoniker": "C:\\BookstoreManagement\\Controllers\\PartialController.cs",
+              "RelativeDocumentMoniker": "Controllers\\PartialController.cs",
+              "ToolTip": "C:\\BookstoreManagement\\Controllers\\PartialController.cs",
+              "RelativeToolTip": "Controllers\\PartialController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAA0wA0AAAAkAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-01T15:01:38.082Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "BookstoreContext.cs",
+              "DocumentMoniker": "C:\\BookstoreManagement\\Models\\BookstoreContext.cs",
+              "RelativeDocumentMoniker": "Models\\BookstoreContext.cs",
+              "ToolTip": "C:\\BookstoreManagement\\Models\\BookstoreContext.cs",
+              "RelativeToolTip": "Models\\BookstoreContext.cs",
+              "ViewState": "AgIAAB8CAAAAAAAAAAAUwC0CAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-01T15:08:11.778Z",
               "EditorCaption": ""
             }
           ]

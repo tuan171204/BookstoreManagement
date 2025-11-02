@@ -22,6 +22,7 @@
 <h2 class="content-title">@ViewData["Title"]</h2>
 <partial name="_InputTextbox" />
 <button id="delete-Employee-btn" style="display: none;"></button>
+<button id="update-Employee-btn" style="display: none;"></button>
 @Html.AntiForgeryToken()
 <table class="table table-hover text-center employee-table">
     <thead>
@@ -65,9 +66,13 @@
 
 
 <script>
-    // Lấy tất cả các hàng trong bảng
-    const rows = document.querySelectorAll(".employee-table tbody tr");
+    document.addEventListener("DOMContentLoaded", () => {
 
+        // Lấy tất cả các hàng trong bảng
+    const rows = document.querySelectorAll(".employee-table tbody tr");
+    const modalElement = document.getElementById("featureModal");
+    const modalBody = document.getElementById("ModalBody");
+    const bsModal = new bootstrap.Modal(modalElement);
     // Biến để nhớ hàng đang được chọn
     let selectedRow = null;
 
@@ -101,7 +106,6 @@
             alert("Vui lòng chọn một nhân viên để xóa!");
             return;
         }
-
         const id = selectedRow.dataset.id;
         const confirmDelete = confirm("Bạn có chắc chắn muốn xóa nhân viên này không?");
         if (!confirmDelete) return;
@@ -129,5 +133,51 @@
             console.error("Lỗi khi xóa:", error);
             alert("Đã xảy ra lỗi khi xóa nhân viên!");
         }
+    })
+
+    document.querySelector("#update-Employee-btn").addEventListener("click", async (e) => {
+        e.preventDefault()
+        if (!selectedRow) {
+            alert("Vui lòng chọn một nhân viên để cập nhật!");
+            return;
+        }
+        const id = selectedRow.dataset.id;
+        const response = await fetch(`/Employee/GetUpdateForm/?id=${id}`);
+        const html = await response.text();
+        modalBody.innerHTML = html;
+        bindAjaxForm();
+    })
+
+     function bindAjaxForm() {
+        const modalBody = document.getElementById("ModalBody");
+        const form = modalBody.querySelector("form");
+        if (!form) return;
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            const response = await fetch(form.action, {
+                method: "POST",
+                body: formData
+            });
+
+            const contentType = response.headers.get("content-type");
+
+            if (contentType && contentType.includes("text/html")) {
+                // Lỗi validation => load lại form có lỗi
+                modalBody.innerHTML = await response.text();
+                bindAjaxForm(); // Gắn lại sự kiện submit
+            } else {
+                const result = await response.json();
+                if (result.success) {
+                    bsModal.hide();
+                    alert(result.message);
+                    location.reload(); // Hoặc cập nhật bảng bằng JS
+                }
+            }
+        });
+    }
+
     })
 </script>

@@ -8,6 +8,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const modalElement = document.getElementById("featureModal");
     const modalBody = document.getElementById("ModalBody");
     const bsModal = new bootstrap.Modal(modalElement);
+    const modalTitle = document.getElementById("modalTitle");
+    const featureDisplayName = {
+        Home: "Trang chủ",
+        Book: "sách",
+        Customer: "khách hàng",
+        Employee: "nhân viên",
+        Supplier: "nhà cung cấp",
+        Inventory: "kho",
+        Sales: "bán hàng",
+        Report: "báo cáo",
+        Promotion: "khuyến mãi",
+        Setting: "cài đặt",
+    }
 
     // Khi bấm nút "Thêm mới"
     document.querySelectorAll("[data-feature]").forEach(btn => {
@@ -20,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     // Gọi đến Controller lấy dữ liệu động ( xem chi tiết trong Partial Controller hàm GetAddForm )
                     const response = await fetch(`/Partial/GetAddForm?feature=${feature}`);
                     const html = await response.text();
+                    modalTitle.textContent = `Thêm mới ${featureDisplayName[feature]}`;
                     modalBody.innerHTML = html;
 
                     bsModal.show();
@@ -29,10 +43,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     break;
                 case 'delete':
-                    dlt_btn = document.querySelector(`#delete-${feature}-btn`);
-                    dlt_btn.click()
+                    let dlt_btn = document.querySelector(`#delete-${feature}-btn`);
+                    if (dlt_btn) {
+                        dlt_btn.click()
+                    } else {
+                        console.log(`The hidden delete button for ${feature} does not exist`);
+                    }
                     break;
                 case 'update':
+                    let update_btn = document.querySelector(`#update-${feature}-btn`);
+                    modalTitle.textContent = `Cập nhật ${featureDisplayName[feature]}`;
+                    if (update_btn) {
+                        update_btn.click()
+                    } else {
+                        console.log(`The hidden update button for ${feature} does not exist`);
+                    }
                     break;
                 case 'refresh':
                     break;
