@@ -21,6 +21,11 @@
 
 }
 
-<form class="search-block d-flex flex-row gap-0 px-4 py-2 border border-sencondary rounded my-4">
-    <input class="search-input border-0" type="text" placeholder="Tìm kiếm @featureDisplayName ...">
+<form id="@( "searchFormFor" + featureName )" class="search-block d-flex flex-row gap-0 px-4 py-2 border border-secondary rounded my-4">
+    <div class="input-group">
+        <input name="inputTxt" type="text" class="form-control" placeholder="Tìm kiếm @featureDisplayName ..." />
+        <button id="searchBtn" type="submit" class="btn btn-outline-secondary">
+            <i class="bi bi-search"></i>
+        </button>
+    </div>
 </form>

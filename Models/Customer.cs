@@ -12,7 +12,7 @@ public partial class Customer
     [Required(ErrorMessage = "Họ tên không được bỏ trống")]
     [StringLength(100, MinimumLength = 6, ErrorMessage = "Họ tên 6 - 100 ký tự")]
     [Column(TypeName = "nvarchar(100)")]
-    public string FullName { get; set; } = null!;
+    public string? FullName { get; set; }
 
     [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
     public required string Phone { get; set; }
@@ -27,7 +27,7 @@ public partial class Customer
 
     public DateTime? UpdatedAt { get; set; }
 
-    public bool? IsActive { get; set; }
+    public bool IsActive { get; set; } = true;
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 }
