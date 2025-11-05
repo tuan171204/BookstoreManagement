@@ -11,10 +11,10 @@
     ViewData["Title"] = "Quản lý nhân viên";
 
     var roleDisplayNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-    {
-        { "Manager", "Quản lý" },
-        { "Employee", "Nhân viên" }
-    };
+{
+{ "Manager", "Quản lý" },
+{ "Employee", "Nhân viên" }
+};
     var rolesFilter = ViewBag.Roles as List<SelectListItem> ?? new List<SelectListItem>();
 }
 
@@ -22,7 +22,8 @@
     /* Bao bọc bảng để scroll cả dọc lẫn ngang nếu cần */
     .table-wrapper {
         max-height: 250px;
-        overflow: auto; /* scroll cả X và Y */
+        overflow: auto;
+        /* scroll cả X và Y */
         border: 1px solid #dee2e6;
         border-radius: .25rem;
     }
@@ -47,7 +48,6 @@
         background-color: #f1f3f5;
         cursor: pointer;
     }
-
 </style>
 
 <h2 class="content-title">@ViewData["Title"]</h2>
@@ -59,7 +59,8 @@
         <option value="">-- Chức vụ --</option>
         @foreach (var role in rolesFilter)
         {
-            if(role.Value != "Admin"){
+            if (role.Value != "Admin")
+            {
                 <option value="@role.Value">@role.Text</option>
             }
         }
@@ -196,8 +197,26 @@
             const response = await fetch(`/Employee/GetUpdateForm/?id=${id}`);
             const html = await response.text();
             modalBody.innerHTML = html;
+
+            bsModal.show();
+
+            document.querySelector('.cancel-button').addEventListener('click', (e) => {
+                // Ngăn chặn bất kỳ hành vi mặc định nào (ví dụ: submit nếu nó là type="submit")
+                e.preventDefault();
+
+                // Gọi hàm hide() của Modal
+                bsModal.hide();
+            });
             bindAjaxForm();
         })
+
+        document.querySelector('.btn-close').addEventListener('click', (e) => {
+            // Ngăn chặn bất kỳ hành vi mặc định nào (ví dụ: submit nếu nó là type="submit")
+            e.preventDefault();
+
+            // Gọi hàm hide() của Modal
+            bsModal.hide();
+        });
 
         function bindAjaxForm() {
             const modalBody = document.getElementById("ModalBody");
@@ -252,7 +271,7 @@
         //     })
         // })
 
-        document.querySelector("#searchFormForEmployee #searchBtn").addEventListener("click", function(e){
+        document.querySelector("#searchFormForEmployee #searchBtn").addEventListener("click", function (e) {
             e.preventDefault(); // tránh form submit mặc định nếu đang trong form
 
             // Lấy các giá trị từ input/select
@@ -268,7 +287,7 @@
 
             // CSRF token nếu cần
             const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
-            if(tokenInput){
+            if (tokenInput) {
                 const token = document.createElement("input");
                 token.type = "hidden";
                 token.name = "__RequestVerificationToken";
@@ -278,7 +297,7 @@
 
             // Thêm các tham số
             const params = { inputTxt, selectedRole, selectedStatus };
-            for(const key in params){
+            for (const key in params) {
                 const input = document.createElement("input");
                 input.type = "hidden";
                 input.name = key;

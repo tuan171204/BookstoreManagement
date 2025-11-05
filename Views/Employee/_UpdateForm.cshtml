@@ -1,10 +1,10 @@
 ﻿@model BookstoreManagement.ViewModels.Employee.EmployeeViewModel
 @{
     var roleDisplayNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-    {
-        { "Employee", "Nhân viên" },
-        { "Manager", "Quản lý" },
-    };
+{
+{ "Employee", "Nhân viên" },
+{ "Manager", "Quản lý" },
+};
 }
 
 <form id="employeeFormForUpdate" asp-controller="Employee" asp-action="Update" method="post">
@@ -49,8 +49,7 @@
     </div>
 
     <div class="d-flex flex-row justify-content-around gap-3">
-        <button type="button" class="btn btn-secondary w-100 cancel-button border border-secondary rounded"
-                data-bs-dismiss="modal">
+        <button type="button" class="btn btn-secondary w-100 cancel-button border border-secondary rounded">
             Hủy
         </button>
         <button type="submit" class="btn w-100">Lưu</button>

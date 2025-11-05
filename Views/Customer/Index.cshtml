@@ -15,32 +15,32 @@
     /* Bao bọc bảng để scroll cả dọc lẫn ngang nếu cần */
     .table-wrapper {
         max-height: 350px;
-        overflow: auto; /* scroll cả X và Y */
+        overflow: auto;
+        /* scroll cả X và Y */
         border: 1px solid #dee2e6;
         border-radius: .25rem;
     }
 
-        /* Cố định header */
-        .table-wrapper thead th {
-            position: sticky;
-            top: 0;
-            background-color: #f8f9fa;
-            z-index: 20;
-        }
+    /* Cố định header */
+    .table-wrapper thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 20;
+    }
 
-        /* Bảng responsive */
-        .table-wrapper table {
-            width: 100%;
-            margin-bottom: 0;
-            table-layout: fixed;
-        }
+    /* Bảng responsive */
+    .table-wrapper table {
+        width: 100%;
+        margin-bottom: 0;
+        table-layout: fixed;
+    }
 
     /* Hover row */
     .employee-table tbody tr:hover {
         background-color: #f1f3f5;
         cursor: pointer;
     }
-
 </style>
 
 <h2 class="content-title">@ViewData["Title"]</h2>
@@ -87,7 +87,7 @@
 <script>
 
     document.addEventListener("DOMContentLoaded", () => {
-         // Lấy tất cả các hàng trong bảng
+        // Lấy tất cả các hàng trong bảng
         const rows = document.querySelectorAll(".customer-table tbody tr");
         const modalElement = document.getElementById("featureModal");
         const modalBody = document.getElementById("ModalBody");
@@ -165,8 +165,28 @@
             const response = await fetch(`/Customer/GetUpdateForm/?id=${id}`);
             const html = await response.text();
             modalBody.innerHTML = html;
+            bsModal.show();
+
+            document.querySelector('.cancel-button').addEventListener('click', (e) => {
+                // Ngăn chặn bất kỳ hành vi mặc định nào (ví dụ: submit nếu nó là type="submit")
+                e.preventDefault();
+
+                // Gọi hàm hide() của Modal
+                bsModal.hide();
+            });
+
             bindAjaxForm();
         })
+
+        document.querySelector('.btn-close').addEventListener('click', (e) => {
+            // Ngăn chặn bất kỳ hành vi mặc định nào (ví dụ: submit nếu nó là type="submit")
+            e.preventDefault();
+
+            // Gọi hàm hide() của Modal
+            bsModal.hide();
+        });
+
+
 
         function bindAjaxForm() {
             const modalBody = document.getElementById("ModalBody");
@@ -199,7 +219,7 @@
             });
         }
 
-        document.querySelector("#searchFormForCustomer #searchBtn").addEventListener("click", function(e){
+        document.querySelector("#searchFormForCustomer #searchBtn").addEventListener("click", function (e) {
             e.preventDefault(); // tránh form submit mặc định nếu đang trong form
 
             // Lấy các giá trị từ input/select
@@ -213,7 +233,7 @@
 
             // CSRF token nếu cần
             const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
-            if(tokenInput){
+            if (tokenInput) {
                 const token = document.createElement("input");
                 token.type = "hidden";
                 token.name = "__RequestVerificationToken";
@@ -223,7 +243,7 @@
 
             // Thêm các tham số
             const params = { inputTxt };
-            for(const key in params){
+            for (const key in params) {
                 const input = document.createElement("input");
                 input.type = "hidden";
                 input.name = key;
