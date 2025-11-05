@@ -1,0 +1,107 @@
+@model BookstoreManagement.ViewModels.Book.BookViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết sách";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="bi bi-info-circle"></i> Chi tiết sách</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Tên sách -->
+                        <div class="col-12">
+                            <h5>@Model.Title</h5>
+                            <hr />
+                        </div>
+
+                        <!-- Thông tin cơ bản -->
+                        <div class="col-md-6">
+                            <label class="text-muted">Tác giả:</label>
+                            <p class="fw-bold">@Model.AuthorName</p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="text-muted">Nhà xuất bản:</label>
+                            <p class="fw-bold">@Model.PublisherName</p>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="text-muted">Năm xuất bản:</label>
+                            <p class="fw-bold">@Model.PublicationYear</p>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="text-muted">Giá bán:</label>
+                            <p class="fw-bold text-success">@Model.Price.ToString("N0") ₫</p>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="text-muted">Tồn kho:</label>
+                            <p>
+                                <span class="badge @(Model.StockQuantity > Model.LowStockThreshold ? "bg-success" : "bg-danger") fs-6">
+                                    @Model.StockQuantity
+                                </span>
+                                @if (Model.StockQuantity <= Model.LowStockThreshold)
+                                {
+                                    <span class="badge bg-warning text-dark">Sắp hết</span>
+                                }
+                            </p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="text-muted">Ngưỡng cảnh báo:</label>
+                            <p class="fw-bold">@Model.LowStockThreshold</p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="text-muted">Trạng thái:</label>
+                            <p>
+                                <span class="badge @(Model.IsDeleted == true ? "bg-secondary" : "bg-success") fs-6">
+                                    @Model.Status
+                                </span>
+                            </p>
+                        </div>
+
+                        <!-- Mô tả -->
+                        @if (!string.IsNullOrEmpty(Model.Description))
+                        {
+                            <div class="col-12">
+                                <label class="text-muted">Mô tả:</label>
+                                <p>@Model.Description</p>
+                            </div>
+                        }
+
+                        <!-- Thông tin thời gian -->
+                        <div class="col-12">
+                            <hr />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="text-muted">Ngày tạo:</label>
+                            <p class="small">@Model.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="text-muted">Ngày cập nhật:</label>
+                            <p class="small">@Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <a asp-action="Edit" asp-route-id="@Model.BookId" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Chỉnh sửa
+                        </a>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

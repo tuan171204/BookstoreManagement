@@ -1,0 +1,98 @@
+@model BookstoreManagement.ViewModels.Book.BookEditViewModel
+
+@{
+    ViewData["Title"] = "Chỉnh sửa sách";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h4 class="mb-0"><i class="bi bi-pencil"></i> Chỉnh sửa sách</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="BookId" />
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        
+                        <div class="row g-3">
+                            <!-- Tên sách -->
+                            <div class="col-md-12">
+                                <label asp-for="Title" class="form-label"></label>
+                                <input asp-for="Title" class="form-control" />
+                                <span asp-validation-for="Title" class="text-danger"></span>
+                            </div>
+
+                            <!-- Tác giả -->
+                            <div class="col-md-6">
+                                <label asp-for="AuthorId" class="form-label"></label>
+                                <select asp-for="AuthorId" class="form-select" asp-items="Model.Authors">
+                                    <option value="">-- Chọn tác giả --</option>
+                                </select>
+                                <span asp-validation-for="AuthorId" class="text-danger"></span>
+                            </div>
+
+                            <!-- Nhà xuất bản -->
+                            <div class="col-md-6">
+                                <label asp-for="PublisherId" class="form-label"></label>
+                                <select asp-for="PublisherId" class="form-select" asp-items="Model.Publishers">
+                                    <option value="">-- Chọn nhà xuất bản --</option>
+                                </select>
+                                <span asp-validation-for="PublisherId" class="text-danger"></span>
+                            </div>
+
+                            <!-- Năm xuất bản -->
+                            <div class="col-md-4">
+                                <label asp-for="PublicationYear" class="form-label"></label>
+                                <input asp-for="PublicationYear" class="form-control" type="number" />
+                                <span asp-validation-for="PublicationYear" class="text-danger"></span>
+                            </div>
+
+                            <!-- Giá bán -->
+                            <div class="col-md-4">
+                                <label asp-for="Price" class="form-label"></label>
+                                <input asp-for="Price" class="form-control" type="number" step="1000" />
+                                <span asp-validation-for="Price" class="text-danger"></span>
+                            </div>
+
+                            <!-- Số lượng tồn kho -->
+                            <div class="col-md-4">
+                                <label asp-for="StockQuantity" class="form-label"></label>
+                                <input asp-for="StockQuantity" class="form-control" type="number" />
+                                <span asp-validation-for="StockQuantity" class="text-danger"></span>
+                            </div>
+
+                            <!-- Ngưỡng cảnh báo -->
+                            <div class="col-md-12">
+                                <label asp-for="LowStockThreshold" class="form-label"></label>
+                                <input asp-for="LowStockThreshold" class="form-control" type="number" />
+                                <span asp-validation-for="LowStockThreshold" class="text-danger"></span>
+                            </div>
+
+                            <!-- Mô tả -->
+                            <div class="col-md-12">
+                                <label asp-for="Description" class="form-label"></label>
+                                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                                <span asp-validation-for="Description" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-save"></i> Cập nhật
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

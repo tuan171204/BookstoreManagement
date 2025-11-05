@@ -1,0 +1,101 @@
+@model BookstoreManagement.ViewModels.Promotion.PromotionViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết khuyến mãi";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="bi bi-info-circle"></i> Chi tiết khuyến mãi</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Tên khuyến mãi -->
+                        <div class="col-12">
+                            <h5>@Model.Name</h5>
+                            <hr />
+                        </div>
+
+                        <!-- Loại khuyến mãi -->
+                        <div class="col-md-6">
+                            <label class="text-muted">Loại khuyến mãi:</label>
+                            <p class="fw-bold">@Model.TypeName</p>
+                        </div>
+
+                        <!-- Phần trăm giảm giá -->
+                        <div class="col-md-6">
+                            <label class="text-muted">Giảm giá:</label>
+                            <p class="fw-bold text-success">@Model.DiscountPercent%</p>
+                        </div>
+
+                        <!-- Thời gian -->
+                        <div class="col-md-6">
+                            <label class="text-muted">Ngày bắt đầu:</label>
+                            <p class="fw-bold">@Model.StartDate?.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="text-muted">Ngày kết thúc:</label>
+                            <p class="fw-bold">@Model.EndDate?.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+
+                        <!-- Số tiền tối thiểu -->
+                        @if (Model.MinPurchaseAmount.HasValue && Model.MinPurchaseAmount > 0)
+                        {
+                            <div class="col-md-6">
+                                <label class="text-muted">Số tiền mua tối thiểu:</label>
+                                <p class="fw-bold">@Model.MinPurchaseAmount.Value.ToString("N0") ₫</p>
+                            </div>
+                        }
+
+                        <!-- Sách tặng kèm -->
+                        @if (!string.IsNullOrEmpty(Model.GiftBookName))
+                        {
+                            <div class="col-md-6">
+                                <label class="text-muted">Sách tặng kèm:</label>
+                                <p class="fw-bold">@Model.GiftBookName</p>
+                            </div>
+                        }
+
+                        <!-- Trạng thái -->
+                        <div class="col-md-12">
+                            <label class="text-muted">Trạng thái:</label>
+                            <p>
+                                <span class="badge @(Model.IsActive == true ? "bg-success" : "bg-secondary") fs-6">
+                                    @Model.Status
+                                </span>
+                            </p>
+                        </div>
+
+                        <!-- Thông tin thời gian -->
+                        <div class="col-12">
+                            <hr />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="text-muted">Ngày tạo:</label>
+                            <p class="small">@Model.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="text-muted">Ngày cập nhật:</label>
+                            <p class="small">@Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <a asp-action="Edit" asp-route-id="@Model.PromotionId" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Chỉnh sửa
+                        </a>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

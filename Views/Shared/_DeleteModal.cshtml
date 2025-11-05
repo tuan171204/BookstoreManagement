@@ -1,0 +1,93 @@
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Xác nhận xóa
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteMessage">Bạn có chắc chắn muốn xóa?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Hủy
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="bi bi-trash"></i> Xóa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@* 22/10/2025 
+Đoạn Script này được đặt trong section → Partial được render trước phần @section Scripts của view chính,
+nên đoạn <script> trong _DeleteModal không được đưa vào layout cuối cùng -> khi bấm nút bị báo lỗi 
+
+@section Scripts { ... } chỉ hoạt động trong file view chính (như Index.cshtml) —
+nếu bạn đặt nó trong Partial, ASP.NET bỏ qua hoàn toàn, không merge vào _Layout.cshtml.
+
+==> NÊN XEM XÉT COPY PASTE VÀO index.cshtml của các view thay vì để trong DeleteModal ròi gắn PartialView cho các view khác 
+vì sẽ bị lỗi chương trình showDeleteModal is not defined
+*@
+@section Scripts {
+    <script>
+        let deleteId = null;
+        let deleteUrl = null;
+
+        function showDeleteModal(id, url, itemName) {
+            deleteId = id;
+            deleteUrl = url;
+            document.getElementById('deleteMessage').textContent =
+                `Bạn có chắc chắn muốn xóa "${itemName}"? Hành động này không thể hoàn tác.`;
+
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+            if (deleteUrl && deleteId) {
+                // Create form data
+                const formData = new FormData();
+                formData.append('id', deleteId);
+
+                // Get anti-forgery token
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                fetch(deleteUrl, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    },
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Close modal
+                            var deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                            deleteModal.hide();
+
+                            // Show success message
+                            alert(data.message);
+
+                            // Reload page
+                            location.reload();
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Có lỗi xảy ra khi xóa.');
+                    });
+            }
+        });
+    </script>
+}

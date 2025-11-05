@@ -1,17 +1,22 @@
-@model IEnumerable<BookstoreManagement.ViewModels.Promotion.PromotionViewModel>
+@model IEnumerable<BookstoreManagement.ViewModels.Author.AuthorViewModel>
 
 @{
-    ViewData["Title"] = "Quản lý Khuyến mãi";
+    ViewData["Title"] = "Quản lý Tác giả";
 }
 
 <div class="container-fluid py-4">
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
-                <h2><i class="bi bi-gift"></i> Quản lý Khuyến mãi</h2>
-                <a asp-action="Create" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> Thêm chương trình mới
-                </a>
+                <h2><i class="bi bi-person"></i> Quản lý Tác giả</h2>
+                <div>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Thêm tác giả
+                    </a>
+                    <a asp-controller="Book" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-book"></i> Quản lý Sách
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -24,25 +29,15 @@
         </div>
     }
 
-    <!-- Search and Filter -->
+    <!-- Search -->
     <div class="card mb-4">
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3">
-                <div class="col-md-8">
-                    <label class="form-label">Tìm kiếm</label>
+                <div class="col-md-10">
                     <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control"
-                        placeholder="Tên chương trình, loại khuyến mãi..." />
+                        placeholder="Tìm kiếm theo tên, tiểu sử..." />
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">Trạng thái</label>
-                    <select name="isActive" class="form-select">
-                        <option value="">-- Tất cả --</option>
-                        <option value="true" selected="@(ViewData["IsActive"]?.ToString() == "True")">Hoạt động</option>
-                        <option value="false" selected="@(ViewData["IsActive"]?.ToString() == "False")">Không hoạt động
-                        </option>
-                    </select>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-search"></i> Tìm
                     </button>
@@ -51,19 +46,17 @@
         </div>
     </div>
 
-    <!-- Promotions Table -->
+    <!-- Authors Table -->
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead class="table-light">
                         <tr>
-                            <th>Tên chương trình</th>
-                            <th>Loại</th>
-                            <th>Giảm giá</th>
-                            <th>Thời gian</th>
-                            <th>Số sách</th>
-                            <th>Trạng thái</th>
+                            <th>Tên tác giả</th>
+                            <th>Tiểu sử</th>
+                            <th>Số lượng sách</th>
+                            <th>Ngày tạo</th>
                             <th class="text-center">Thao tác</th>
                         </tr>
                     </thead>
@@ -73,44 +66,15 @@
                             @foreach (var item in Model)
                             {
                                 <tr>
+                                    <td><strong>@item.Name</strong></td>
+                                    <td>@(item.Bio?.Length > 100 ? item.Bio.Substring(0, 100) + "..." : item.Bio)</td>
                                     <td>
-                                        <strong>@item.Name</strong>
-                                        @if (item.MinPurchaseAmount.HasValue)
-                                        {
-                                            <br />
-
-                                            <small class="text-muted">Min:
-                                                @item.MinPurchaseAmount.Value.ToString("N0")₫</small>
-                                        }
+                                        <span class="badge bg-info">@item.BooksCount sách</span>
                                     </td>
-                                    <td>@item.TypeName</td>
-                                    <td>
-                                        @if (item.DiscountPercent.HasValue)
-                                        {
-                                            <span class="badge bg-success">@item.DiscountPercent%</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">N/A</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        <small>
-                                            @item.StartDate?.ToString("dd/MM/yyyy")<br />
-                                            → @item.EndDate?.ToString("dd/MM/yyyy")
-                                        </small>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info">@item.AppliedBooksCount</span>
-                                    </td>
-                                    <td>
-                                        <span class="badge @item.StatusBadgeClass">
-                                            @item.Status
-                                        </span>
-                                    </td>
+                                    <td>@item.CreatedAt?.ToString("dd/MM/yyyy")</td>
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm">
-                                            <a asp-action="Details" asp-route-id="@item.PromotionId" class="btn btn-info"
+                                            <a asp-action="Details" asp-route-id="@item.AuthorId" class="btn btn-info"
                                                 title="Chi tiết">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                                     fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
@@ -120,7 +84,7 @@
                                                         d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0" />
                                                 </svg>
                                             </a>
-                                            <a asp-action="Edit" asp-route-id="@item.PromotionId" class="btn btn-warning"
+                                            <a asp-action="Edit" asp-route-id="@item.AuthorId" class="btn btn-warning"
                                                 title="Sửa">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                                     fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
@@ -130,20 +94,8 @@
                                                         d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
                                                 </svg>
                                             </a>
-                                            <button type="button"
-                                                class="btn @(item.IsActive == true ? "btn-secondary" : "btn-success")"
-                                                title="@(item.IsActive == true ? "Vô hiệu hóa" : "Kích hoạt")"
-                                                onclick="toggleActive(@item.PromotionId)">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                    fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
-                                                    <path fill-rule="evenodd"
-                                                        d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z" />
-                                                    <path
-                                                        d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466" />
-                                                </svg>
-                                            </button>
                                             <button type="button" class="btn btn-danger" title="Xóa"
-                                                onclick="showDeleteModal(@item.PromotionId, '@Url.Action("Delete", "Promotion")', '@item.Name')">
+                                                onclick="showDeleteModal(@item.AuthorId, '@Url.Action("Delete", "Author")', '@item.Name')">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                                     fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                                                     <path
@@ -160,9 +112,9 @@
                         else
                         {
                             <tr>
-                                <td colspan="7" class="text-center py-4">
+                                <td colspan="5" class="text-center py-4">
                                     <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
-                                    <p class="mt-2 text-muted">Không tìm thấy chương trình khuyến mãi nào</p>
+                                    <p class="mt-2 text-muted">Không tìm thấy tác giả nào</p>
                                 </td>
                             </tr>
                         }
@@ -170,54 +122,18 @@
                 </table>
             </div>
 
-            <!-- Pagination -->
             @await Html.PartialAsync("_Pagination")
         </div>
     </div>
 </div>
 
-<!-- Delete Modal -->
 @await Html.PartialAsync("_DeleteModal")
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
     <form id="deleteForm">
         @Html.AntiForgeryToken()
     </form>
 
-    <script>
-        function toggleActive(promotionId) {
-            if (confirm('Bạn có chắc chắn muốn thay đổi trạng thái?')) {
-                const formData = new FormData();
-                formData.append('id', promotionId);
-
-                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-                fetch('@Url.Action("ToggleActive", "Promotion")', {
-                    method: 'POST',
-                    headers: {
-                        'RequestVerificationToken': token
-                    },
-                    body: formData
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert(data.message);
-                            location.reload();
-                        } else {
-                            alert(data.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Có lỗi xảy ra.');
-                    });
-            }
-        }
-    </script>
 
     <script>
         let deleteId = null;

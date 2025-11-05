@@ -1,7 +1,245 @@
+@model IEnumerable<BookstoreManagement.ViewModels.Book.BookViewModel>
+
 @{
-    Layout = "_Layout";
-    ViewData["Title"] = "Quản lý sách";
+    ViewData["Title"] = "Quản lý Sách";
 }
 
-<h2>@ViewData["Title"]</h2>
-<p>Đây là trang quản lý sách.</p>
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="bi bi-book"></i> Quản lý Sách</h2>
+                <div>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Thêm sách mới
+                    </a>
+                    <a asp-controller="Author" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-person"></i> Quản lý Tác giả
+                    </a>
+                    <a asp-controller="Publisher" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-building"></i> Quản lý NXB
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Tìm kiếm</label>
+                    <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control"
+                        placeholder="Tên sách, tác giả, NXB..." />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Tác giả</label>
+                    <select name="authorId" class="form-select">
+                        <option value="">-- Tất cả --</option>
+                        @foreach (var item in ViewBag.Authors as SelectList)
+                        {
+                            <option value="@item.Value" selected="@(item.Value == ViewData["AuthorId"]?.ToString())">
+                                @item.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Nhà xuất bản</label>
+                    <select name="publisherId" class="form-select">
+                        <option value="">-- Tất cả --</option>
+                        @foreach (var item in ViewBag.Publishers as SelectList)
+                        {
+                            <option value="@item.Value" selected="@(item.Value == ViewData["PublisherId"]?.ToString())">
+                                @item.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Tìm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Books Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tên sách</th>
+                            <th>Tác giả</th>
+                            <th>Nhà xuất bản</th>
+                            <th>Năm XB</th>
+                            <th>Giá</th>
+                            <th>Tồn kho</th>
+                            <th>Trạng thái</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@item.Title</strong>
+                                        @if (item.StockQuantity <= item.LowStockThreshold)
+                                        {
+                                            <span class="badge bg-warning text-dark ms-2">
+                                                <i class="bi bi-exclamation-triangle"></i> Sắp hết
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>@item.AuthorName</td>
+                                    <td>@item.PublisherName</td>
+                                    <td>@item.PublicationYear</td>
+                                    <td>@item.Price.ToString("N0") ₫</td>
+                                    <td>
+                                        <span
+                                            class="badge @(item.StockQuantity > item.LowStockThreshold ? "bg-success" : "bg-danger")">
+                                            @item.StockQuantity
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge @(item.IsDeleted == true ? "bg-secondary" : "bg-success")">
+                                            @item.Status
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-action="Details" asp-route-id="@item.BookId" class="btn btn-info"
+                                                title="Chi tiết">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                                                    <path
+                                                        d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z" />
+                                                    <path
+                                                        d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0" />
+                                                </svg>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@item.BookId" class="btn btn-warning"
+                                                title="Sửa">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                                    <path
+                                                        d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                                    <path fill-rule="evenodd"
+                                                        d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                                                </svg>
+                                            </a>
+                                            <button type="button" class="btn btn-danger" title="Xóa"
+                                                onclick="showDeleteModal(@item.BookId, '@Url.Action("Delete", "Book")', '@item.Title')">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                                    <path
+                                                        d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                                    <path
+                                                        d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                                    <p class="mt-2 text-muted">Không tìm thấy sách nào</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @await Html.PartialAsync("_Pagination")
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+@await Html.PartialAsync("_DeleteModal")
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <form id="deleteForm">
+        @Html.AntiForgeryToken()
+    </form>
+
+
+    <script>
+        let deleteId = null;
+        let deleteUrl = null;
+
+        function showDeleteModal(id, url, itemName) {
+            deleteId = id;
+            deleteUrl = url;
+            document.getElementById('deleteMessage').textContent =
+                `Bạn có chắc chắn muốn xóa "${itemName}"? Hành động này không thể hoàn tác.`;
+
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+            if (deleteUrl && deleteId) {
+                // Create form data
+                const formData = new FormData();
+                formData.append('id', deleteId);
+
+                // Get anti-forgery token
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                fetch(deleteUrl, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    },
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Close modal
+                            var deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                            deleteModal.hide();
+
+                            // Show success message
+                            alert(data.message);
+
+                            // Reload page
+                            location.reload();
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Có lỗi xảy ra khi xóa.');
+                    });
+            }
+        });
+    </script>
+}
