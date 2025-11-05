@@ -194,6 +194,7 @@ namespace BookstoreManagement.Controllers
             if (!string.IsNullOrEmpty(inputTxt))
             {
                 query = query.Where(u => (u.Email.Contains("@") && u.Email.Substring(0, u.Email.IndexOf("@")).Contains(inputTxt))
+                                        || u.Email.Contains(inputTxt)
                                        || u.FullName.Contains(inputTxt)
                                        || u.Address.Contains(inputTxt));
             }
