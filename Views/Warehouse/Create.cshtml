@@ -1,0 +1,182 @@
+﻿@model BookstoreManagement.ViewModels.Warehouse.ImportTicketCreateViewModel
+
+@{
+    ViewData["Title"] = "Tạo Phiếu Nhập Kho";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-box-arrow-in-down"></i> Tạo Phiếu Nhập Kho</h2>
+        </div>
+    </div>
+
+    <form asp-action="Create" method="post" id="importForm">
+        @Html.AntiForgeryToken()
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Thông tin chung</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="SupplierId" class="form-label">Nhà cung cấp</label>
+                        <select asp-for="SupplierId" asp-items="@Model.Suppliers" class="form-select">
+                            <option value="">-- Chọn Nhà cung cấp --</option>
+                        </select>
+                        <span asp-validation-for="SupplierId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="PaymentMethodId" class="form-label">Hình thức thanh toán</label>
+                        <select asp-for="PaymentMethodId" asp-items="@Model.PaymentMethods" class="form-select">
+                            <option value="">-- Chọn hình thức TT --</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Note" class="form-label">Ghi chú</label>
+                        <textarea asp-for="Note" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Chi tiết sách nhập</h5>
+                <button type="button" id="addBookRow" class="btn btn-sm btn-success">
+                    <i class="bi bi-plus-circle"></i> Thêm Sách
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Sách</th>
+                                <th style="width: 150px;">Số lượng</th>
+                                <th style="width: 200px;">Giá nhập (VNĐ)</th>
+                                <th style="width: 200px;">Thành tiền</th>
+                                <th style="width: 50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookDetailsBody">
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-light">
+                                <td colspan="3" class="text-end"><strong>Tổng cộng:</strong></td>
+                                <td colspan="2"><strong id="totalCost">0 VNĐ</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div id="detailsValidation" class="text-danger"></div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Lưu Phiếu Nhập
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle"></i> Hủy
+            </a>
+        </div>
+    </form>
+</div>
+
+<table style="display: none;">
+    <tr id="bookRowTemplate">
+        <td>
+            <select name="Details[__INDEX__].BookId">
+                <option value="">-- Chọn Sách --</option>
+                @if (Model.Books != null)
+                {
+                    @foreach (var item in Model.Books)
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                }
+            </select>
+            
+        </td>
+        <td>
+            <input type="number" name="Details[__INDEX__].Quantity" class="form-control quantity-input" value="1" min="1" required />
+        </td>
+        <td>
+            <input type="number" name="Details[__INDEX__].CostPrice" class="form-control cost-input" value="0" min="0" step="1000" required />
+        </td>
+        <td>
+            <strong class="subtotal">0 VNĐ</strong>
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger remove-row">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    </tr>
+</table>
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            let rowIndex = 0;
+
+            // 1. Thêm một dòng sách mới
+            $("#addBookRow").click(function () {
+                // Lấy template HTML, thay thế __INDEX__ bằng rowIndex hiện tại
+                let template = $("#bookRowTemplate").html();
+                template = template.replace(/__INDEX__/g, rowIndex);
+
+                // Thêm dòng mới vào table body
+                $("#bookDetailsBody").append("<tr>" + template + "</tr>");
+                rowIndex++;
+            });
+
+            // 2. Xóa một dòng
+            $("#bookDetailsBody").on("click", ".remove-row", function () {
+                $(this).closest("tr").remove();
+                updateTotalCost();
+            });
+
+            // 3. Tự động tính Thành tiền và Tổng cộng
+            $("#bookDetailsBody").on("input", ".quantity-input, .cost-input", function () {
+                let row = $(this).closest("tr");
+                let quantity = parseInt(row.find(".quantity-input").val()) || 0;
+                let costPrice = parseFloat(row.find(".cost-input").val()) || 0;
+                let subtotal = quantity * costPrice;
+
+                // Cập nhật thành tiền của dòng
+                row.find(".subtotal").text(subtotal.toLocaleString('vi-VN') + " VNĐ");
+
+                // Cập nhật tổng tiền
+                updateTotalCost();
+            });
+
+            function updateTotalCost() {
+                let total = 0;
+                $("#bookDetailsBody tr").each(function () {
+                    let quantity = parseInt($(this).find(".quantity-input").val()) || 0;
+                    let costPrice = parseFloat($(this).find(".cost-input").val()) || 0;
+                    total += quantity * costPrice;
+                });
+                $("#totalCost").text(total.toLocaleString('vi-VN') + " VNĐ");
+            }
+
+            // 4. Validation trước khi Submit
+            $("#importForm").submit(function(e) {
+                if ($("#bookDetailsBody tr").length === 0) {
+                    $("#detailsValidation").text("Bạn phải thêm ít nhất một quyển sách.");
+                    e.preventDefault(); // Ngăn form submit
+                } else {
+                    $("#detailsValidation").text("");
+                }
+            });
+        });
+    </script>
+}
