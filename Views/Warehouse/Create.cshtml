@@ -74,7 +74,7 @@
             </div>
         </div>
 
-        <div class="mt-4">
+        <div class="mt-3">
             <button type="submit" class="btn btn-primary">
                 <i class="bi bi-save"></i> Lưu Phiếu Nhập
             </button>
@@ -98,13 +98,15 @@
                     }
                 }
             </select>
-            
+
         </td>
         <td>
-            <input type="number" name="Details[__INDEX__].Quantity" class="form-control quantity-input" value="1" min="1" required />
+            <input type="number" name="Details[__INDEX__].Quantity" class="form-control quantity-input" value="1"
+                min="1" required />
         </td>
         <td>
-            <input type="number" name="Details[__INDEX__].CostPrice" class="form-control cost-input" value="0" min="0" step="1000" required />
+            <input type="number" name="Details[__INDEX__].CostPrice" class="form-control cost-input" value="0" min="0"
+                step="1000" required />
         </td>
         <td>
             <strong class="subtotal">0 VNĐ</strong>
@@ -169,7 +171,7 @@
             }
 
             // 4. Validation trước khi Submit
-            $("#importForm").submit(function(e) {
+            $("#importForm").submit(function (e) {
                 if ($("#bookDetailsBody tr").length === 0) {
                     $("#detailsValidation").text("Bạn phải thêm ít nhất một quyển sách.");
                     e.preventDefault(); // Ngăn form submit
