@@ -1,0 +1,148 @@
+﻿@model BookstoreManagement.ViewModels.Warehouse.WarehouseDetailViewModel
+
+@{
+    ViewData["Title"] = Model.PageTitle;
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-3">
+        <div class="col-12">
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Quay lại danh sách
+            </a>
+        </div>
+    </div>
+
+    @if (Model.TicketType == "Import" && Model.ImportTicket != null)
+    {
+        var ticket = Model.ImportTicket;
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Thông tin Phiếu Nhập: @ticket.DocumentNumber</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">Nhà cung cấp:</dt>
+                    <dd class="col-sm-9">@ticket.Supplier.Name</dd>
+
+                    <dt class="col-sm-3">Ngày nhập:</dt>
+                    <dd class="col-sm-9">@ticket.Date?.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                    <dt class="col-sm-3">Người tạo:</dt>
+                    <dd class="col-sm-9">@ticket.User.FullName</dd>
+
+                    <dt class="col-sm-3">Tổng số lượng:</dt>
+                    <dd class="col-sm-9">@ticket.TotalQuantity</dd>
+
+                    <dt class="col-sm-3">Tổng chi phí:</dt>
+                    <dd class="col-sm-9">@ticket.TotalCost?.ToString("N0") ₫</dd>
+
+                    <dt class="col-sm-3">Trạng thái:</dt>
+                    <dd class="col-sm-9"><span class="badge bg-secondary">@ticket.Status</span></dd>
+
+                    <dt class="col-sm-3">Ghi chú:</dt>
+                    <dd class="col-sm-9">@ticket.Note</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5>Chi tiết hàng hóa</h5>
+            </div>
+            <div class="card-body table-responsive">
+                <table class="table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Sách</th>
+                            <th class="text-end">Số lượng</th>
+                            <th class="text-end">Giá nhập (VNĐ)</th>
+                            <th class="text-end">Thành tiền (VNĐ)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in ticket.ImportDetails)
+                        {
+                            <tr>
+                                <td>@item.Book.Title</td>
+                                <td class="text-end">@item.Quantity</td>
+                                <td class="text-end">@item.CostPrice.ToString("N0")</td>
+                                <td class="text-end">@item.Subtotal?.ToString("N0")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else if (Model.TicketType == "Export" && Model.ExportTicket != null)
+    {
+        var ticket = Model.ExportTicket;
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Thông tin Phiếu Xuất: @ticket.DocumentNumber</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">Lý do xuất:</dt>
+                    <dd class="col-sm-9">@ticket.Reason</dd>
+
+                    <dt class="col-sm-3">Đơn hàng liên quan:</dt>
+                    <dd class="col-sm-9">@ticket.Reference?.OrderId</dd>
+
+                    <dt class="col-sm-3">Ngày xuất:</dt>
+                    <dd class="col-sm-9">@ticket.Date?.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                    <dt class="col-sm-3">Người tạo:</dt>
+                    <dd class="col-sm-9">@ticket.User.FullName</dd>
+
+                    <dt class="col-sm-3">Tổng số lượng:</dt>
+                    <dd class="col-sm-9">@ticket.TotalQuantity</dd>
+
+                    <dt class="col-sm-3">Trạng thái:</dt>
+                    <dd class="col-sm-9"><span class="badge bg-secondary">@ticket.Status</span></dd>
+
+                    <dt class="col-sm-3">Ghi chú:</dt>
+                    <dd class="col-sm-9">@ticket.Note</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5>Chi tiết hàng hóa</h5>
+            </div>
+            <div class="card-body table-responsive">
+                <table class="table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Sách</th>
+                            <th class="text-end">Số lượng</th>
+                            <th class="text-end">Giá bán (VNĐ)</th>
+                            <th class="text-end">Thành tiền (VNĐ)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in ticket.ExportDetails)
+                        {
+                            <tr>
+                                <td>@item.Book.Title</td>
+                                <td class="text-end">@item.Quantity</td>
+                                <td class="text-end">@item.UnitPrice.ToString("N0")</td>
+                                <td class="text-end">@item.Subtotal?.ToString("N0")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> Không tìm thấy thông tin phiếu.
+        </div>
+    }
+</div>
