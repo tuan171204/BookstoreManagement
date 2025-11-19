@@ -7,7 +7,7 @@ namespace BookstoreManagement.Controllers
     {
         [HttpGet]
         [Authorize]
-        public IActionResult Index()
+        public IActionResult List()
         {
             return View();
         }

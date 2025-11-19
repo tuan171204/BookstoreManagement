@@ -39,7 +39,11 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-white @(ViewContext.RouteData.Values["controller"]?.ToString() == "Sales" ? "active" : "")"
-                            asp-area="" asp-controller="Sales" asp-action="Index">Bán hàng</a>
+                            asp-area="" asp-controller="Sales" asp-action="List">Bán hàng</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white @(ViewContext.RouteData.Values["controller"]?.ToString() == "Order" ? "active" : "")"
+                            asp-area="" asp-controller="Order" asp-action="Index">Hóa đơn</a>
                     </li>
 
                     <li class="nav-item">

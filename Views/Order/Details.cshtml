@@ -1,0 +1,115 @@
+@model BookstoreManagement.Models.Order
+
+@{
+    ViewData["Title"] = "Chi tiết Hóa đơn #" + Model.OrderId;
+}
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+        <h1>Chi tiết Hóa đơn #@Model.OrderId</h1>
+        <div>
+            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+            <button onclick="window.print()" class="btn btn-primary"><i class="fas fa-print"></i> In Hóa Đơn</button>
+        </div>
+    </div>
+
+    <div class="card mb-4" id="invoice-area">
+        <div class="card-header">
+            Thông tin đơn hàng
+            <span class="float-end">Ngày: <strong>@Model.OrderDate?.ToString("dd/MM/yyyy HH:mm")</strong></span>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-sm-6">
+                    <h6 class="mb-3">Từ:</h6>
+                    <div><strong>Bookstore Management</strong></div>
+                    <div>123 Đường ABC, Quận 1, TP.HCM</div>
+                    <div>Email: admin@bookstore.com</div>
+                    <div>Phone: +84 123 456 789</div>
+                </div>
+                <div class="col-sm-6">
+                    <h6 class="mb-3">Đến (Khách hàng):</h6>
+                    <div><strong>@Model.Customer.FullName</strong></div>
+                    <div>SĐT: @Model.Customer.Phone</div>
+                    <div>Địa chỉ: @(Model.Customer.Address ?? "---")</div>
+                    <div>Người bán: @Model.User.FullName</div>
+                </div>
+            </div>
+
+            <div class="table-responsive-sm">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th class="center">#</th>
+                            <th>Tên Sách</th>
+                            <th class="text-center">SL</th>
+                            <th class="text-end">Đơn giá</th>
+                            <th class="text-end">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int i = 1; }
+                        @foreach (var detail in Model.OrderDetails)
+                        {
+                            <tr>
+                                <td class="center">@i</td>
+                                <td class="strong">@detail.Book.Title</td>
+                                <td class="text-center">@detail.Quantity</td>
+                                <td class="text-end">@detail.UnitPrice.ToString("N0") đ</td>
+                                <td class="text-end">@detail.Subtotal.ToString("N0") đ</td>
+                            </tr>
+                            i++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-4 col-sm-5 ms-auto">
+                    <table class="table table-clear">
+                        <tbody>
+                            <tr>
+                                <td class="left"><strong>Tổng cộng</strong></td>
+                                <td class="text-end">@Model.TotalAmount.ToString("N0") đ</td>
+                            </tr>
+                            <tr>
+                                <td class="left"><strong>Giảm giá</strong></td>
+                                <td class="text-end">-@(Model.DiscountAmount?.ToString("N0") ?? "0") đ</td>
+                            </tr>
+                            <tr>
+                                <td class="left"><strong>Thành tiền</strong></td>
+                                <td class="text-end"><strong class="text-primary" style="font-size: 1.2em;">@Model.FinalAmount.ToString("N0") đ</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="left"><em>Phương thức TT</em></td>
+                                <td class="text-end">@Model.PaymentMethod?.Value</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        @@media print {
+            body * {
+                visibility: hidden;
+            }
+            #invoice-area, #invoice-area * {
+                visibility: visible;
+            }
+            #invoice-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .btn, .breadcrumb {
+                display: none !important;
+            }
+        }
+    </style>
+}
