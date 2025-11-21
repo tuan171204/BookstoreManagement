@@ -1,0 +1,53 @@
+@model BookstoreManagement.Models.Supplier
+
+@{
+    ViewData["Title"] = "Thêm Nhà cung cấp mới";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Thêm Nhà cung cấp</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Supplier" asp-action="Index">Danh sách Nhà cung cấp</a></li>
+        <li class="breadcrumb-item active">Thêm mới</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-plus-circle me-1"></i>
+            Thông tin Nhà cung cấp mới
+        </div>
+        <div class="card-body">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-floating mb-3">
+                            <input asp-for="Name" class="form-control" placeholder="Tên Nhà cung cấp" />
+                            <label asp-for="Name">Tên Nhà cung cấp</label>
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="ContactInfo" class="form-control" placeholder="Thông tin liên hệ" />
+                            <label asp-for="ContactInfo">Thông tin liên hệ (SĐT, Email, v.v.)</label>
+                            <span asp-validation-for="ContactInfo" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Address" class="form-control" placeholder="Địa chỉ" />
+                            <label asp-for="Address">Địa chỉ</label>
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mt-4 mb-0">
+                            <input type="submit" value="Tạo mới" class="btn btn-primary" />
+                            <a asp-action="Index" class="btn btn-secondary ms-2">Hủy</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
