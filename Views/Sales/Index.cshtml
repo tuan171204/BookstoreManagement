@@ -1,7 +1,329 @@
 @{
-    Layout = "_Layout";
-    ViewData["Title"] = "Bán hàng";
+    ViewData["Title"] = "Bán Hàng (POS)";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>@ViewData["Title"]</h2>
-<p>Đây là trang bán hàng.</p>
+<div class="container-fluid px-4 mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body p-3">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+                        <input type="text" id="txtSearchBook" class="form-control border-start-0"
+                            placeholder="Gõ tên sách để tìm kiếm..." autocomplete="off">
+                    </div>
+                    <div id="searchResult" class="list-group position-absolute w-100"
+                        style="z-index: 1000; display:none; top: 100%;"></div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm" style="min-height: 500px;">
+                <div class="card-header bg-white fw-bold">
+                    <i class="fas fa-shopping-cart"></i> Danh sách sản phẩm
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 45%">Tên Sách</th>
+                                <th style="width: 25%" class="text-center">Số lượng</th>
+                                <th style="width: 20%" class="text-end">Thành tiền</th>
+                                <th style="width: 10%"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cartBody">
+                        </tbody>
+                    </table>
+
+                    <div id="emptyCartMessage" class="text-center py-5 text-muted">
+                        <i class="fas fa-box-open fa-3x mb-3"></i>
+                        <p>Chưa có sản phẩm nào trong giỏ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-white fw-bold">Khách hàng</div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <input type="text" id="txtCustomerPhone" class="form-control"
+                            placeholder="Số điện thoại khách (Enter để tìm)...">
+                    </div>
+                    <div class="mb-0">
+                        <input type="text" id="txtCustomerName" class="form-control"
+                            placeholder="Tên khách hàng (Tùy chọn)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-white fw-bold">Khuyến mãi</div>
+                <div class="card-body">
+                    <select class="form-select" id="ddlPromotion">
+                        <option value="0" data-id="0">-- Không áp dụng --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-primary">
+                <div class="card-header bg-primary text-white fw-bold text-center">THANH TOÁN</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tạm tính:</span>
+                        <span class="fw-bold" id="lblSubTotal">0 đ</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 text-danger">
+                        <span>Giảm giá:</span>
+                        <span class="fw-bold" id="lblDiscount">-0 đ</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-3">
+                        <h5 class="text-primary fw-bold">TỔNG CỘNG:</h5>
+                        <h4 class="text-primary fw-bold" id="lblFinalTotal">0 đ</h4>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="small text-muted">Hình thức:</label>
+                        <select class="form-select form-select-sm" id="ddlPaymentMethod"></select>
+                    </div>
+
+                    <button id="btnPay" class="btn btn-success w-100 py-3 fw-bold text-uppercase fs-5">
+                        <i class="fas fa-check-circle"></i> Hoàn tất đơn hàng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var cart = [];
+
+        $(document).ready(function () {
+            // 1. Load danh sách khuyến mãi ngay khi vào trang
+            loadPromotions();
+
+            // 1.1 Load danh sách phương thức thanh toán
+            loadPaymentMethods();
+
+            // 2. Xử lý tìm kiếm sách
+            $('#txtSearchBook').on('keyup', function () {
+                var keyword = $(this).val();
+                var resultBox = $('#searchResult');
+
+                if (keyword.length < 2) {
+                    resultBox.hide();
+                    return;
+                }
+
+                // Gọi API SearchBooks trong Controller
+                $.ajax({
+                    url: '/Sales/SearchBooks',
+                    type: 'GET',
+                    data: { term: keyword },
+                    success: function (data) {
+                        resultBox.empty();
+                        if (data.length > 0) {
+                            data.forEach(book => {
+                                resultBox.append(`
+                                                                <a href="javascript:void(0)" class="list-group-item list-group-item-action" 
+                                                                   onclick="addToCart(${book.id}, '${book.title}', ${book.price}, '${book.isbn}', ${book.stock})">
+                                                                    <div class="d-flex w-100 justify-content-between">
+                                                                        <h6 class="mb-1 fw-bold">${book.title}</h6>
+                                                                        <span class="text-danger fw-bold">${book.price.toLocaleString('vi-VN')} đ</span>
+                                                                    </div>
+                                                                    <small class="text-muted">Tồn kho: ${book.stock} | ISBN: ${book.isbn}</small>
+                                                                </a>
+                                                            `);
+                            });
+                            resultBox.show();
+                        } else {
+                            resultBox.hide();
+                        }
+                    }
+                });
+            });
+
+            // Ẩn gợi ý khi click ra ngoài
+            $(document).click(function (e) {
+                if (!$(e.target).closest('#txtSearchBook').length) {
+                    $('#searchResult').hide();
+                }
+            });
+
+            // 3. Xử lý khi chọn khuyến mãi -> Tính lại tiền
+            $('#ddlPromotion').change(function () {
+                renderCart();
+            });
+
+            // 4. SỰ KIỆN NÚT THANH TOÁN (QUAN TRỌNG)
+            $('#btnPay').click(function () {
+                if (cart.length === 0) {
+                    alert('Giỏ hàng đang trống!');
+                    return;
+                }
+
+                if (!confirm('Xác nhận thanh toán đơn hàng này?')) return;
+
+                // Tạo cục dữ liệu JSON gửi lên Server
+                var payload = {
+                    CustomerPhone: $('#txtCustomerPhone').val(),
+                    CustomerName: $('#txtCustomerName').val(),
+                    PromotionId: parseInt($('#ddlPromotion option:selected').attr('data-id')) || 0,
+                    PaymentMethod: $('#ddlPaymentMethod').val(),
+                    CartItems: cart.map(x => ({
+                        BookId: x.id,
+                        Title: x.title,
+                        Quantity: x.quantity
+                    }))
+                };
+                console.log("Payload: " + payload)
+
+                // Gửi lên SalesController -> Checkout
+                $.ajax({
+                    url: '/Sales/Checkout',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function (res) {
+                        if (res.success) {
+                            alert('✅ ' + res.message);
+                            location.reload(); // F5 lại trang để bán đơn mới
+                        } else {
+                            alert('❌ Lỗi: ' + res.message);
+                        }
+                    },
+                    error: function (err) {
+                        alert('Lỗi kết nối Server!');
+                        console.log(err);
+                    }
+                });
+            });
+        });
+
+        // --- CÁC HÀM HỖ TRỢ ---
+
+        function loadPromotions() {
+            $.get('/Sales/GetActivePromotions', function (data) {
+                var ddl = $('#ddlPromotion');
+                data.forEach(p => {
+                    ddl.append(`<option value="${p.discount}" data-id="${p.id}">${p.name} (-${p.discount}%)</option>`);
+                });
+            });
+        }
+
+        function loadPaymentMethods() {
+            $.get('/Sales/GetPaymentMethods', function (data) {
+                var ddl = $('#ddlPaymentMethod');
+                ddl.empty();
+
+                data.forEach(pm => {
+                    // Giá trị (value) của option là ID (int CodeId),
+                    // sẽ được gửi lên controller dưới dạng string.
+                    ddl.append(`<option value="${pm.id}">${pm.name}</option>`);
+                });
+
+                // Chọn mục đầu tiên làm mặc định
+                if (data.length > 0) {
+                    ddl.val(data[0].id);
+                }
+            });
+        }
+
+        function addToCart(id, title, price, isbn, maxStock) {
+            $('#searchResult').hide();
+            $('#txtSearchBook').val('').focus();
+
+            var existingItem = cart.find(x => x.id === id);
+            if (existingItem) {
+                if (existingItem.quantity < maxStock) {
+                    existingItem.quantity++;
+                } else {
+                    alert('Đã đạt giới hạn tồn kho!');
+                }
+            } else {
+                cart.push({ id: id, title: title, price: price, isbn: isbn, quantity: 1, maxStock: maxStock });
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            var html = '';
+            var subTotal = 0;
+
+            if (cart.length === 0) {
+                $('#cartBody').html('');
+                $('#emptyCartMessage').show();
+                $('#lblSubTotal').text('0 đ');
+                $('#lblDiscount').text('-0 đ');
+                $('#lblFinalTotal').text('0 đ');
+                return;
+            }
+
+            $('#emptyCartMessage').hide();
+
+            cart.forEach((item, index) => {
+                subTotal += item.price * item.quantity;
+                html += `
+                                                <tr>
+                                                    <td>
+                                                        <div class="fw-bold text-truncate" style="max-width: 200px;">${item.title}</div>
+                                                        <small class="text-muted">${item.price.toLocaleString('vi-VN')} đ</small>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <div class="input-group input-group-sm" style="width: 100px; margin: auto;">
+                                                            <button class="btn btn-outline-secondary" onclick="updateQty(${index}, -1)">-</button>
+                                                            <input type="text" class="form-control text-center px-1" value="${item.quantity}" readonly>
+                                                            <button class="btn btn-outline-secondary" onclick="updateQty(${index}, 1)">+</button>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-end fw-bold text-primary">
+                                                        ${(item.price * item.quantity).toLocaleString('vi-VN')} đ
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <button class="btn btn-link text-danger p-0" onclick="removeItem(${index})">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            `;
+            });
+
+            $('#cartBody').html(html);
+
+            // Tính toán tiền
+            var discountPercent = parseFloat($('#ddlPromotion').val()) || 0;
+            var discountAmount = subTotal * (discountPercent / 100);
+            var finalTotal = subTotal - discountAmount;
+
+            $('#lblSubTotal').text(subTotal.toLocaleString('vi-VN') + ' đ');
+            $('#lblDiscount').text('-' + discountAmount.toLocaleString('vi-VN') + ' đ');
+            $('#lblFinalTotal').text(finalTotal.toLocaleString('vi-VN') + ' đ');
+        }
+
+        function updateQty(index, delta) {
+            var item = cart[index];
+            var newQty = item.quantity + delta;
+
+            if (newQty > item.maxStock) {
+                alert('Kho chỉ còn ' + item.maxStock + ' cuốn!');
+                return;
+            }
+            if (newQty <= 0) {
+                removeItem(index);
+            } else {
+                item.quantity = newQty;
+                renderCart();
+            }
+        }
+
+        function removeItem(index) {
+            cart.splice(index, 1);
+            renderCart();
+        }
+    </script>
+}
