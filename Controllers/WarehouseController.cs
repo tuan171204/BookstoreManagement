@@ -240,6 +240,106 @@ public class WarehouseController : Controller
         return View(viewModel);
     }
 
+    // === 1. HIỂN THỊ FORM TẠO PHIẾU XUẤT (GET) ===
+    [HttpGet]
+    public IActionResult CreateExport()
+    {
+        var viewModel = new ExportTicketCreateViewModel
+        {
+            // Load sách còn tồn kho > 0 để hiển thị
+            Books = new SelectList(_context.Books.Where(b => b.IsDeleted != true && b.StockQuantity > 0).ToList(), "BookId", "Title")
+        };
+        return View(viewModel);
+    }
+
+    // === 2. XỬ LÝ FORM (POST) ===
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateExport(ExportTicketCreateViewModel viewModel)
+    {
+        if (viewModel.Details == null || !viewModel.Details.Any())
+        {
+            ModelState.AddModelError("Details", "Bạn phải chọn ít nhất một quyển sách.");
+        }
+
+        if (ModelState.IsValid)
+        {
+            // Lấy User ID
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // A. Tạo Phiếu Xuất (Master)
+                var exportTicket = new ExportTicket
+                {
+                    UserId = userId ?? "1",
+                    Date = DateTime.Now,
+                    Status = "Completed",
+                    Reason = viewModel.Reason,
+                    Note = viewModel.Note,
+                    DocumentNumber = $"PX{DateTimeOffset.Now.ToUnixTimeSeconds()}", // Mã: PX...
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+
+                // B. Xử lý chi tiết và Trừ kho
+                int totalQty = 0;
+
+                foreach (var item in viewModel.Details)
+                {
+                    var book = await _context.Books.FindAsync(item.BookId);
+
+                    // 1. Kiểm tra sách tồn tại
+                    if (book == null)
+                    {
+                        throw new Exception($"Sách ID {item.BookId} không tồn tại.");
+                    }
+
+                    // 2. KIỂM TRA TỒN KHO (Quan trọng!)
+                    if ((book.StockQuantity ?? 0) < item.Quantity)
+                    {
+                        throw new Exception($"Sách '{book.Title}' không đủ số lượng để xuất (Tồn: {book.StockQuantity}).");
+                    }
+
+                    // 3. Trừ kho
+                    book.StockQuantity -= item.Quantity;
+                    book.UpdatedAt = DateTime.Now;
+
+                    // 4. Thêm chi tiết
+                    exportTicket.ExportDetails.Add(new ExportDetail
+                    {
+                        BookId = item.BookId,
+                        Quantity = item.Quantity,
+                        UnitPrice = book.Price, // Lấy giá hiện tại của sách
+                        Subtotal = book.Price * item.Quantity
+                    });
+
+                    totalQty += item.Quantity;
+                }
+
+                exportTicket.TotalQuantity = totalQty;
+
+                // C. Lưu tất cả
+                _context.ExportTickets.Add(exportTicket);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["SuccessMessage"] = "Tạo phiếu xuất kho thành công!";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                ModelState.AddModelError("", "Lỗi: " + ex.Message);
+            }
+        }
+
+        // Nếu lỗi, load lại dropdown
+        viewModel.Books = new SelectList(await _context.Books.Where(b => b.IsDeleted != true).ToListAsync(), "BookId", "Title");
+        return View(viewModel);
+    }
+
     // Hàm private để tránh lặp code tải dropdown
     private async Task LoadDropdownsForCreateView(ImportTicketCreateViewModel viewModel)
     {
