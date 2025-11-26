@@ -20,7 +20,7 @@ builder.Services.AddIdentity<AppUser, AppRole>()
 	.AddDefaultTokenProviders();
 
 builder.Services.AddTransient<IEmailSender, EmailSender>();
-
+builder.Services.AddScoped<ReportService>();
 
 // set biến môi trường ASPNETCORE_ENVIRONMENT=Development/Production trong Properties/launchSettings.json
 if (builder.Environment.IsDevelopment())

@@ -1,7 +1,256 @@
+@* Views/Report/Index.cshtml *@
 @{
-    Layout = "_Layout";
-    ViewData["Title"] = "Báo cáo & Thống kê";
+    ViewData["Title"] = "Thống kê & Báo cáo";
 }
 
-<h2>@ViewData["Title"]</h2>
-<p>Đây là trang báo cáo thống kê.</p>
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="bi bi-graph-up-arrow"></i> Thống kê & Báo cáo</h2>
+                <div>
+                    <button onclick="location.reload()" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise"></i> Làm mới dữ liệu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- 3 Card tổng quan -->
+    <div class="row mb-4">
+        <!-- Hôm nay -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Doanh thu hôm nay
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @(ViewBag.TodaySummary != null ? ((dynamic)ViewBag.TodaySummary).DoanhThu.ToString("#,##0") : "0") ₫
+                            </div>
+                            <small class="text-muted">@(ViewBag.TodaySummary != null ? ((dynamic)ViewBag.TodaySummary).SoDonHang : 0) đơn hàng</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar-day fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tháng này -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Doanh thu tháng @DateTime.Now.ToString("MM/yyyy")
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @(ViewBag.MonthRevenue != null ? ((decimal)ViewBag.MonthRevenue).ToString("#,##0") : "0") ₫
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar-month fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng đơn hàng tháng này -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Tổng đơn hàng tháng này
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                               @(ViewBag.MonthSummary is null ? 0 : ((dynamic)ViewBag.MonthSummary).SoDonHang) đơn
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-cart-check fa-2x text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BIỂU ĐỒ DOANH THU (PHẢI CÓ ĐỂ MÀU HEADER BẢNG DƯỚI KHÔNG BỊ MẤT) -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-primary text-white d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold">
+                <i class="bi bi-bar-chart-line"></i> DOANH THU THEO KHOẢNG THỜI GIAN
+            </h6>
+            <div>
+                <select id="groupBy" class="form-select form-select-sm">
+                    <option value="day">Theo ngày (30 ngày gần nhất)</option>
+                    <option value="month" selected>Theo tháng (12 tháng gần nhất)</option>
+                    <option value="year">Theo năm</option>
+                </select>
+            </div>
+        </div>
+        <div class="card-body">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+
+    <!-- BẢNG TOP 10 – ĐÃ FIX MÀU HEADER -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-primary text-white">
+            <h6 class="m-0 font-weight-bold">
+                <i class="bi bi-trophy"></i> TOP 10 SÁCH BÁN CHẠY NHẤT
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="80" class="text-center">Xếp hạng</th>
+                            <th>Tên sách</th>
+                            <th width="120" class="text-center">Số lượng</th>
+                            <th width="180" class="text-end">Doanh thu</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ViewBag.TopBooks != null && ((IEnumerable<dynamic>)ViewBag.TopBooks).Any())
+                        {
+                            var index = 0;
+                            foreach (var item in ViewBag.TopBooks)
+                            {
+                                index++;
+                                <tr>
+                                    <td class="text-center align-middle">
+                                        @if (index <= 3)
+                                        {
+                                            <span class="badge bg-@(index == 1 ? "warning text-dark" : index == 2 ? "secondary" : "danger") fs-6">
+                                                @(index == 1 ? "1st" : index == 2 ? "2nd" : "3rd")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <strong>@index</strong>
+                                        }
+                                    </td>
+                                    <td class="align-middle"><strong>@item.Title</strong></td>
+                                    <td class="text-center align-middle">
+                                        <span class="badge bg-primary fs-6">@item.SoLuong</span>
+                                    </td>
+                                    <td class="text-end align-middle fw-bold text-success">
+                                        @((item.DoanhThu as decimal?)?.ToString("#,##0") ?? "0") ₫
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center py-5">
+                                    <i class="bi bi-inbox" style="font-size: 4rem; color: #ddd;"></i>
+                                    <p class="mt-3 text-muted">Chưa có dữ liệu bán hàng</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        let revenueChart;
+
+        async function loadRevenueChart(groupBy = 'month') {
+            let fromDate = new Date(), toDate = new Date();
+
+            if (groupBy === 'day') fromDate.setDate(toDate.getDate() - 29);
+            else if (groupBy === 'month') fromDate.setMonth(toDate.getMonth() - 11);
+            else fromDate = new Date(toDate.getFullYear() - 9, 0, 1);
+
+            const params = new URLSearchParams({
+                fromDate: fromDate.toISOString().split('T')[0],
+                toDate: toDate.toISOString().split('T')[0],
+                groupBy: groupBy
+            });
+
+            try {
+                const response = await fetch(`/Report/GetRevenueData?${params}`);
+                if (!response.ok) throw new Error('Network error');
+                const data = await response.json();
+
+                const ctx = document.getElementById('revenueChart').getContext('2d');
+                if (revenueChart) revenueChart.destroy();
+
+                revenueChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(x => x.label),
+                        datasets: [{
+                            label: 'Doanh thu (₫)',
+                            data: data.map(x => x.revenue),
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            maxBarThickness: 50
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => 'Doanh thu: ' + new Intl.NumberFormat('vi-VN').format(ctx.parsed.y) + ' ₫'
+                                }
+                            },
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: v => v >= 1000000 ? (v / 1000000) + 'tr' : v >= 1000 ? (v / 1000) + 'k' : v
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRevenueChart('month');
+            document.getElementById('groupBy')?.addEventListener('change', e => loadRevenueChart(e.target.value));
+        });
+    </script>
+
+    <style>
+        #revenueChart { height: 420px !important; }
+    </style>
+}
