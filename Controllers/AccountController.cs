@@ -40,7 +40,7 @@ namespace BookstoreManagement.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken] // Bảo vệ tấn công CSRF
-        public async Task<IActionResult> Login(string email, string password)
+        public async Task<IActionResult> Login(string email, string password, bool rememberMe)
         {
             if (!ModelState.IsValid) // Các validation trong models không hợp lệ
             {
@@ -50,7 +50,7 @@ namespace BookstoreManagement.Controllers
             var result = await _signInManager.PasswordSignInAsync(
                 userName: email,
                 password: password,
-                isPersistent: false, // true = lưu cookie sau khi tắt trình duyệt
+                isPersistent: rememberMe, // true = lưu cookie sau khi tắt trình duyệt
                 lockoutOnFailure: false
             );
 
