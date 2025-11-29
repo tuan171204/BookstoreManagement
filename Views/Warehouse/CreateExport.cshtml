@@ -1,0 +1,109 @@
+﻿@model BookstoreManagement.ViewModels.Warehouse.ExportTicketCreateViewModel
+
+@{
+    ViewData["Title"] = "Tạo Phiếu Xuất Kho";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-box-arrow-up"></i> Tạo Phiếu Xuất Kho (Thủ công)</h2>
+        </div>
+    </div>
+
+    <form asp-action="CreateExport" method="post" id="exportForm">
+        @Html.AntiForgeryToken()
+
+        <div class="card mb-4">
+            <div class="card-header"><h5>Thông tin chung</h5></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Reason" class="form-label">Lý do xuất <span class="text-danger">*</span></label>
+                        <input asp-for="Reason" class="form-control" placeholder="Hủy hàng hỏng, Trả NXB..." />
+                        <span asp-validation-for="Reason" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Note" class="form-label">Ghi chú</label>
+                        <input asp-for="Note" class="form-control" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Danh sách sách xuất</h5>
+                <button type="button" id="addBookRow" class="btn btn-sm btn-danger">
+                    <i class="bi bi-plus-circle"></i> Thêm dòng
+                </button>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Sách</th>
+                            <th style="width: 150px;">Số lượng</th>
+                            <th style="width: 50px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookDetailsBody"></tbody>
+                </table>
+                <div id="detailsValidation" class="text-danger"></div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Lưu Phiếu Xuất</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+        </div>
+    </form>
+</div>
+
+<table style="display: none;">
+    <tr id="bookRowTemplate">
+        <td>
+            <select name="Details[__INDEX__].BookId" class="form-select book-select" required>
+                <option value="">-- Chọn Sách --</option>
+                @if (Model.Books != null)
+                {
+                @foreach (var item in Model.Books)
+                    {
+                <option value="@item.Value">@item.Text</option>
+                    }
+                }
+            </select>
+        </td>
+        <td>
+            <input type="number" name="Details[__INDEX__].Quantity" class="form-control quantity-input" value="1" min="1" required />
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="bi bi-trash"></i></button>
+        </td>
+    </tr>
+</table>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        $(document).ready(function () {
+            let rowIndex = 0;
+
+            $("#addBookRow").click(function () {
+                let template = $("#bookRowTemplate").html().replace(/__INDEX__/g, rowIndex++);
+                $("#bookDetailsBody").append("<tr>" + template + "</tr>");
+            });
+
+            $("#bookDetailsBody").on("click", ".remove-row", function () {
+                $(this).closest("tr").remove();
+            });
+
+            $("#exportForm").submit(function(e) {
+                if ($("#bookDetailsBody tr").length === 0) {
+                    $("#detailsValidation").text("Bạn phải thêm ít nhất một quyển sách.");
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+}

@@ -22,7 +22,7 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label asp-for="SupplierId" class="form-label">Nhà cung cấp</label>
-                        <select asp-for="SupplierId" asp-items="@Model.Suppliers" class="form-select">
+                        <select asp-for="SupplierId" asp-items="@Model.Suppliers" class="form-select" id="SupplierId">
                             <option value="">-- Chọn Nhà cung cấp --</option>
                         </select>
                         <span asp-validation-for="SupplierId" class="text-danger"></span>
@@ -44,7 +44,7 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5>Chi tiết sách nhập</h5>
-                <button type="button" id="addBookRow" class="btn btn-sm btn-success">
+                <button type="button" id="addBookRow" class="btn btn-sm btn-success" disabled>
                     <i class="bi bi-plus-circle"></i> Thêm Sách
                 </button>
             </div>
@@ -88,25 +88,17 @@
 <table style="display: none;">
     <tr id="bookRowTemplate">
         <td>
-            <select name="Details[__INDEX__].BookId">
+            <select name="Details[__INDEX__].BookId" class="form-select book-dropdown" required>
                 <option value="">-- Chọn Sách --</option>
-                @if (Model.Books != null)
-                {
-                    @foreach (var item in Model.Books)
-                    {
-                        <option value="@item.Value">@item.Text</option>
-                    }
-                }
             </select>
-
         </td>
         <td>
             <input type="number" name="Details[__INDEX__].Quantity" class="form-control quantity-input" value="1"
-                min="1" required />
+                   min="1" required />
         </td>
         <td>
-            <input type="number" name="Details[__INDEX__].CostPrice" class="form-control cost-input" value="0" min="0"
-                step="1000" required />
+            <input type="number" name="Details[__INDEX__].CostPrice" class="form-control cost-input cost-price-input"
+                   value="0" min="0" step="1" required readonly />
         </td>
         <td>
             <strong class="subtotal">0 VNĐ</strong>
@@ -128,41 +120,132 @@
     <script>
         $(document).ready(function () {
             let rowIndex = 0;
+            window.supplierBooksData = [];
 
-            // 1. Thêm một dòng sách mới
+            $('#SupplierId').on('change', function() {
+                var supplierId = $(this).val();
+
+                $("#detailsValidation").text("");
+                $("#addBookRow").prop('disabled', true);
+                window.supplierBooksData = [];
+
+                $("#bookDetailsBody tr").each(function() {
+                    lockRowFields($(this));
+                });
+
+                if (supplierId) {
+                    $.ajax({
+                        url: '@Url.Action("GetBooksBySupplier", "Warehouse")',
+                        type: 'GET',
+                        data: { supplierId: supplierId },
+                        success: function(data) {
+                            if (data && data.length > 0) {
+                                window.supplierBooksData = data;
+
+                                $("#addBookRow").prop('disabled', false);
+
+                                if ($("#bookDetailsBody tr").length === 0) {
+                                    $("#addBookRow").click();
+                                }
+                            } else {
+                                $("#detailsValidation").text("Nhà cung cấp này chưa có sách được định giá. Vui lòng chọn nhà cung cấp khác.");
+                            }
+                        },
+                        error: function() {
+                            alert("Lỗi khi tải danh sách sách từ nhà cung cấp.");
+                        }
+                    });
+                } else {
+                    updateTotalCost();
+                }
+            });
+
+            function lockRowFields(row) {
+                row.find(".book-dropdown").prop('disabled', true);
+                row.find(".quantity-input").prop('readonly', true).addClass('form-control-plaintext');
+                row.find(".cost-input").addClass('form-control-plaintext');
+
+                row.find(".remove-row").prop('disabled', true);
+            }
+
+            function renderBookDropdown(dropdownElement) {
+                var options = '<option value="">-- Chọn Sách --</option>';
+                $.each(window.supplierBooksData, function(index, item) {
+                  
+                    options += '<option value="' + item.bookId + '" data-price="' + item.costPrice + '">' + item.title + '</option>';
+                });
+
+                dropdownElement.html(options);
+            }
+
             $("#addBookRow").click(function () {
-                // Lấy template HTML, thay thế __INDEX__ bằng rowIndex hiện tại
+                if (window.supplierBooksData.length === 0) {
+                    alert("Vui lòng chọn Nhà cung cấp hoặc Nhà cung cấp này chưa có sách.");
+                    return;
+                }
+
                 let template = $("#bookRowTemplate").html();
                 template = template.replace(/__INDEX__/g, rowIndex);
 
-                // Thêm dòng mới vào table body
-                $("#bookDetailsBody").append("<tr>" + template + "</tr>");
-                rowIndex++;
-            });
+                let newRow = $("<tr>" + template + "</tr>");
+                $("#bookDetailsBody").append(newRow);
 
-            // 2. Xóa một dòng
-            $("#bookDetailsBody").on("click", ".remove-row", function () {
-                $(this).closest("tr").remove();
+       
+                renderBookDropdown(newRow.find(".book-dropdown"));
+
+                newRow.find(".book-dropdown").prop('disabled', false);
+                newRow.find(".quantity-input").prop('readonly', false).removeClass('form-control-plaintext');
+                newRow.find(".remove-row").prop('disabled', false);
+
+                rowIndex++;
                 updateTotalCost();
             });
 
-            // 3. Tự động tính Thành tiền và Tổng cộng
+            $("#bookDetailsBody").on("click", ".remove-row", function () {
+           
+                if (!$(this).prop('disabled')) {
+                    $(this).closest("tr").remove();
+                    updateTotalCost();
+                }
+            });
+            $("#bookDetailsBody").on("change", ".book-dropdown", function () {
+                let selectedOption = $(this).find('option:selected');
+                let costPrice = selectedOption.data('price');
+
+                let row = $(this).closest("tr");
+                let costPriceInput = row.find(".cost-input");
+
+                if (costPrice !== undefined) {
+                 
+                    costPriceInput.val(costPrice);
+                  
+                    costPriceInput.removeClass('form-control').addClass('form-control-plaintext');
+                } else {
+                  
+                    costPriceInput.val(0);
+                    costPriceInput.removeClass('form-control').addClass('form-control-plaintext');
+                }
+               
+                costPriceInput.trigger('input');
+            });
+
+
             $("#bookDetailsBody").on("input", ".quantity-input, .cost-input", function () {
                 let row = $(this).closest("tr");
                 let quantity = parseInt(row.find(".quantity-input").val()) || 0;
                 let costPrice = parseFloat(row.find(".cost-input").val()) || 0;
                 let subtotal = quantity * costPrice;
 
-                // Cập nhật thành tiền của dòng
                 row.find(".subtotal").text(subtotal.toLocaleString('vi-VN') + " VNĐ");
 
-                // Cập nhật tổng tiền
+              
                 updateTotalCost();
             });
 
             function updateTotalCost() {
                 let total = 0;
                 $("#bookDetailsBody tr").each(function () {
+                
                     let quantity = parseInt($(this).find(".quantity-input").val()) || 0;
                     let costPrice = parseFloat($(this).find(".cost-input").val()) || 0;
                     total += quantity * costPrice;
@@ -170,13 +253,16 @@
                 $("#totalCost").text(total.toLocaleString('vi-VN') + " VNĐ");
             }
 
-            // 4. Validation trước khi Submit
+
             $("#importForm").submit(function (e) {
                 if ($("#bookDetailsBody tr").length === 0) {
                     $("#detailsValidation").text("Bạn phải thêm ít nhất một quyển sách.");
-                    e.preventDefault(); // Ngăn form submit
+                    e.preventDefault();
                 } else {
                     $("#detailsValidation").text("");
+
+
+                    $("#bookDetailsBody").find(".book-dropdown").prop('disabled', false);
                 }
             });
         });
