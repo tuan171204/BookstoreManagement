@@ -8,7 +8,6 @@
 <div class="container-fluid px-4">
     <h1 class="mt-4">Quản lý Nhà cung cấp</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
         <li class="breadcrumb-item active">Nhà cung cấp</li>
     </ol>
 
@@ -52,10 +51,12 @@
                                 <td>@item.ContactInfo</td>
                                 <td>@item.Address</td>
                                 <td class="text-center">
-                                    <a asp-action="Edit" asp-route-id="@item.SupplierId" class="btn btn-warning btn-sm" title="Sửa">
+                                    <a asp-action="Edit" asp-route-id="@item.SupplierId" class="btn btn-warning btn-sm"
+                                        title="Sửa">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a asp-action="Delete" asp-route-id="@item.SupplierId" class="btn btn-danger btn-sm" title="Xóa" onclick="return confirm('Bạn có chắc muốn xóa nhà cung cấp này?');">
+                                    <a asp-action="Delete" asp-route-id="@item.SupplierId" class="btn btn-danger btn-sm"
+                                        title="Xóa" onclick="return confirm('Bạn có chắc muốn xóa nhà cung cấp này?');">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
                                 </td>

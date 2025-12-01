@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 namespace BookstoreManagement.Controllers
 {
 
-    [Authorize(Roles = "Admin,Manager")] // chỉ role Admin hoặc Manager được truy cập
+    [Authorize(Roles = "Admin,Manager")]
     public class EmployeeController : Controller
     {
         private readonly BookstoreContext _context;
@@ -28,161 +28,9 @@ namespace BookstoreManagement.Controllers
 
 
         [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString)
         {
-            TempData["CurrentFeature"] = "Employee";
-            var employees = await (from u in _context.Users
-                                   join ur in _context.UserRoles on u.Id equals ur.UserId
-                                   join r in _context.Roles on ur.RoleId equals r.Id
-                                   where r.Name != "Admin"
-                                   select u)
-                      .Distinct()
-                      .ToListAsync();
-            ViewBag.Roles = _roleManager.Roles
-                            .Select(r => new SelectListItem
-                            {
-                                Value = r.Name,
-                                Text = r.Name == "Employee" ? "Nhân viên" : r.Name == "Manager" ? "Quản lý" : r.Name
-                            })
-                            .ToList();
-            return View(employees);
-        }
-
-
-        [HttpPost]
-        [Authorize]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(AppUser model, string selectedRole)
-        {
-            // Nếu sai validate thì trả về form hiện tại
-            if (!ModelState.IsValid)
-            {
-                return PartialView("_CreateForm", model);
-            }
-
-            // Mặc định, nếu không chọn role thì gán Employee
-            if (string.IsNullOrEmpty(selectedRole))
-                selectedRole = "Employee";
-
-            // Nếu chưa có role
-            if (!await _roleManager.RoleExistsAsync(selectedRole))
-            {
-                await _roleManager.CreateAsync(new AppRole
-                {
-                    Name = selectedRole,
-                    Description = selectedRole == "Manager" ? "Quản lý" : "Nhân viên",
-                    CreatedAt = DateTime.Now
-                });
-            }
-
-            string userEmail = model.Email ?? string.Empty;
-            var employee = new AppUser
-            {
-                UserName = model.Email,
-                Email = model.Email,
-                FullName = model.FullName,
-                PhoneNumber = model.PhoneNumber,
-                Address = model.Address,
-                IsActive = true,
-                CreatedAt = DateTime.Now
-            };
-
-            var result = await _userManager.CreateAsync(employee, "123");
-            if (!result.Succeeded)
-                return Json(new { success = false, message = string.Join(", ", result.Errors.Select(e => e.Description)) });
-
-            await _userManager.AddToRoleAsync(employee, selectedRole);
-
-            return Json(new { success = true, message = "Thêm nhân viên thành công!" });
-        }
-
-        [HttpPost]
-        [Authorize(Roles = "Admin,Manager")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(string id)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return Json(new { success = false, message = "Không tìm thấy nhân viên!" });
-
-            if (user.UserName == User.Identity?.Name)
-                return Json(new { success = false, message = "Bạn không thể tự xóa chính mình!" });
-
-            user.IsActive = false;
-            var result = await _userManager.UpdateAsync(user);
-            if (!result.Succeeded)
-                return Json(new { success = false, message = "Xóa thất bại: " + string.Join(", ", result.Errors.Select(e => e.Description)) });
-
-            return Json(new { success = true, message = "Xóa nhân viên thành công!" });
-        }
-
-        public async Task<IActionResult> GetUpdateForm(string id)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
-
-            var roles = await _userManager.GetRolesAsync(user);
-
-            var vm = new EmployeeViewModel
-            {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                Address = user.Address,
-                RoleName = roles.FirstOrDefault() ?? "Employee",
-                IsActive = user.IsActive
-            };
-
-            ViewBag.Roles = _roleManager.Roles
-                            .Select(r => new SelectListItem
-                            {
-                                Value = r.Name,
-                                Text = r.Name == "Employee" ? "Nhân viên" : r.Name == "Manager" ? "Quản lý" : r.Name
-                            })
-                            .ToList();
-
-            return PartialView("~/Views/Employee/_UpdateForm.cshtml", vm);
-        }
-
-        [HttpPost]
-        [Authorize(Roles = "Admin,Manager")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Update(EmployeeViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                return PartialView("_UpdateForm", model);
-            }
-
-            var user = await _userManager.FindByIdAsync(model.Id);
-            if (user == null) return NotFound();
-
-            user.FullName = model.FullName;
-            user.Email = model.Email;
-            user.PhoneNumber = model.PhoneNumber;
-            user.Address = model.Address;
-            user.IsActive = model.IsActive;
-            user.UpdatedAt = DateTime.Now;
-
-            await _userManager.UpdateAsync(user);
-
-            // cập nhật vai trò
-            var currentRoles = await _userManager.GetRolesAsync(user);
-            await _userManager.RemoveFromRolesAsync(user, currentRoles);
-            await _userManager.AddToRoleAsync(user, model.RoleName);
-
-            return Json(new { success = true, message = "Cập nhật nhân viên thành công!" });
-        }
-
-        [HttpPost]
-        [Authorize]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> GetList(string inputTxt, string selectedRole, string selectedStatus)
-        {
-
-            TempData["CurrentFeature"] = "Employee";
+            ViewData["CurrentFilter"] = searchString;
 
             var query = from u in _context.Users
                         join ur in _context.UserRoles on u.Id equals ur.UserId
@@ -190,43 +38,179 @@ namespace BookstoreManagement.Controllers
                         where r.Name != "Admin"
                         select u;
 
-            // Lọc theo input
-            if (!string.IsNullOrEmpty(inputTxt))
+            if (!string.IsNullOrEmpty(searchString))
             {
-                query = query.Where(u => (u.Email.Contains("@") && u.Email.Substring(0, u.Email.IndexOf("@")).Contains(inputTxt))
-                                        || u.Email.Contains(inputTxt)
-                                       || u.FullName.Contains(inputTxt)
-                                       || u.Address.Contains(inputTxt));
-            }
-
-            // Lọc theo role
-            if (!string.IsNullOrEmpty(selectedRole))
-            {
-                query = query.Where(u => _context.UserRoles
-                                .Where(ur => ur.UserId == u.Id)
-                                .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
-                                .Any(rn => rn == selectedRole));
-            }
-
-            // Lọc theo trạng thái
-            if (!string.IsNullOrEmpty(selectedStatus))
-            {
-                bool isActive = selectedStatus == "1";
-                query = query.Where(u => u.IsActive == isActive);
+                query = query.Where(u => u.FullName.Contains(searchString) || u.Email.Contains(searchString));
             }
 
             var employees = await query.Distinct().ToListAsync();
+            return View(employees);
+        }
 
-            ViewBag.Roles = _roleManager.Roles
-                            .Select(r => new SelectListItem
-                            {
-                                Value = r.Name,
-                                Text = r.Name == "Employee" ? "Nhân viên" :
-                                       r.Name == "Manager" ? "Quản lý" : r.Name
-                            })
-                            .ToList();
 
-            return View("Index", employees);
+        [HttpGet]
+        public IActionResult Create()
+        {
+            var roles = _roleManager.Roles
+                .Where(r => r.Name != "Admin")
+                .Select(r => new { r.Name })
+                .ToList();
+
+            ViewBag.Roles = new SelectList(_roleManager.Roles.Where(r => r.Name != "Admin"), "Name", "Name");
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(EmployeeViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = new AppUser
+                {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    FullName = model.FullName,
+                    PhoneNumber = model.PhoneNumber,
+                    Address = model.Address,
+                    IsActive = true,
+                    CreatedAt = DateTime.Now
+                };
+
+                var result = await _userManager.CreateAsync(user, "123");
+
+                if (result.Succeeded)
+                {
+                    if (!string.IsNullOrEmpty(model.RoleName))
+                    {
+                        await _userManager.AddToRoleAsync(user, model.RoleName);
+                    }
+                    TempData["SuccessMessage"] = "Thêm nhân viên thành công!";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError("", error.Description);
+                }
+            }
+
+            var rolesList = _roleManager.Roles
+                .Where(r => r.Name != "Admin")
+                .ToList();
+            ViewBag.Roles = new SelectList(rolesList, "Name", "Name");
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(string id)
+        {
+            if (id == null) return NotFound();
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var viewModel = new EmployeeViewModel
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                Address = user.Address,
+                RoleName = roles.FirstOrDefault(),
+                IsActive = user.IsActive
+            };
+
+            ViewBag.Roles = new SelectList(_roleManager.Roles.Where(r => r.Name != "Admin"), "Name", "Name");
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(string id, EmployeeViewModel model)
+        {
+            if (id != model.Id) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.FindByIdAsync(id);
+                if (user == null) return NotFound();
+
+                user.FullName = model.FullName;
+                user.PhoneNumber = model.PhoneNumber;
+                user.Address = model.Address;
+                user.IsActive = model.IsActive;
+                user.UpdatedAt = DateTime.Now;
+
+                // Nếu cho phép sửa Email thì bỏ comment dòng dưới 
+                // user.Email = model.Email; 
+                // user.UserName = model.Email;
+
+                var result = await _userManager.UpdateAsync(user);
+
+                if (result.Succeeded)
+                {
+                    var currentRoles = await _userManager.GetRolesAsync(user);
+                    if (!currentRoles.Contains(model.RoleName))
+                    {
+                        await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                        await _userManager.AddToRoleAsync(user, model.RoleName);
+                    }
+
+                    TempData["SuccessMessage"] = "Cập nhật nhân viên thành công!";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError("", error.Description);
+                }
+            }
+
+            ViewBag.Roles = new SelectList(_roleManager.Roles.Where(r => r.Name != "Admin"), "Name", "Name");
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user != null)
+            {
+                user.IsActive = false;
+                user.UpdatedAt = DateTime.Now;
+                await _userManager.UpdateAsync(user);
+
+                TempData["SuccessMessage"] = "Đã khóa tài khoản nhân viên.";
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(string id)
+        {
+            if (id == null) return NotFound();
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var viewModel = new EmployeeViewModel
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                Address = user.Address,
+                RoleName = roles.FirstOrDefault() ?? "Chưa có",
+                IsActive = user.IsActive
+            };
+
+            return View(viewModel);
         }
 
     }

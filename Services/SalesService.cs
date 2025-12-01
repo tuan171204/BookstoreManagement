@@ -29,7 +29,7 @@ namespace BookstoreManagement.Services
                     {
                         throw new Exception($"Không tìm thấy sách với ID {detail.BookId}.");
                     }
-                    
+
                     // KIỂM TRA TỒN KHO
                     if ((book.StockQuantity ?? 0) < detail.Quantity)
                     {
@@ -51,7 +51,7 @@ namespace BookstoreManagement.Services
                 order.OrderDate = DateTime.Now;
                 order.TotalAmount = calculatedTotal;
                 // (Bạn có thể thêm logic khuyến mãi ở đây nếu muốn)
-                order.FinalAmount = calculatedTotal - (order.DiscountAmount ?? 0); 
+                order.FinalAmount = calculatedTotal - (order.DiscountAmount ?? 0);
                 order.Status = "Completed"; // Đánh dấu hoàn thành
                 order.CreatedAt = DateTime.Now;
                 order.UpdatedAt = DateTime.Now;

@@ -11,6 +11,9 @@ public partial class Book
     [Column(TypeName = "nvarchar(100)")]
     public string Title { get; set; } = null!;
 
+    [Column(TypeName = "nvarchar(255)")]
+    public string? ImageUrl { get; set; }
+
     public int AuthorId { get; set; }
 
     public int PublisherId { get; set; }
@@ -21,7 +24,7 @@ public partial class Book
 
     public int? StockQuantity { get; set; }
 
-[Column(TypeName = "nvarchar(255)")]
+    [Column(TypeName = "nvarchar(255)")]
     public string? Description { get; set; }
 
     public int? LowStockThreshold { get; set; }

@@ -15,11 +15,30 @@ namespace BookstoreManagement.Controllers
             _context = context;
         }
 
+        // ============================================================
         // 1. CÁC ACTION TRẢ VỀ GIAO DIỆN
+        // ============================================================
         [HttpGet]
-        [Authorize]
         public IActionResult Index()
         {
+            ViewBag.Categories = _context.Categories.OrderBy(c => c.Name).ToList();
+
+            var initialBooks = _context.Books
+                .Where(b => b.IsDeleted != true)
+                .OrderByDescending(b => b.CreatedAt)
+                .Take(20)
+                .Select(b => new
+                {
+                    // SỬA: Dùng chữ thường cho đồng bộ JS
+                    id = b.BookId,
+                    title = b.Title,
+                    price = b.Price,
+                    stock = b.StockQuantity ?? 0,
+                    imageUrl = b.ImageUrl,
+                    //isbn = b.SKU 
+                }).ToList();
+
+            ViewBag.InitialBooksJson = System.Text.Json.JsonSerializer.Serialize(initialBooks);
             return View();
         }
 
@@ -35,40 +54,62 @@ namespace BookstoreManagement.Controllers
             return View(orders);
         }
 
-        // 2. API TÌM KIẾM & KHUYẾN MÃI
+        // ============================================================
+        // 2. API TÌM KIẾM & DỮ LIỆU HỖ TRỢ
+        // ============================================================
         [HttpGet]
-        public IActionResult SearchBooks(string term)
+        public IActionResult SearchBooks(string term, int? categoryId)
         {
-            if (string.IsNullOrEmpty(term)) return Json(new List<object>());
+            var query = _context.Books.AsQueryable();
 
-            var books = _context.Books
-                .Where(b => b.Title.Contains(term) && b.IsDeleted != true && b.StockQuantity > 0)
+            if (!string.IsNullOrEmpty(term))
+                query = query.Where(b => b.Title.Contains(term));
+
+            if (categoryId.HasValue && categoryId > 0)
+            {
+                var bookIdsInCat = _context.BookCategories
+                   .Where(bc => bc.CategoryId == categoryId)
+                   .Select(bc => bc.BookId);
+                query = query.Where(b => bookIdsInCat.Contains(b.BookId));
+            }
+
+            var books = query
+                .Where(b => b.IsDeleted != true && b.StockQuantity > 0)
                 .Select(b => new
                 {
                     id = b.BookId,
                     title = b.Title,
                     price = b.Price,
                     stock = b.StockQuantity ?? 0,
-                    isbn = b.BookId.ToString()
+                    //isbn = b.SKU ?? "",
+                    imageUrl = b.ImageUrl
                 })
                 .Take(10).ToList();
 
             return Json(books);
         }
 
+        // --- API LẤY KHUYẾN MÃI (ĐÃ CẬP NHẬT LẤY GIÁ SÁCH TẶNG) ---
         [HttpGet]
         public IActionResult GetActivePromotions()
         {
             var today = DateTime.Now;
             var promos = _context.Promotions
+                .Include(p => p.GiftBook)
                 .Where(p => p.IsActive == true
-                         && (p.StartDate == null || p.StartDate <= today)
-                         && (p.EndDate == null || p.EndDate >= today))
+                        && (p.StartDate == null || p.StartDate <= today)
+                        && (p.EndDate == null || p.EndDate >= today))
                 .Select(p => new
                 {
                     id = p.PromotionId,
                     name = p.Name,
-                    discount = p.DiscountPercent ?? 0
+                    typeId = p.TypeId,
+                    value = p.DiscountPercent ?? 0,
+                    min = p.MinPurchaseAmount ?? 0,
+                    giftName = p.GiftBook != null ? p.GiftBook.Title : "",
+                    giftStock = p.GiftBook != null ? (p.GiftBook.StockQuantity ?? 0) : 0,
+                    // THÊM: Lấy giá bán của sách tặng
+                    giftPrice = p.GiftBook != null ? p.GiftBook.Price : 0
                 }).ToList();
 
             return Json(promos);
@@ -79,32 +120,47 @@ namespace BookstoreManagement.Controllers
         {
             var paymentMethods = _context.Codes
                 .Where(c => c.Entity == "PaymentMethod")
-                .Select(c => new
-                {
-                    id = c.CodeId,
-                    name = c.Value
-                })
-                .ToList();
-
+                .Select(c => new { id = c.CodeId, name = c.Value }).ToList();
             return Json(paymentMethods);
         }
 
-        // 3. API THANH TOÁN (ĐÃ SỬA LỖI Ở ĐÂY)
-        // ... (Giữ nguyên các phần trên)
+        [HttpGet]
+        public IActionResult GetCustomerInfo(string phone)
+        {
+            if (string.IsNullOrEmpty(phone)) return Json(new { success = false });
 
-        // 3. API THANH TOÁN (ĐÃ CẬP NHẬT LOGIC TẠO PHIẾU XUẤT)
+            var customer = _context.Customers
+                .Where(c => c.Phone == phone && c.IsActive == true)
+                .Select(c => new { name = c.FullName, phone = c.Phone })
+                .FirstOrDefault();
+
+            if (customer != null) return Json(new { success = true, data = customer });
+            return Json(new { success = false });
+        }
+
+        [HttpGet]
+        public IActionResult SearchCustomers(string keyword)
+        {
+            var customers = _context.Customers
+                .Where(c => c.Phone.Contains(keyword))
+                .Select(c => c.Phone)
+                .Take(5).ToList();
+            return Json(customers);
+        }
+
+        // ============================================================
+        // 3. API THANH TOÁN (CHECKOUT)
+        // ============================================================
         [HttpPost]
         public async Task<IActionResult> Checkout([FromBody] CheckoutRequest request)
         {
             if (request == null || request.CartItems == null || !request.CartItems.Any())
-            {
                 return Json(new { success = false, message = "Giỏ hàng trống!" });
-            }
 
             using var transaction = _context.Database.BeginTransaction();
             try
             {
-                // A. Xử lý khách hàng (Giữ nguyên)
+                // A. Xử lý khách hàng
                 var customer = _context.Customers.FirstOrDefault(c => c.Phone == request.CustomerPhone);
                 if (customer == null)
                 {
@@ -119,11 +175,10 @@ namespace BookstoreManagement.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                // B. Lấy ID User và Payment Method
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (!int.TryParse(request.PaymentMethod, out int paymentMethodId)) paymentMethodId = 1;
 
-                // --- 1. TẠO HÓA ĐƠN (ORDER) ---
+                // --- TẠO ORDER HEADER ---
                 var order = new Order
                 {
                     CustomerId = customer.CustomerId,
@@ -137,27 +192,24 @@ namespace BookstoreManagement.Controllers
                     FinalAmount = 0
                 };
                 _context.Orders.Add(order);
-
-                // Lưu Order trước để có OrderId dùng cho ExportTicket (nếu cần tham chiếu ID cứng)
                 await _context.SaveChangesAsync();
 
-                // --- 2. TẠO PHIẾU XUẤT KHO (EXPORT TICKET) ---
-                // Đây là phần bổ sung để quản lý quá trình xuất hàng
+                // --- TẠO PHIẾU XUẤT KHO ---
                 var exportTicket = new ExportTicket
                 {
-                    UserId = userId ?? "1",          // Người bán cũng là người xuất kho
-                    ReferenceId = order.OrderId,     // Tham chiếu đến đơn hàng vừa tạo
+                    UserId = userId ?? "1",
+                    ReferenceId = order.OrderId,
                     Date = DateTime.Now,
-                    Status = "Completed",            // Xuất kho thành công ngay lập tức
-                    Reason = "Bán hàng (POS)",       // Lý do xuất
-                    DocumentNumber = $"PX{DateTimeOffset.Now.ToUnixTimeSeconds()}", // Mã phiếu tự sinh: PX...
+                    Status = "Completed",
+                    Reason = "Bán hàng (POS)",
+                    DocumentNumber = $"PX{DateTimeOffset.Now.ToUnixTimeSeconds()}",
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
-                    TotalQuantity = 0 // Sẽ cộng dồn trong vòng lặp
+                    TotalQuantity = 0
                 };
                 _context.ExportTickets.Add(exportTicket);
 
-                // C. Xử lý chi tiết
+                // C. Xử lý chi tiết 
                 decimal subTotal = 0;
                 int totalQty = 0;
 
@@ -166,14 +218,11 @@ namespace BookstoreManagement.Controllers
                     var book = await _context.Books.FindAsync(item.BookId);
                     if (book == null) throw new Exception($"Sách ID {item.BookId} không tồn tại");
 
-                    // --- 3. TRỪ TỒN KHO (QUẢN LÝ KHO) ---
                     if ((book.StockQuantity ?? 0) < item.Quantity)
-                    {
                         throw new Exception($"Sách '{book.Title}' không đủ hàng (Còn: {book.StockQuantity})");
-                    }
-                    book.StockQuantity -= item.Quantity; // Trừ trực tiếp
 
-                    // Thêm chi tiết Hóa đơn (Order Detail)
+                    book.StockQuantity -= item.Quantity;
+
                     var orderDetail = new OrderDetail
                     {
                         OrderId = order.OrderId,
@@ -184,16 +233,14 @@ namespace BookstoreManagement.Controllers
                     };
                     _context.OrderDetails.Add(orderDetail);
 
-                    // Thêm chi tiết Phiếu xuất (Export Detail) - Để lưu lịch sử kho
                     var exportDetail = new ExportDetail
                     {
-                        ExportId = exportTicket.ExportId, // EF Core sẽ tự gán ID sau khi SaveChanges nếu dùng Add vào Collection, nhưng gán thủ công cũng được nếu ExportTicket chưa save
-                        Export = exportTicket, // Gán object để EF tự hiểu
+                        Export = exportTicket,
                         BookId = item.BookId,
                         Quantity = item.Quantity,
                         UnitPrice = book.Price,
                         Subtotal = book.Price * item.Quantity,
-                        Note = "Xuất bán tại quầy"
+                        Note = "Xuất bán"
                     };
                     _context.ExportDetails.Add(exportDetail);
 
@@ -201,29 +248,77 @@ namespace BookstoreManagement.Controllers
                     totalQty += item.Quantity;
                 }
 
-                // D. Cập nhật các con số tổng
-                // Cập nhật Order
-                order.TotalAmount = subTotal;
+                // ========================================================
+                // D. LOGIC KHUYẾN MÃI (ĐÃ SỬA LOGIC HẾT QUÀ -> TRỪ TIỀN)
+                // ========================================================
                 decimal discountVal = 0;
+
                 if (order.PromotionId != null)
                 {
                     var promo = await _context.Promotions.FindAsync(order.PromotionId);
-                    if (promo != null)
+                    var now = DateTime.Now;
+
+                    if (promo != null && promo.IsActive == true &&
+                       (promo.StartDate == null || promo.StartDate <= now) &&
+                       (promo.EndDate == null || promo.EndDate >= now))
                     {
-                        discountVal = subTotal * (promo.DiscountPercent ?? 0m) / 100;
+                        decimal minSpend = promo.MinPurchaseAmount ?? 0;
+                        if (subTotal >= minSpend)
+                        {
+                            switch (promo.TypeId)
+                            {
+                                case 1: // PHẦN TRĂM (%)
+                                    discountVal = subTotal * (promo.DiscountPercent ?? 0m) / 100;
+                                    break;
+
+                                case 2: // CỐ ĐỊNH (TIỀN MẶT)
+                                    discountVal = promo.DiscountPercent ?? 0m;
+                                    break;
+
+                                case 3: // TẶNG SÁCH (GIFT BOOK)
+                                    discountVal = 0;
+                                    if (promo.GiftBookId != null)
+                                    {
+                                        var giftBook = await _context.Books.FindAsync(promo.GiftBookId);
+
+                                        // 1. KIỂM TRA TỒN KHO SÁCH QUÀ
+                                        if (giftBook != null && (giftBook.StockQuantity ?? 0) > 0)
+                                        {
+                                            // CÒN HÀNG: Tặng sách
+                                            giftBook.StockQuantity -= 1;
+
+                                            // Thêm vào đơn giá 0đ
+                                            _context.OrderDetails.Add(new OrderDetail { OrderId = order.OrderId, BookId = giftBook.BookId, Quantity = 1, UnitPrice = 0, Subtotal = 0 });
+
+                                            // Thêm vào phiếu xuất
+                                            _context.ExportDetails.Add(new ExportDetail { Export = exportTicket, BookId = giftBook.BookId, Quantity = 1, UnitPrice = 0, Subtotal = 0, Note = "Hàng tặng" });
+
+                                            totalQty += 1;
+                                        }
+                                        else if (giftBook != null)
+                                        {
+                                            // 2. HẾT HÀNG: Trừ tiền = Giá bán sách đó
+                                            discountVal = giftBook.Price;
+                                        }
+                                    }
+                                    break;
+                            }
+                        }
                     }
                 }
+
+                // Bảo vệ: Không giảm quá tổng tiền
+                if (discountVal > subTotal) discountVal = subTotal;
+
+                order.TotalAmount = subTotal;
                 order.DiscountAmount = discountVal;
                 order.FinalAmount = subTotal - discountVal;
-
-                // Cập nhật ExportTicket
                 exportTicket.TotalQuantity = totalQty;
 
-                // Lưu tất cả thay đổi (Update Order, Insert ExportTicket, Insert Details, Update Books)
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return Json(new { success = true, message = "Thanh toán và xuất kho thành công!", orderId = order.OrderId });
+                return Json(new { success = true, message = "Thanh toán thành công!", orderId = order.OrderId });
             }
             catch (Exception ex)
             {
@@ -232,7 +327,7 @@ namespace BookstoreManagement.Controllers
             }
         }
 
-        // Class DTO
+        // --- Class DTO ---
         public class CheckoutRequest
         {
             public string? CustomerPhone { get; set; }

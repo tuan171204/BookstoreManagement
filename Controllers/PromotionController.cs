@@ -345,7 +345,7 @@ namespace BookstoreManagement.Controllers
 
             promotion.IsActive = !promotion.IsActive;
             promotion.UpdatedAt = DateTime.Now;
-            
+
             await _context.SaveChangesAsync();
 
             var status = promotion.IsActive == true ? "kích hoạt" : "vô hiệu hóa";

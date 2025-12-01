@@ -21,7 +21,7 @@ namespace BookstoreManagement.Services
         public async Task<List<Supplier>> GetAllSuppliersAsync()
         {
             return await _context.Suppliers
-                                 .Where(s => s.IsActive == true) 
+                                 .Where(s => s.IsActive == true)
                                  .OrderBy(s => s.Name)
                                  .ToListAsync();
         }
@@ -39,7 +39,7 @@ namespace BookstoreManagement.Services
             supplier.CreatedAt = DateTime.Now;
             supplier.UpdatedAt = DateTime.Now;
             supplier.IsActive = true; // Đặt là true khi tạo mới
-            
+
             _context.Suppliers.Add(supplier);
             await _context.SaveChangesAsync();
         }
@@ -47,7 +47,7 @@ namespace BookstoreManagement.Services
         // Cập nhật
         public async Task UpdateSupplierAsync(Supplier supplier)
         {
-            var existingSupplier = await _context.Suppliers.FindAsync(supplier.SupplierId); 
+            var existingSupplier = await _context.Suppliers.FindAsync(supplier.SupplierId);
             if (existingSupplier != null)
             {
                 existingSupplier.Name = supplier.Name;
@@ -55,7 +55,7 @@ namespace BookstoreManagement.Services
                 existingSupplier.Address = supplier.Address;
                 existingSupplier.IsActive = supplier.IsActive; // Cho phép cập nhật trạng thái
                 existingSupplier.UpdatedAt = DateTime.Now;
-                
+
                 _context.Suppliers.Update(existingSupplier);
                 await _context.SaveChangesAsync();
             }

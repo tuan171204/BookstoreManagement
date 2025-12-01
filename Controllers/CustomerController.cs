@@ -1,13 +1,12 @@
 using BookstoreManagement.Models;
 using BookstoreManagement.ViewModels.Customer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookstoreManagement.Controllers
 {
+    [Authorize]
     public class CustomerController : Controller
     {
         private readonly BookstoreContext _context;
@@ -18,131 +17,153 @@ namespace BookstoreManagement.Controllers
         }
 
         [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString)
         {
-            TempData["CurrentFeature"] = "Customer";
-            var customers = await _context.Customers.ToListAsync();
+            ViewData["CurrentFilter"] = searchString;
+            TempData["CurrentFeature"] = "Customer"; // Để active menu nếu cần
+
+            var query = _context.Customers.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(c => c.FullName.Contains(searchString)
+                                      || c.Phone.Contains(searchString)
+                                      || c.Email.Contains(searchString));
+            }
+
+            var customers = await query.OrderByDescending(c => c.CreatedAt).ToListAsync();
             return View(customers);
         }
 
-        [HttpPost]
-        [Authorize]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Customer customer)
+        [HttpGet]
+        public async Task<IActionResult> Details(string id)
         {
-            // Validate dữ liệu theo các Attribute trong Customer Model, nếu không hợp lệ thì trả về _CreateForm cùng lõi
-            if (!ModelState.IsValid)
-                return PartialView("_CreateForm", customer);
+            if (id == null) return NotFound();
 
-            customer.CustomerId = Guid.NewGuid().ToString();
-            customer.CreatedAt = DateTime.Now;
-            customer.IsActive = true;
+            var customer = await _context.Customers.FindAsync(id);
+            if (customer == null) return NotFound();
 
-            _context.Customers.Add(customer);
-            await _context.SaveChangesAsync();
+            var viewModel = new CustomerViewModel
+            {
+                CustomerId = customer.CustomerId,
+                FullName = customer.FullName,
+                Phone = customer.Phone,
+                Email = customer.Email,
+                Address = customer.Address,
+                IsActive = customer.IsActive
+            };
 
-            return Json(new { success = true, message = "Thêm khách hàng thành công!" });
+            return View(viewModel);
+        }
+
+        [HttpGet]
+        public IActionResult Create()
+        {
+            return View();
         }
 
         [HttpPost]
-        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CustomerViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var customer = new Customer
+                {
+                    CustomerId = Guid.NewGuid().ToString(),
+                    FullName = model.FullName,
+                    Phone = model.Phone,
+                    Email = model.Email,
+                    Address = model.Address,
+                    IsActive = true,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+
+                _context.Add(customer);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Thêm khách hàng thành công!";
+                return RedirectToAction(nameof(Index));
+            }
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(string id)
+        {
+            if (id == null) return NotFound();
+
+            var customer = await _context.Customers.FindAsync(id);
+            if (customer == null) return NotFound();
+
+            var viewModel = new CustomerViewModel
+            {
+                CustomerId = customer.CustomerId,
+                FullName = customer.FullName,
+                Phone = customer.Phone,
+                Email = customer.Email,
+                Address = customer.Address,
+                IsActive = customer.IsActive
+            };
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(string id, CustomerViewModel model)
+        {
+            if (id != model.CustomerId) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var customer = await _context.Customers.FindAsync(id);
+                    if (customer == null) return NotFound();
+
+                    customer.FullName = model.FullName;
+                    customer.Phone = model.Phone;
+                    customer.Email = model.Email;
+                    customer.Address = model.Address;
+                    customer.IsActive = model.IsActive;
+                    customer.UpdatedAt = DateTime.Now;
+
+                    _context.Update(customer);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!CustomerExists(model.CustomerId)) return NotFound();
+                    else throw;
+                }
+
+                TempData["SuccessMessage"] = "Cập nhật khách hàng thành công!";
+                return RedirectToAction(nameof(Index));
+            }
+            return View(model);
+        }
+
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(string id)
         {
             var customer = await _context.Customers.FindAsync(id);
-            if (customer == null)
-                return Json(new { success = false, message = "Không tìm khách hàng!" });
-
-            try
+            if (customer != null)
             {
                 customer.IsActive = false;
-                _context.Customers.Update(customer);
+                customer.UpdatedAt = DateTime.Now;
+                _context.Update(customer);
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true, message = "Xóa khách hàng thành công!" });
+                TempData["SuccessMessage"] = "Đã xóa (khóa) khách hàng thành công.";
             }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Xóa thất bại: " + ex.Message });
-            }
+            return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> GetUpdateForm(string id)
+        private bool CustomerExists(string id)
         {
-            var customer = await _context.Customers.FindAsync(id);
-            if (customer == null) return NotFound();
-
-            var vm = new CustomerViewModel
-            {
-                CustomerId = customer.CustomerId,
-                FullName = customer.FullName,
-                Email = customer.Email,
-                Phone = customer.Phone,
-                Address = customer.Address,
-                IsActive = customer.IsActive,
-            };
-
-            return PartialView("~/Views/Customer/_UpdateForm.cshtml", vm);
+            return _context.Customers.Any(e => e.CustomerId == id);
         }
-
-        [HttpPost]
-        [Authorize]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Update(CustomerViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                return PartialView("_UpdateForm", model);
-            }
-
-            var customer = await _context.Customers.FindAsync(model.CustomerId);
-            if (customer == null) return NotFound();
-
-            customer.FullName = model.FullName;
-            customer.Email = model.Email;
-            customer.Phone = model.Phone;
-            customer.Address = model.Address;
-            customer.IsActive = model.IsActive;
-            customer.UpdatedAt = DateTime.Now;
-
-            try
-            {
-                _context.Customers.Update(customer);
-                await _context.SaveChangesAsync();
-
-                return Json(new { success = true, message = "Cập nhật khách hàng thành công!" });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Cập nhật thất bại: " + ex.Message });
-            }
-        }
-
-        [HttpPost]
-        [Authorize]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> GetList(string inputTxt)
-        {
-
-            TempData["CurrentFeature"] = "Customer";
-
-            var query = from u in _context.Customers
-                        select u;
-            if (!string.IsNullOrEmpty(inputTxt))
-            {
-                query = query.Where(u => u.FullName.Contains(inputTxt)
-                                    || u.Phone.Contains(inputTxt)
-                                    || (u.Email.Contains("@") && u.Email.Substring(0, u.Email.IndexOf("@")).Contains(inputTxt))
-                                    || u.Email.Contains(inputTxt)
-                                    || u.Address.Contains(inputTxt)
-                );
-
-            }
-
-            var customers = await query.Distinct().ToListAsync();
-            return View("Index", customers);
-        }
-
     }
 }

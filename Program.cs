@@ -132,8 +132,7 @@ using (var scope = app.Services.CreateScope())
 			{
 				new Code { Entity = "PromotionType", Key = 1, Value = "Giảm giá theo phần trăm", CreatedAt = DateTime.Now },
 				new Code { Entity = "PromotionType", Key = 2, Value = "Giảm giá cố định", CreatedAt = DateTime.Now },
-				new Code { Entity = "PromotionType", Key = 3, Value = "Tặng sách", CreatedAt = DateTime.Now },
-				new Code { Entity = "PromotionType", Key = 4, Value = "Mua X tặng Y", CreatedAt = DateTime.Now }
+				new Code { Entity = "PromotionType", Key = 3, Value = "Tặng sách", CreatedAt = DateTime.Now }
 			};
 			context.Codes.AddRange(promotionTypes);
 			await context.SaveChangesAsync();
