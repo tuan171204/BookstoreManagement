@@ -14,9 +14,20 @@
                 <div class="card-body">
                     <div class="row g-3">
                         <!-- Tên sách -->
-                        <div class="col-12">
+                        <div class="col-6">
                             <h5>@Model.Title</h5>
                             <hr />
+                        </div>
+
+                        <div class="col-6">
+                            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                            {
+                                <img src="@Model.ImageUrl" alt="@Model.Title" class="img-fluid rounded shadow-sm" />
+                            }
+                            else
+                            {
+                                <div class="alert alert-secondary text-center">Chưa có hình ảnh</div>
+                            }
                         </div>
 
                         <!-- Thông tin cơ bản -->
@@ -43,7 +54,8 @@
                         <div class="col-md-4">
                             <label class="text-muted">Tồn kho:</label>
                             <p>
-                                <span class="badge @(Model.StockQuantity > Model.LowStockThreshold ? "bg-success" : "bg-danger") fs-6">
+                                <span
+                                    class="badge @(Model.StockQuantity > Model.LowStockThreshold ? "bg-success" : "bg-danger") fs-6">
                                     @Model.StockQuantity
                                 </span>
                                 @if (Model.StockQuantity <= Model.LowStockThreshold)

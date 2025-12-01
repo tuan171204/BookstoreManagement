@@ -1,0 +1,67 @@
+@model BookstoreManagement.ViewModels.Customer.CustomerViewModel
+
+@{
+    ViewData["Title"] = "Thêm khách hàng mới";
+    Layout = "_Layout";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-person-plus-fill"></i> Thêm khách hàng mới</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label asp-for="FullName" class="form-label">Họ tên khách hàng <span
+                                        class="text-danger">*</span></label>
+                                <input asp-for="FullName" class="form-control" placeholder="Nhập họ và tên..." />
+                                <span asp-validation-for="FullName" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Phone" class="form-label">Số điện thoại <span
+                                        class="text-danger">*</span></label>
+                                <input asp-for="Phone" class="form-control" placeholder="09xxxxxxxx" />
+                                <span asp-validation-for="Phone" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label">Email</label>
+                                <input asp-for="Email" class="form-control" placeholder="example@email.com" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Address" class="form-label">Địa chỉ</label>
+                                <textarea asp-for="Address" class="form-control" rows="2"
+                                    placeholder="Số nhà, đường, phường/xã..."></textarea>
+                                <span asp-validation-for="Address" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-2 border-top">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Lưu khách hàng
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

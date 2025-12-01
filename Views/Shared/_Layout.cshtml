@@ -25,20 +25,14 @@
         @if (User.Identity?.IsAuthenticated ?? false)
         {
             <div class="row main-row">
-                @* Sidebar các nút chức năng *@
-                <partial name="_Sidebar" />
-
                 @* Nội dung chức năng *@
-                <div class="content-container col-11">
+                <div class="content-container col-12">
                     <div class="content overflow-auto">
                         @RenderBody()
                     </div>
                 </div>
 
             </div>
-
-            @* Modal thêm *@
-            <partial name="_ModalForm" />
 
             @* Footer *@
             <partial name="_Footer" />

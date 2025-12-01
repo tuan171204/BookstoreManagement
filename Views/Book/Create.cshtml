@@ -12,15 +12,21 @@
                     <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Thêm sách mới</h4>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Create" method="post">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-                        
+
                         <div class="row g-3">
                             <!-- Tên sách -->
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <label asp-for="Title" class="form-label"></label>
                                 <input asp-for="Title" class="form-control" placeholder="Nhập tên sách" />
                                 <span asp-validation-for="Title" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="ImageFile" class="form-label"></label>
+                                <input asp-for="ImageFile" class="form-control" type="file" accept="image/*" />
+                                <span asp-validation-for="ImageFile" class="text-danger"></span>
                             </div>
 
                             <!-- Tác giả -->
@@ -72,7 +78,8 @@
                             <!-- Mô tả -->
                             <div class="col-md-12">
                                 <label asp-for="Description" class="form-label"></label>
-                                <textarea asp-for="Description" class="form-control" rows="4" placeholder="Nhập mô tả sách"></textarea>
+                                <textarea asp-for="Description" class="form-control" rows="4"
+                                    placeholder="Nhập mô tả sách"></textarea>
                                 <span asp-validation-for="Description" class="text-danger"></span>
                             </div>
                         </div>
@@ -93,5 +100,7 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

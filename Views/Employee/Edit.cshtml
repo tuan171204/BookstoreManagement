@@ -1,0 +1,77 @@
+@model BookstoreManagement.ViewModels.Employee.EmployeeViewModel
+
+@{
+    ViewData["Title"] = "Cập nhật nhân viên";
+    Layout = "_Layout";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning">
+                    <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Cập nhật thông tin</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label asp-for="FullName" class="form-label">Họ tên</label>
+                                <input asp-for="FullName" class="form-control" />
+                                <span asp-validation-for="FullName" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label">Email</label>
+                                <input asp-for="Email" class="form-control" readonly
+                                    style="background-color: #e9ecef;" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="PhoneNumber" class="form-label">Số điện thoại</label>
+                                <input asp-for="PhoneNumber" class="form-control" />
+                                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="RoleName" class="form-label">Chức vụ</label>
+                                <select asp-for="RoleName" class="form-select" asp-items="ViewBag.Roles"></select>
+                                <span asp-validation-for="RoleName" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 d-flex align-items-center mt-5">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" asp-for="IsActive">
+                                    <label class="form-check-label" asp-for="IsActive">Kích hoạt tài khoản</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Address" class="form-label">Địa chỉ</label>
+                                <textarea asp-for="Address" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-2 border-top">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-save"></i> Cập nhật
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

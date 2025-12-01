@@ -33,7 +33,7 @@ namespace BookstoreManagement.Controllers
             // Search filter
             if (!string.IsNullOrEmpty(searchString))
             {
-                booksQuery = booksQuery.Where(b => 
+                booksQuery = booksQuery.Where(b =>
                     b.Title.Contains(searchString) ||
                     b.Author.Name.Contains(searchString) ||
                     b.Publisher.Name.Contains(searchString));
@@ -62,6 +62,7 @@ namespace BookstoreManagement.Controllers
                 {
                     BookId = b.BookId,
                     Title = b.Title,
+                    ImageUrl = b.ImageUrl,
                     AuthorName = b.Author.Name,
                     AuthorId = b.AuthorId,
                     PublisherName = b.Publisher.Name,
@@ -111,6 +112,7 @@ namespace BookstoreManagement.Controllers
             {
                 BookId = book.BookId,
                 Title = book.Title,
+                ImageUrl = book.ImageUrl,
                 AuthorName = book.Author.Name,
                 AuthorId = book.AuthorId,
                 PublisherName = book.Publisher.Name,
@@ -161,9 +163,16 @@ namespace BookstoreManagement.Controllers
         {
             if (ModelState.IsValid)
             {
+                string? imagePath = null;
+                if (viewModel.ImageFile != null)
+                {
+                    imagePath = await SaveImage(viewModel.ImageFile);
+                }
+
                 var book = new Book
                 {
                     Title = viewModel.Title,
+                    ImageUrl = imagePath,
                     AuthorId = viewModel.AuthorId,
                     PublisherId = viewModel.PublisherId,
                     PublicationYear = viewModel.PublicationYear,
@@ -177,7 +186,7 @@ namespace BookstoreManagement.Controllers
 
                 _context.Add(book);
                 await _context.SaveChangesAsync();
-                
+
                 TempData["SuccessMessage"] = "Thêm sách thành công!";
                 return RedirectToAction(nameof(Index));
             }
@@ -191,7 +200,7 @@ namespace BookstoreManagement.Controllers
                     Text = a.Name
                 })
                 .ToListAsync();
-            
+
             viewModel.Publishers = await _context.Publishers
                 .OrderBy(p => p.Name)
                 .Select(p => new SelectListItem
@@ -222,6 +231,7 @@ namespace BookstoreManagement.Controllers
             {
                 BookId = book.BookId,
                 Title = book.Title,
+                ImageUrl = book.ImageUrl,
                 AuthorId = book.AuthorId,
                 PublisherId = book.PublisherId,
                 PublicationYear = book.PublicationYear,
@@ -271,6 +281,11 @@ namespace BookstoreManagement.Controllers
                         return NotFound();
                     }
 
+                    if (viewModel.ImageFile != null)
+                    {
+                        book.ImageUrl = await SaveImage(viewModel.ImageFile);
+                    }
+
                     book.Title = viewModel.Title;
                     book.AuthorId = viewModel.AuthorId;
                     book.PublisherId = viewModel.PublisherId;
@@ -283,7 +298,7 @@ namespace BookstoreManagement.Controllers
 
                     _context.Update(book);
                     await _context.SaveChangesAsync();
-                    
+
                     TempData["SuccessMessage"] = "Cập nhật sách thành công!";
                     return RedirectToAction(nameof(Index));
                 }
@@ -309,7 +324,7 @@ namespace BookstoreManagement.Controllers
                     Text = a.Name
                 })
                 .ToListAsync();
-            
+
             viewModel.Publishers = await _context.Publishers
                 .OrderBy(p => p.Name)
                 .Select(p => new SelectListItem
@@ -336,15 +351,36 @@ namespace BookstoreManagement.Controllers
             // Soft delete
             book.IsDeleted = true;
             book.UpdatedAt = DateTime.Now;
-            
+
             await _context.SaveChangesAsync();
-            
+
             return Json(new { success = true, message = "Xóa sách thành công" });
         }
 
         private bool BookExists(int id)
         {
             return _context.Books.Any(e => e.BookId == id);
+        }
+
+        private async Task<string> SaveImage(IFormFile imageFile)
+        {
+            string uniqueFileName = Guid.NewGuid().ToString() + "_" + imageFile.FileName;
+
+            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "books");
+
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+
+            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await imageFile.CopyToAsync(fileStream);
+            }
+
+            return "/images/books/" + uniqueFileName;
         }
     }
 }

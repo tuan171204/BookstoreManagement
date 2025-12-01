@@ -105,6 +105,8 @@ ul.navbar-nav {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 87px);
+  padding: 0px;
+  margin: 0;
 }
 
 .main-row {
@@ -116,7 +118,7 @@ ul.navbar-nav {
 .content-container {
   height: calc(100vh - 150px);
   background-color: #D9D9D9 !important;
-  padding: 15px 0px 30px 15px;
+  padding: 15px 0px 30px 25px;
 }
 
 .content {
@@ -125,7 +127,7 @@ ul.navbar-nav {
   -moz-box-shadow: -6px 11px 23px -4px rgba(0, 0, 0, 0.25);
   background: #fff;
   height: 100%;
-  padding: 20px 30px;
+  padding: 20px 40px;
 
 }
 
@@ -141,11 +143,13 @@ ul.navbar-nav {
   -webkit-box-shadow: -1px -3px 23px 0px rgba(0, 0, 0, 0.25);
   -moz-box-shadow: -1px -3px 23px 0px rgba(0, 0, 0, 0.25);
   position: absolute;
+  margin-left: 2px;
   bottom: 0;
   width: 100%;
   white-space: nowrap;
   line-height: 60px;
   background: #fff;
+  padding: 5px 20px;
 }
 
 

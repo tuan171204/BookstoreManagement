@@ -1,0 +1,84 @@
+@model IEnumerable<BookstoreManagement.Models.AppRole>
+
+@{
+    ViewData["Title"] = "Quản lý chức vụ & Phân quyền";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="content-title m-0">@ViewData["Title"]</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-shield-plus"></i> Thêm chức vụ
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Tên chức vụ</th>
+                    <th>Mô tả</th>
+                    <th>Lương cơ bản</th>
+                    <th class="text-center" style="width: 150px;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <span class="fw-bold text-primary">@item.Name</span>
+                            </td>
+                            <td>@item.Description</td>
+                            <td>@item.Salary.ToString("N0") ₫</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning" title="Sửa">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+
+                                    @if (item.Name != "Admin")
+                                    {
+                                        <button type="button" class="btn btn-danger" title="Xóa"
+                                            onclick="confirmDelete('@item.Id', '@item.Name')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">Chưa có chức vụ nào</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<form id="deleteForm" asp-action="Delete" method="post" style="display:none;">
+    <input type="hidden" name="id" id="deleteId" />
+</form>
+
+@section Scripts {
+    <script>
+        function confirmDelete(id, name) {
+            if (confirm(`Bạn có chắc chắn muốn xóa chức vụ "${name}"? Hành động này không thể hoàn tác!`)) {
+                document.getElementById('deleteId').value = id;
+                document.getElementById('deleteForm').submit();
+            }
+        }
+    </script>
+}
