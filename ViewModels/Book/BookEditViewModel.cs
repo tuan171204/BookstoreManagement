@@ -44,6 +44,15 @@ namespace BookstoreManagement.ViewModels.Book
         [DataType(DataType.MultilineText)]
         public string? Description { get; set; }
 
+        [Display(Name = "Nhà cung cấp")]
+        [Required(ErrorMessage = "Vui lòng chọn nhà cung cấp")]
+        public int SupplierId { get; set; }
+
+        [Display(Name = "Giá nhập")]
+        [Required(ErrorMessage = "Giá nhập là bắt buộc")]
+        [Range(0, double.MaxValue, ErrorMessage = "Giá nhập phải lớn hơn 0")]
+        public decimal DefaultCostPrice { get; set; }
+
         [Range(0, int.MaxValue, ErrorMessage = "Ngưỡng cảnh báo phải lớn hơn hoặc bằng 0")]
         [Display(Name = "Ngưỡng cảnh báo tồn kho thấp")]
         public int? LowStockThreshold { get; set; }
@@ -53,5 +62,7 @@ namespace BookstoreManagement.ViewModels.Book
         // Dropdown lists
         public List<SelectListItem>? Authors { get; set; }
         public List<SelectListItem>? Publishers { get; set; }
+
+        public IEnumerable<SelectListItem>? SupplierList { get; set; }
     }
 }

@@ -161,18 +161,55 @@ namespace BookstoreManagement.Controllers
             try
             {
                 // A. Xử lý khách hàng
-                var customer = _context.Customers.FirstOrDefault(c => c.Phone == request.CustomerPhone);
-                if (customer == null)
+
+                string? customerId = null;
+
+                // TRƯỜNG HỢP 1: Có nhập số điện thoại -> Tìm hoặc Tạo khách hàng cụ thể
+                if (!string.IsNullOrEmpty(request.CustomerPhone))
                 {
-                    customer = new Customer
+                    var customer = _context.Customers.FirstOrDefault(c => c.Phone == request.CustomerPhone);
+                    if (customer == null)
                     {
-                        FullName = string.IsNullOrEmpty(request.CustomerName) ? "Khách lẻ" : request.CustomerName,
-                        Phone = request.CustomerPhone ?? "0000000000",
-                        CreatedAt = DateTime.Now,
-                        IsActive = true
-                    };
-                    _context.Customers.Add(customer);
-                    await _context.SaveChangesAsync();
+                        // Tạo khách hàng mới (Khách lẻ)    
+                        customer = new Customer
+                        {
+                            CustomerId = Guid.NewGuid().ToString(),
+                            FullName = string.IsNullOrEmpty(request.CustomerName) ? "Khách mới" : request.CustomerName,
+                            Phone = request.CustomerPhone,
+                            Email = "guest@bookstore.com", // Email giả định nếu không có
+                            CreatedAt = DateTime.Now,
+                            IsActive = true
+                        };
+                        _context.Customers.Add(customer);
+                        await _context.SaveChangesAsync();
+                    }
+                    customerId = customer.CustomerId; // Gán ID nếu tìm/tạo được
+                }
+
+                // TRƯỜNG HỢP 2: Không nhập SĐT -> Gán cho "Khách lẻ" (Walk-in Customer)
+                else
+                {
+                    // Quy ước: SĐT 0000000000 là Khách lẻ
+                    var guestCustomer = await _context.Customers.FirstOrDefaultAsync(c => c.Phone == "0000000000");
+
+                    if (guestCustomer == null)
+                    {
+                        // Nếu chưa có trong DB thì tạo mới (chỉ chạy 1 lần đầu tiên)
+                        guestCustomer = new Customer
+                        {
+                            CustomerId = Guid.NewGuid().ToString(),
+                            FullName = "Khách lẻ",       // Tên hiển thị
+                            Phone = "0000000000",        // SĐT quy ước
+                            Email = "walkin@store.com",  // Email dummy
+                            Address = "Tại quầy",
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            IsActive = true              // Vẫn phải Active để bán hàng được
+                        };
+                        _context.Customers.Add(guestCustomer);
+                        await _context.SaveChangesAsync();
+                    }
+                    customerId = guestCustomer.CustomerId;
                 }
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -181,7 +218,7 @@ namespace BookstoreManagement.Controllers
                 // --- TẠO ORDER HEADER ---
                 var order = new Order
                 {
-                    CustomerId = customer.CustomerId,
+                    CustomerId = customerId,
                     UserId = userId ?? "1",
                     OrderDate = DateTime.Now,
                     PromotionId = request.PromotionId == 0 ? null : request.PromotionId,

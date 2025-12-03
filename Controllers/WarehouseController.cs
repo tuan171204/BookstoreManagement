@@ -1,6 +1,7 @@
 ﻿using BookstoreManagement.Models;
 using BookstoreManagement.Services;
 using BookstoreManagement.ViewModels.Warehouse;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -110,7 +111,7 @@ public class WarehouseController : Controller
                     .ThenInclude(d => d.Book)
                 .FirstOrDefaultAsync(t => t.ImportId == id);
         }
-        else 
+        else
         {
             viewModel.ExportTicket = await _context.ExportTickets
                 .Include(t => t.Reference)
@@ -140,6 +141,7 @@ public class WarehouseController : Controller
         return View(viewModel);
     }
 
+    [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(ImportTicketCreateViewModel viewModel)
@@ -153,6 +155,11 @@ public class WarehouseController : Controller
         if (ModelState.IsValid)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToAction("Login", "Account");
+            }
 
             var importTicket = new ImportTicket
             {
@@ -181,8 +188,8 @@ public class WarehouseController : Controller
 
             try
             {
-            
-         
+
+
                 await _importService.CreateImportTicketAsync(importTicket);
 
                 TempData["SuccessMessage"] = "Tạo phiếu nhập thành công!";
@@ -190,7 +197,7 @@ public class WarehouseController : Controller
             }
             catch (Exception)
             {
-         
+
                 ModelState.AddModelError("", "Đã xảy ra lỗi khi lưu phiếu nhập. Vui lòng thử lại.");
                 await LoadDropdownsForCreateView(viewModel);
                 return View(viewModel);
@@ -208,21 +215,21 @@ public class WarehouseController : Controller
 
         var supplierBooks = await _context.SupplierBooks
             .Where(sb => sb.SupplierId == supplierId)
-            .Include(sb => sb.Book) 
+            .Include(sb => sb.Book)
             .Select(sb => new
             {
                 BookId = sb.BookId,
                 Title = sb.Book.Title,
-                
+
                 CostPrice = sb.DefaultCostPrice
             })
             .ToListAsync();
 
-       
+
         return Json(supplierBooks);
     }
 
-    
+
     private async Task LoadDropdownsForCreateView(ImportTicketCreateViewModel viewModel)
     {
         viewModel.Suppliers = new SelectList(await _context.Suppliers.ToListAsync(), "SupplierId", "Name", viewModel.SupplierId);
@@ -230,13 +237,14 @@ public class WarehouseController : Controller
         viewModel.Books = new SelectList(await _context.Books.Where(b => b.IsDeleted == false).ToListAsync(), "BookId", "Title");
     }
 
-    
+
+    [Authorize]
     [HttpGet]
     public IActionResult CreateExport()
     {
         var viewModel = new ExportTicketCreateViewModel
         {
-          
+
             Books = new SelectList(_context.Books.Where(b => b.IsDeleted != true && b.StockQuantity > 0).ToList(), "BookId", "Title")
         };
         return View(viewModel);
@@ -258,7 +266,7 @@ public class WarehouseController : Controller
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-              
+
                 var exportTicket = new ExportTicket
                 {
                     UserId = userId ?? "1",
@@ -278,28 +286,28 @@ public class WarehouseController : Controller
                 {
                     var book = await _context.Books.FindAsync(item.BookId);
 
-                 
+
                     if (book == null)
                     {
                         throw new Exception($"Sách ID {item.BookId} không tồn tại.");
                     }
 
-                   
+
                     if ((book.StockQuantity ?? 0) < item.Quantity)
                     {
                         throw new Exception($"Sách '{book.Title}' không đủ số lượng để xuất (Tồn: {book.StockQuantity}).");
                     }
 
-                   
+
                     book.StockQuantity -= item.Quantity;
                     book.UpdatedAt = DateTime.Now;
 
-                   
+
                     exportTicket.ExportDetails.Add(new ExportDetail
                     {
                         BookId = item.BookId,
                         Quantity = item.Quantity,
-                        UnitPrice = book.Price, 
+                        UnitPrice = book.Price,
                         Subtotal = book.Price * item.Quantity
                     });
 

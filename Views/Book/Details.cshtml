@@ -31,12 +31,12 @@
                         </div>
 
                         <!-- Thông tin cơ bản -->
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="text-muted">Tác giả:</label>
                             <p class="fw-bold">@Model.AuthorName</p>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="text-muted">Nhà xuất bản:</label>
                             <p class="fw-bold">@Model.PublisherName</p>
                         </div>
@@ -44,6 +44,16 @@
                         <div class="col-md-4">
                             <label class="text-muted">Năm xuất bản:</label>
                             <p class="fw-bold">@Model.PublicationYear</p>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="text-muted">Giá nhập:</label>
+                            <p class="fw-bold text-warning">@Model.DefaultCostPrice.ToString("N0") ₫</p>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="text-muted">Nhà cung cấp:</label>
+                            <p class="fw-bold">@Model.SupplierName</p>
                         </div>
 
                         <div class="col-md-4">
@@ -65,12 +75,12 @@
                             </p>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="text-muted">Ngưỡng cảnh báo:</label>
                             <p class="fw-bold">@Model.LowStockThreshold</p>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="text-muted">Trạng thái:</label>
                             <p>
                                 <span class="badge @(Model.IsDeleted == true ? "bg-secondary" : "bg-success") fs-6">

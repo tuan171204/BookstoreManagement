@@ -1,0 +1,11 @@
+@{
+    ViewData["Title"] = "Không tìm thấy";
+    Layout = "_Layout"; // Hoặc layout đơn giản hơn
+}
+
+<div class="text-center mt-5">
+    <h1 class="display-4 text-danger">404</h1>
+    <h2 class="text-secondary">@ViewBag.ErrorMessage</h2>
+    <p>Địa chỉ bạn truy cập không tồn tại hoặc đã bị xóa.</p>
+    <a asp-action="Index" asp-controller="Home" class="btn btn-primary mt-3">Quay về Trang chủ</a>
+</div>

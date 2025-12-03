@@ -35,6 +35,12 @@ namespace BookstoreManagement.ViewModels.Book
         [Display(Name = "Mô tả")]
         public string? Description { get; set; }
 
+        [Display(Name = "Nhà cung cấp")]
+        public string? SupplierName { get; set; }
+
+        [Display(Name = "Giá nhập")]
+        public decimal DefaultCostPrice { get; set; }
+
         [Display(Name = "Ngưỡng cảnh báo")]
         public int? LowStockThreshold { get; set; }
 

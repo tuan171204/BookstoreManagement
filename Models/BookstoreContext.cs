@@ -499,7 +499,7 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__RolePermi__Permi__02FC7413");
 
-            entity.HasOne<AppRole>().WithMany()
+            entity.HasOne(d => d.Role).WithMany()
                 .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__RolePermi__RoleI__02084FDA");
@@ -528,20 +528,25 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
 
         modelBuilder.Entity<SupplierBook>(entity =>
         {
-            entity.HasNoKey();
+            entity.HasKey(e => new { e.SupplierId, e.BookId });
 
+            // 2. Cấu hình các cột
             entity.Property(e => e.BookId).HasColumnName("BookID");
+            entity.Property(e => e.SupplierId).HasColumnName("SupplierID");
             entity.Property(e => e.DefaultCostPrice)
                 .HasDefaultValue(0m)
                 .HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.SupplierId).HasColumnName("SupplierID");
 
-            entity.HasOne(d => d.Book).WithMany()
+            // 3. Mối quan hệ với bảng Book
+            entity.HasOne(d => d.Book)
+                .WithMany(p => p.SupplierBooks) // <--- SỬA TẠI ĐÂY: Trỏ đúng vào collection SupplierBooks trong Book.cs
                 .HasForeignKey(d => d.BookId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__SupplierB__BookI__1BC821DD");
 
-            entity.HasOne(d => d.Supplier).WithMany()
+            // 4. Mối quan hệ với bảng Supplier
+            entity.HasOne(d => d.Supplier)
+                .WithMany(p => p.SupplierBooks) // <--- SỬA TẠI ĐÂY: Trỏ đúng vào collection SupplierBooks trong Supplier.cs
                 .HasForeignKey(d => d.SupplierId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__SupplierB__Suppl__1AD3FDA4");

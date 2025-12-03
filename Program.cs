@@ -18,10 +18,47 @@ builder.Services.AddDbContext<BookstoreContext>(
 
 builder.Services.AddIdentity<AppUser, AppRole>()
 	.AddEntityFrameworkStores<BookstoreContext>()
-	.AddDefaultTokenProviders();
+	.AddDefaultTokenProviders()
+	.AddClaimsPrincipalFactory<CustomClaimsPrincipalFactory>();
 
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddScoped<ReportService>();
+
+builder.Services.AddAuthorization(options =>
+{
+	// 1. Quản lý Đơn hàng (Order)
+	options.AddPolicy("Order.View", policy => policy.RequireClaim("Permission", "Order.View"));
+	options.AddPolicy("Order.Create", policy => policy.RequireClaim("Permission", "Order.Create"));
+	options.AddPolicy("Order.Update", policy => policy.RequireClaim("Permission", "Order.Update"));
+	options.AddPolicy("Order.Delete", policy => policy.RequireClaim("Permission", "Order.Delete"));
+	options.AddPolicy("Order.Approve", policy => policy.RequireClaim("Permission", "Order.Approve"));
+
+	// 2. Quản lý Sách (Book)
+	options.AddPolicy("Book.View", policy => policy.RequireClaim("Permission", "Book.View"));
+	options.AddPolicy("Book.Create", policy => policy.RequireClaim("Permission", "Book.Create"));
+	options.AddPolicy("Book.Update", policy => policy.RequireClaim("Permission", "Book.Update"));
+	options.AddPolicy("Book.Delete", policy => policy.RequireClaim("Permission", "Book.Delete"));
+
+	// 3. Quản lý Danh mục & Nhà cung cấp (Category/Supplier)
+	options.AddPolicy("Category.Manage", policy => policy.RequireClaim("Permission", "Category.Manage"));
+	options.AddPolicy("Supplier.Manage", policy => policy.RequireClaim("Permission", "Supplier.Manage"));
+
+	// 4. Báo cáo (Report)
+	options.AddPolicy("Report.View", policy => policy.RequireClaim("Permission", "Report.View"));
+	options.AddPolicy("Report.Revenue", policy => policy.RequireClaim("Permission", "Report.Revenue"));
+	options.AddPolicy("Report.Inventory", policy => policy.RequireClaim("Permission", "Report.Inventory"));
+	options.AddPolicy("Report.Export", policy => policy.RequireClaim("Permission", "Report.Export"));
+
+	// 5. Quản lý Người dùng & Chức vụ (User/Role)
+	options.AddPolicy("User.View", policy => policy.RequireClaim("Permission", "User.View"));
+	options.AddPolicy("User.Create", policy => policy.RequireClaim("Permission", "User.Create"));
+	options.AddPolicy("User.Update", policy => policy.RequireClaim("Permission", "User.Update"));
+	options.AddPolicy("User.Delete", policy => policy.RequireClaim("Permission", "User.Delete"));
+	options.AddPolicy("Role.Manage", policy => policy.RequireClaim("Permission", "Role.Manage"));
+
+	// 6. Cấu hình hệ thống (Settings)
+	options.AddPolicy("System.Settings", policy => policy.RequireClaim("Permission", "System.Settings"));
+});
 
 // set biến môi trường ASPNETCORE_ENVIRONMENT=Development/Production trong Properties/launchSettings.json
 if (builder.Environment.IsDevelopment())
@@ -89,7 +126,7 @@ if (builder.Environment.IsProduction())
 		options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // lâu hơn chút
 		options.LoginPath = "/login/";
 		options.LogoutPath = "/logout/";
-		options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+		options.AccessDeniedPath = "/Home/HandleError/403";
 		options.SlidingExpiration = true;
 	});
 
@@ -182,6 +219,7 @@ if (!app.Environment.IsDevelopment())
 	app.UseHsts();
 }
 
+app.UseStatusCodePagesWithReExecute("/Home/HandleError", "?statusCode={0}");
 
 app.UseHttpsRedirection();
 

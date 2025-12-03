@@ -61,17 +61,6 @@
                             </td>
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm">
-                                    <a asp-action="Edit" asp-route-id="@item.CustomerId" class="btn btn-warning" title="Sửa">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-danger" title="Xóa"
-                                        onclick="confirmDelete('@item.CustomerId', '@item.FullName')">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <div class="btn-group btn-group-sm">
                                     <a asp-action="Details" asp-route-id="@item.CustomerId" class="btn btn-info text-white"
                                         title="Chi tiết">
                                         <i class="bi bi-eye"></i>

@@ -4,13 +4,11 @@ namespace BookstoreManagement.ViewModels.Customer
 {
     public class CustomerViewModel
     {
-        [Required]
         public string? CustomerId { get; set; }
 
         [Required(ErrorMessage = "Họ tên không được bỏ trống")]
         public string? FullName { get; set; }
 
-        [Required(ErrorMessage = "Email không được bỏ trống")]
         [EmailAddress(ErrorMessage = "Email không hợp lệ")]
         public string? Email { get; set; }
 

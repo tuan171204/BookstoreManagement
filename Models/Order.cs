@@ -8,7 +8,7 @@ public partial class Order
 {
     public int OrderId { get; set; }
 
-    public required string CustomerId { get; set; }
+    public string? CustomerId { get; set; }
 
     public required string UserId { get; set; }
 
@@ -24,7 +24,7 @@ public partial class Order
 
     public decimal FinalAmount { get; set; }
 
-[Column(TypeName = "nvarchar(100)")]
+    [Column(TypeName = "nvarchar(100)")]
     public string Status { get; set; } = null!;
 
     public DateTime? CreatedAt { get; set; }

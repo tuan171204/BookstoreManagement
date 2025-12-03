@@ -36,12 +36,23 @@ namespace BookstoreManagement.ViewModels.Book
 
         [StringLength(500, ErrorMessage = "Mô tả không được vượt quá 500 ký tự")]
         [Display(Name = "Mô tả")]
-        [DataType(DataType.MultilineText)]
         public string? Description { get; set; }
 
         [Range(0, int.MaxValue, ErrorMessage = "Ngưỡng cảnh báo phải lớn hơn hoặc bằng 0")]
         [Display(Name = "Ngưỡng cảnh báo tồn kho thấp")]
         public int? LowStockThreshold { get; set; } = 10;
+
+        [Display(Name = "Nhà cung cấp")]
+        [Required(ErrorMessage = "Vui lòng chọn nhà cung cấp")]
+        public int? SupplierId { get; set; }
+
+        [Display(Name = "Giá nhập")]
+        [Required(ErrorMessage = "Giá nhập là bắt buộc")]
+        [Range(0, double.MaxValue, ErrorMessage = "Giá nhập phải lớn hơn 0")]
+        public decimal DefaultCostPrice { get; set; }
+
+        // THÊM MỚI: Danh sách nhà cung cấp để đổ vào dropdown
+        public List<SelectListItem>? Suppliers { get; set; }
 
         // Dropdown lists
         public List<SelectListItem>? Authors { get; set; }

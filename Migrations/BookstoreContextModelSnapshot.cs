@@ -649,7 +649,6 @@ namespace BookstoreManagement.Migrations
                         .HasDefaultValueSql("(getdate())");
 
                     b.Property<string>("CustomerId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("CustomerID");
 
@@ -880,20 +879,19 @@ namespace BookstoreManagement.Migrations
                         .HasColumnType("int")
                         .HasColumnName("PermissionID");
 
+                    b.Property<string>("AppRoleId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<int?>("PermissionId1")
                         .HasColumnType("int");
 
-                    b.Property<string>("RoleId1")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("RoleId", "PermissionId");
+
+                    b.HasIndex("AppRoleId");
 
                     b.HasIndex("PermissionId");
 
                     b.HasIndex("PermissionId1");
-
-                    b.HasIndex("RoleId1");
 
                     b.ToTable("RolePermissions");
                 });
@@ -944,6 +942,10 @@ namespace BookstoreManagement.Migrations
 
             modelBuilder.Entity("BookstoreManagement.Models.SupplierBook", b =>
                 {
+                    b.Property<int>("SupplierId")
+                        .HasColumnType("int")
+                        .HasColumnName("SupplierID");
+
                     b.Property<int>("BookId")
                         .HasColumnType("int")
                         .HasColumnName("BookID");
@@ -953,13 +955,9 @@ namespace BookstoreManagement.Migrations
                         .HasColumnType("decimal(18, 2)")
                         .HasDefaultValue(0m);
 
-                    b.Property<int>("SupplierId")
-                        .HasColumnType("int")
-                        .HasColumnName("SupplierID");
+                    b.HasKey("SupplierId", "BookId");
 
                     b.HasIndex("BookId");
-
-                    b.HasIndex("SupplierId");
 
                     b.ToTable("SupplierBooks");
                 });
@@ -1203,7 +1201,6 @@ namespace BookstoreManagement.Migrations
                     b.HasOne("BookstoreManagement.Models.Customer", "Customer")
                         .WithMany("Orders")
                         .HasForeignKey("CustomerId")
-                        .IsRequired()
                         .HasConstraintName("FK__Orders__Customer__0C85DE4D");
 
                     b.HasOne("BookstoreManagement.Models.Code", "PaymentMethod")
@@ -1271,6 +1268,10 @@ namespace BookstoreManagement.Migrations
 
             modelBuilder.Entity("BookstoreManagement.Models.RolePermission", b =>
                 {
+                    b.HasOne("BookstoreManagement.Models.AppRole", null)
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("AppRoleId");
+
                     b.HasOne("BookstoreManagement.Models.Permission", "Permission")
                         .WithMany()
                         .HasForeignKey("PermissionId")
@@ -1281,17 +1282,11 @@ namespace BookstoreManagement.Migrations
                         .WithMany("RolePermissions")
                         .HasForeignKey("PermissionId1");
 
-                    b.HasOne("BookstoreManagement.Models.AppRole", null)
+                    b.HasOne("BookstoreManagement.Models.AppRole", "Role")
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .IsRequired()
                         .HasConstraintName("FK__RolePermi__RoleI__02084FDA");
-
-                    b.HasOne("BookstoreManagement.Models.AppRole", "Role")
-                        .WithMany("RolePermissions")
-                        .HasForeignKey("RoleId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("Permission");
 
@@ -1301,13 +1296,13 @@ namespace BookstoreManagement.Migrations
             modelBuilder.Entity("BookstoreManagement.Models.SupplierBook", b =>
                 {
                     b.HasOne("BookstoreManagement.Models.Book", "Book")
-                        .WithMany()
+                        .WithMany("SupplierBooks")
                         .HasForeignKey("BookId")
                         .IsRequired()
                         .HasConstraintName("FK__SupplierB__BookI__1BC821DD");
 
                     b.HasOne("BookstoreManagement.Models.Supplier", "Supplier")
-                        .WithMany()
+                        .WithMany("SupplierBooks")
                         .HasForeignKey("SupplierId")
                         .IsRequired()
                         .HasConstraintName("FK__SupplierB__Suppl__1AD3FDA4");
@@ -1345,6 +1340,8 @@ namespace BookstoreManagement.Migrations
                     b.Navigation("OrderDetails");
 
                     b.Navigation("Promotions");
+
+                    b.Navigation("SupplierBooks");
                 });
 
             modelBuilder.Entity("BookstoreManagement.Models.Code", b =>
@@ -1396,6 +1393,8 @@ namespace BookstoreManagement.Migrations
             modelBuilder.Entity("BookstoreManagement.Models.Supplier", b =>
                 {
                     b.Navigation("ImportTickets");
+
+                    b.Navigation("SupplierBooks");
                 });
 #pragma warning restore 612, 618
         }

@@ -24,6 +24,8 @@ namespace BookstoreManagement.Controllers
 
             var query = _context.Customers.AsQueryable();
 
+            query = query.Where(c => c.Phone != "0000000000");
+
             if (!string.IsNullOrEmpty(searchString))
             {
                 query = query.Where(c => c.FullName.Contains(searchString)
@@ -66,6 +68,7 @@ namespace BookstoreManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CustomerViewModel model)
         {
+            Console.WriteLine("Gọi đến action Create trong CustomerController ... ");
             if (ModelState.IsValid)
             {
                 var customer = new Customer
@@ -80,11 +83,21 @@ namespace BookstoreManagement.Controllers
                     UpdatedAt = DateTime.Now
                 };
 
+                Console.WriteLine("Khách hàng mới: ", customer.ToString());
+
                 _context.Add(customer);
                 await _context.SaveChangesAsync();
 
                 TempData["SuccessMessage"] = "Thêm khách hàng thành công!";
                 return RedirectToAction(nameof(Index));
+            }
+            else
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors);
+                foreach (var error in errors)
+                {
+                    Console.WriteLine($"Lỗi xác thực: {error.ErrorMessage}");
+                }
             }
             return View(model);
         }

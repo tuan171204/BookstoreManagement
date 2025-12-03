@@ -47,29 +47,45 @@
                                 <span asp-validation-for="PublisherId" class="text-danger"></span>
                             </div>
 
+                            <!-- Nhà cung cấp -->
+                            <div class="col-md-6">
+                                <label asp-for="SupplierId" class="form-label"></label>
+                                <select asp-for="SupplierId" class="form-select" asp-items="Model.Suppliers">
+                                    <option value="">-- Chọn nhà cung cấp --</option>
+                                </select>
+                                <span asp-validation-for="SupplierId" class="text-danger"></span>
+                            </div>
+
+                            <!-- Giá nhập -->
+                            <div class="col-md-6">
+                                <label asp-for="DefaultCostPrice" class="form-label"></label>
+                                <input asp-for="DefaultCostPrice" class="form-control" type="number" step="1000" />
+                                <span asp-validation-for="DefaultCostPrice" class="text-danger"></span>
+                            </div>
+
                             <!-- Năm xuất bản -->
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label asp-for="PublicationYear" class="form-label"></label>
                                 <input asp-for="PublicationYear" class="form-control" type="number" />
                                 <span asp-validation-for="PublicationYear" class="text-danger"></span>
                             </div>
 
                             <!-- Giá bán -->
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label asp-for="Price" class="form-label"></label>
                                 <input asp-for="Price" class="form-control" type="number" step="1000" />
                                 <span asp-validation-for="Price" class="text-danger"></span>
                             </div>
 
                             <!-- Số lượng tồn kho -->
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label asp-for="StockQuantity" class="form-label"></label>
                                 <input asp-for="StockQuantity" class="form-control" type="number" />
                                 <span asp-validation-for="StockQuantity" class="text-danger"></span>
                             </div>
 
                             <!-- Ngưỡng cảnh báo -->
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <label asp-for="LowStockThreshold" class="form-label"></label>
                                 <input asp-for="LowStockThreshold" class="form-control" type="number" />
                                 <span asp-validation-for="LowStockThreshold" class="text-danger"></span>

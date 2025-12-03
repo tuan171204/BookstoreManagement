@@ -1,0 +1,11 @@
+@{
+    ViewData["Title"] = "Không được phép truy cập";
+    Layout = "_Layout";
+}
+
+<div class="text-center mt-5">
+    <h1 class="display-4 text-warning">403</h1>
+    <h2 class="text-secondary">@ViewBag.ErrorMessage</h2>
+    <p>Bạn không có quyền để xem trang này. Vui lòng liên hệ quản trị viên.</p>
+    <a asp-action="Index" asp-controller="Home" class="btn btn-info mt-3">Trở về</a>
+</div>
