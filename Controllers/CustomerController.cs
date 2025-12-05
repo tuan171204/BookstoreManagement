@@ -28,9 +28,10 @@ namespace BookstoreManagement.Controllers
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                query = query.Where(c => c.FullName.Contains(searchString)
-                                      || c.Phone.Contains(searchString)
-                                      || c.Email.Contains(searchString));
+                // Thay đổi TẠI ĐÂY để tìm kiếm theo FullName, Email, HOẶC PhoneNumber
+                query = query.Where(u => u.FullName.Contains(searchString) 
+                                      || u.Email.Contains(searchString) 
+                                      || u.Phone.Contains(searchString)); // Đã thêm PhoneNumber
             }
 
             var customers = await query.OrderByDescending(c => c.CreatedAt).ToListAsync();

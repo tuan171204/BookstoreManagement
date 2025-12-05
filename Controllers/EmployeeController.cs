@@ -40,7 +40,8 @@ namespace BookstoreManagement.Controllers
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                query = query.Where(u => u.FullName.Contains(searchString) || u.Email.Contains(searchString));
+                query = query.Where(u => u.FullName.Contains(searchString) 
+                                      || u.Email.Contains(searchString));
             }
 
             var employees = await query.Distinct().ToListAsync();

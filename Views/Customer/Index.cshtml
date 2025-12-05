@@ -17,8 +17,8 @@
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3">
                 <div class="col-md-10">
-                    <input type="text" name="inputTxt" class="form-control" placeholder="Tìm theo tên, email, sđt..."
-                        value="@ViewData["CurrentFilter"]" />
+                    <input type="text" name="searchString" class="form-control"
+                        placeholder="Tìm theo tên, email, sđt..." value="@ViewData["CurrentFilter"]" />
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary w-100">
