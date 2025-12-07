@@ -176,6 +176,20 @@ using (var scope = app.Services.CreateScope())
 			Console.WriteLine("Đã seed PromotionType codes!");
 		}
 
+		if (!context.Codes.Any(c => c.Entity == "PaymentMethod"))
+		{
+			var promotionTypes = new[]
+			{
+				new Code { Entity = "PaymentMethod", Key = 1, Value = "Tiền mặt", CreatedAt = DateTime.Now },
+				new Code { Entity = "PaymentMethod", Key = 2, Value = "Chuyển khoản", CreatedAt = DateTime.Now }
+			};
+			context.Codes.AddRange(promotionTypes);
+			await context.SaveChangesAsync();
+			Console.WriteLine("Đã seed PromotionType codes!");
+		}
+
+
+
 		// Tạo user admin nếu chưa có
 		string adminEmail = "admin@bookstore.com";
 		var adminUser = await userManager.FindByEmailAsync(adminEmail);
@@ -233,7 +247,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
 	name: "default",
-	pattern: "{controller=Home}/{action=Index}/{id?}");
+	pattern: "{controller=Book}/{action=Index}/{id?}");
 
 app.MapRazorPages();
 

@@ -9,6 +9,7 @@ namespace BookstoreManagement.ViewModels.Customer
         [Required(ErrorMessage = "Họ tên không được bỏ trống")]
         public string? FullName { get; set; }
 
+        [Required(ErrorMessage = "Email không được bỏ trống")]
         [EmailAddress(ErrorMessage = "Email không hợp lệ")]
         public string? Email { get; set; }
 
@@ -17,6 +18,7 @@ namespace BookstoreManagement.ViewModels.Customer
 
         [StringLength(255)]
         public string? Address { get; set; }
+        public List<BookstoreManagement.Models.Order>? Orders { get; set; }
 
         public bool IsActive { get; set; } = true;
     }

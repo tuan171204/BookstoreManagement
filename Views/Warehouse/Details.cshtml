@@ -38,6 +38,11 @@
                     <dt class="col-sm-3">Tổng chi phí:</dt>
                     <dd class="col-sm-9">@ticket.TotalCost?.ToString("N0") ₫</dd>
 
+                    <dt class="col-sm-3">Phương thức thanh toán:</dt>
+                    <dd class="col-sm-9">
+                        @(ticket.PaymentMethod?.Value ?? "Chưa xác định")
+                    </dd>
+
                     <dt class="col-sm-3">Trạng thái:</dt>
                     <dd class="col-sm-9"><span class="badge bg-secondary">@ticket.Status</span></dd>
 

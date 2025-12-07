@@ -1,0 +1,62 @@
+@model BookstoreManagement.ViewModels.Author.AuthorViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết Tác giả";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Chi tiết Tác giả</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index">Danh sách Tác giả</a></li>
+        <li class="breadcrumb-item active">Chi tiết</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-user me-1"></i>
+            Thông tin tác giả: <strong>@Model.Name</strong>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">ID:</dt>
+                <dd class="col-sm-9">@Model.AuthorId</dd>
+
+                <dt class="col-sm-3">Họ và tên:</dt>
+                <dd class="col-sm-9 fw-bold text-primary">@Model.Name</dd>
+
+                <dt class="col-sm-3">Tiểu sử:</dt>
+                <dd class="col-sm-9">
+                    @if (!string.IsNullOrEmpty(Model.Bio))
+                    {
+                        @Model.Bio
+                    }
+                    else
+                    {
+                        <span class="text-muted fst-italic">Chưa có thông tin tiểu sử</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3">Số lượng sách:</dt>
+                <dd class="col-sm-9">
+                    <span class="badge bg-info text-dark">@Model.BooksCount cuốn</span>
+                </dd>
+
+                <dt class="col-sm-3">Ngày tạo:</dt>
+                <dd class="col-sm-9">@Model.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                <dt class="col-sm-3">Cập nhật lần cuối:</dt>
+                <dd class="col-sm-9">@Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")</dd>
+            </dl>
+        </div>
+        <div class="card-footer text-end">
+            <a asp-action="Edit" asp-route-id="@Model.AuthorId" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Chỉnh sửa
+            </a>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </div>
+</div>

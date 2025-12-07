@@ -29,8 +29,8 @@ namespace BookstoreManagement.Controllers
             if (!string.IsNullOrEmpty(searchString))
             {
                 // Thay đổi TẠI ĐÂY để tìm kiếm theo FullName, Email, HOẶC PhoneNumber
-                query = query.Where(u => u.FullName.Contains(searchString) 
-                                      || u.Email.Contains(searchString) 
+                query = query.Where(u => u.FullName.Contains(searchString)
+                                      || u.Email.Contains(searchString)
                                       || u.Phone.Contains(searchString)); // Đã thêm PhoneNumber
             }
 
@@ -43,7 +43,12 @@ namespace BookstoreManagement.Controllers
         {
             if (id == null) return NotFound();
 
-            var customer = await _context.Customers.FindAsync(id);
+            // Kèm theo danh sách đơn hàng và chi tiết để tính tổng
+            var customer = await _context.Customers
+                .Include(c => c.Orders)
+                    .ThenInclude(o => o.OrderDetails)
+                .FirstOrDefaultAsync(m => m.CustomerId == id);
+
             if (customer == null) return NotFound();
 
             var viewModel = new CustomerViewModel
@@ -53,11 +58,15 @@ namespace BookstoreManagement.Controllers
                 Phone = customer.Phone,
                 Email = customer.Email,
                 Address = customer.Address,
-                IsActive = customer.IsActive
+                IsActive = customer.IsActive,
+
+                // Gán danh sách đơn hàng sang ViewModel
+                Orders = customer.Orders.OrderByDescending(o => o.OrderDate).ToList()
             };
 
             return View(viewModel);
         }
+
 
         [HttpGet]
         public IActionResult Create()

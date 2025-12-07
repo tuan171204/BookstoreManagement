@@ -1,0 +1,68 @@
+@model BookstoreManagement.ViewModels.Publisher.PublisherViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết Nhà xuất bản";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Chi tiết Nhà xuất bản</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index">Danh sách NXB</a></li>
+        <li class="breadcrumb-item active">Chi tiết</li>
+    </ol>
+
+    <div class="card mb-4 border-primary">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-building me-1"></i>
+            Thông tin Nhà xuất bản
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <dl class="row">
+                        <dt class="col-sm-4">Mã NXB:</dt>
+                        <dd class="col-sm-8">@Model.PublisherId</dd>
+
+                        <dt class="col-sm-4">Tên Nhà xuất bản:</dt>
+                        <dd class="col-sm-8 h5">@Model.Name</dd>
+
+                        <dt class="col-sm-4">Địa chỉ:</dt>
+                        <dd class="col-sm-8">
+                            <i class="fas fa-map-marker-alt text-danger"></i>
+                            @(Model.Address ?? "Chưa cập nhật địa chỉ")
+                        </dd>
+
+                        <dt class="col-sm-4">Số đầu sách đã phát hành:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-success fs-6">@Model.BooksCount</span>
+                        </dd>
+                    </dl>
+                </div>
+
+                <div class="col-md-4 border-start">
+                    <h6 class="text-muted">Thông tin hệ thống</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <strong>Ngày tạo:</strong><br />
+                            @Model.CreatedAt?.ToString("dd/MM/yyyy HH:mm")
+                        </li>
+                        <li>
+                            <strong>Cập nhật gần nhất:</strong><br />
+                            @Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-between">
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại danh sách
+            </a>
+            <a asp-action="Edit" asp-route-id="@Model.PublisherId" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Chỉnh sửa thông tin
+            </a>
+        </div>
+    </div>
+</div>

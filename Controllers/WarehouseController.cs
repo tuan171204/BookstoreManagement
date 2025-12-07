@@ -23,8 +23,8 @@ public class WarehouseController : Controller
     public async Task<IActionResult> Index(string searchString, string typeFilter, string statusFilter)
     {
 
-        ViewBag.TypeFilter = new SelectList(new[] { "Import", "Export" });
-        ViewBag.StatusFilter = new SelectList(new[] { "Completed", "Pending", "Cancelled" });
+        ViewBag.TypeFilter = new SelectList(new[] { "Phiếu Nhập", "Phiếu Xuất" });
+        ViewBag.StatusFilter = new SelectList(new[] { "Đã hoàn thành", "Đang đợi", "Đã hủy" });
         ViewData["CurrentFilter"] = searchString;
 
 
@@ -107,6 +107,7 @@ public class WarehouseController : Controller
             viewModel.ImportTicket = await _context.ImportTickets
                 .Include(t => t.Supplier)
                 .Include(t => t.User)
+                .Include(t => t.PaymentMethod)
                 .Include(t => t.ImportDetails)
                     .ThenInclude(d => d.Book)
                 .FirstOrDefaultAsync(t => t.ImportId == id);
@@ -130,11 +131,23 @@ public class WarehouseController : Controller
     }
 
     [HttpGet]
+    public IActionResult GetPaymentMethods()
+    {
+        var paymentMethods = _context.Codes
+            .Where(c => c.Entity == "PaymentMethod")
+            .Select(c => new { id = c.CodeId, name = c.Value }).ToList();
+        return Json(paymentMethods);
+    }
+
+    [HttpGet]
     public IActionResult Create()
     {
         var viewModel = new ImportTicketCreateViewModel
         {
-            Suppliers = new SelectList(_context.Suppliers.ToList(), "SupplierId", "Name"),
+            Suppliers = new SelectList(
+                _context.Suppliers.Where(s => s.IsActive).ToList(),
+                "SupplierId",
+                "Name"),
             PaymentMethods = new SelectList(_context.Codes.Where(c => c.Entity == "PaymentMethod").ToList(), "CodeId", "Value"),
             Books = new SelectList(_context.Books.Where(b => b.IsDeleted == false).ToList(), "BookId", "Title")
         };

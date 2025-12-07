@@ -18,11 +18,19 @@ namespace BookstoreManagement.Controllers
 
         // 2. TRANG DANH SÁCH (INDEX)
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString)
         {
-            // Lấy tất cả nhà cung cấp từ SQL -> Gửi sang View
-            var suppliers = await _context.Suppliers.ToListAsync();
-            return View(suppliers);
+            ViewData["CurrentFilter"] = searchString;
+
+            var query = _context.Suppliers.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(s => s.Name.Contains(searchString)
+                                      || (s.ContactInfo != null && s.ContactInfo.Contains(searchString)));
+            }
+
+            return View(await query.ToListAsync());
         }
 
         // 3. TRANG THÊM MỚI (CREATE)
@@ -109,6 +117,21 @@ namespace BookstoreManagement.Controllers
                 TempData["SuccessMessage"] = "Đã xóa nhà cung cấp!";
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var supplier = await _context.Suppliers
+                .Include(s => s.SupplierBooks)
+                    .ThenInclude(sb => sb.Book)
+                .FirstOrDefaultAsync(m => m.SupplierId == id);
+
+            if (supplier == null) return NotFound();
+
+            return View(supplier);
         }
     }
 }
