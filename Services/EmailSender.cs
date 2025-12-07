@@ -29,7 +29,7 @@ namespace BookstoreManagement.Services
             // DEBUG LOG
             var fromEmail = _config["EmailSettings:Email"];
             if (string.IsNullOrWhiteSpace(fromEmail))
-                throw new Exception("Thiếu cấu hình EmailSettings:Email trong appsettings.json");
+                throw new Exception("Thiếu cấu hình EmailSettings:Email");
 
 
             var mailMessage = new MailMessage

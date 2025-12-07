@@ -181,6 +181,7 @@ namespace BookstoreManagement.Controllers
         [AllowAnonymous]
         public IActionResult ResetPasswordConfirmation() => View();
 
+
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]

@@ -248,6 +248,7 @@ namespace BookstoreManagement.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Policy = "Book.Update")]
         // GET: Book/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
@@ -380,6 +381,7 @@ namespace BookstoreManagement.Controllers
         }
 
         // POST: Book/Delete/5
+        [Authorize(Policy = "Book.Delete")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)

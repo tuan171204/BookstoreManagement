@@ -22,13 +22,10 @@ namespace BookstoreManagement.Services
 
         protected override async Task<ClaimsIdentity> GenerateClaimsAsync(AppUser user)
         {
-            // 1. Lấy identity mặc định (bao gồm User info và Role Names)
             var identity = await base.GenerateClaimsAsync(user);
 
-            // 2. Lấy danh sách Role của user
             var roleNames = await UserManager.GetRolesAsync(user);
 
-            // 3. Tìm các Permission tương ứng với Role đó trong DB của bạn
             // Logic: User -> Roles -> RolePermissions -> Permissions
             if (roleNames.Any())
             {
@@ -36,7 +33,7 @@ namespace BookstoreManagement.Services
                                          join rp in _context.RolePermissions on r.Id equals rp.RoleId
                                          join p in _context.Permissions on rp.PermissionId equals p.PermissionId
                                          where roleNames.Contains(r.Name)
-                                         select p.PermissionName) // Giả sử Permission có cột PermissionName (ví dụ: "Book.View", "Book.Edit")
+                                         select p.PermissionName) // Permission có cột PermissionName (ví dụ: "Book.View", "Book.Edit")
                                          .Distinct()
                                          .ToListAsync();
 

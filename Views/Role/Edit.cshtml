@@ -41,18 +41,79 @@
 
                         @if (Model.AllPermissions != null && Model.AllPermissions.Any())
                         {
-                            <div class="row">
-                                @foreach (var perm in Model.AllPermissions)
+
+                            var permissionGroups = Model.AllPermissions
+                            .GroupBy(p => p.PermissionName.Contains('.') ? p.PermissionName.Split('.')[0] : "Other")
+                            .OrderBy(g => g.Key);
+
+                            var moduleNames = new Dictionary<string, string>
+                                                {
+                                                { "Order", "Quản lý Đơn hàng (Order)" },
+                                                { "Book", "Quản lý Sách (Book)" },
+                                                { "Category", "Quản lý Danh mục (Category)" },
+                                                { "Supplier", "Quản lý Nhà cung cấp (Supplier)" },
+                                                { "Author", "Quản lý Tác giả (Author)" },
+                                                { "Publisher", "Quản lý NXB (Publisher)" },
+                                                { "Customer", "Quản lý Khách hàng (Customer)" },
+                                                { "Report", "Báo cáo & Thống kê (Report)" },
+                                                { "User", "Quản lý Nhân viên (User)" },
+                                                { "Role", "Quản lý Chức vụ (Role)" },
+                                                { "Warehouse", "Quản lý Kho (Warehouse)" },
+                                                { "System", "Hệ thống (System)" },
+                                                { "Promotion", "Khuyến mãi (Promotion)" }
+                                                };
+
+                            <div class="accordion" id="permissionsAccordion">
+                                @foreach (var group in permissionGroups)
                                 {
-                                    <div class="col-md-6">
-                                        <div class="form-check mb-2">
-                                            <input class="form-check-input" type="checkbox" name="SelectedPermissionIds"
-                                                value="@perm.PermissionId" id="perm_@perm.PermissionId"
-                                                @(Model.SelectedPermissionIds.Contains(perm.PermissionId) ? "checked" : "")>
-                                            <label class="form-check-label" for="perm_@perm.PermissionId">
-                                                <strong>@perm.PermissionName</strong> <br />
-                                                <small class="text-muted">@perm.Description</small>
-                                            </label>
+                                    // Lấy tên tiếng Việt, nếu không có thì dùng tên gốc
+                                    string groupDisplayName = moduleNames.ContainsKey(group.Key) ? moduleNames[group.Key] :
+                                    group.Key;
+                                    string collapseId = "collapse_" + group.Key; // ID duy nhất cho mỗi dropdown
+
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="heading_@group.Key">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                                data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
+                                                <strong>@groupDisplayName</strong>
+                                                <span class="badge bg-secondary ms-2">@group.Count() quyền</span>
+                                            </button>
+                                        </h2>
+                                        <div id="@collapseId" class="accordion-collapse collapse"
+                                            aria-labelledby="heading_@group.Key">
+                                            <div class="accordion-body">
+
+                                                <div class="form-check mb-3 border-bottom pb-2">
+                                                    <input class="form-check-input select-all-group" type="checkbox"
+                                                        data-group="@group.Key" id="selectAll_@group.Key">
+                                                    <label class="form-check-label fw-bold text-primary"
+                                                        for="selectAll_@group.Key">
+                                                        Chọn tất cả nhóm @groupDisplayName
+                                                    </label>
+                                                </div>
+
+                                                <div class="row">
+                                                    @foreach (var perm in group)
+                                                    {
+                                                        <div class="col-md-6">
+                                                            <div class="form-check mb-2">
+                                                                <input class="form-check-input perm-checkbox group-@group.Key"
+                                                                    type="checkbox" name="SelectedPermissionIds"
+                                                                    value="@perm.PermissionId" id="perm_@perm.PermissionId"
+                                                                    @(Model.SelectedPermissionIds.Contains(perm.PermissionId) ?
+                                                                                                                            "checked" : "")>
+
+                                                                <label class="form-check-label" for="perm_@perm.PermissionId">
+                                                                    <strong>@perm.PermissionName.Substring(perm.PermissionName.IndexOf('.')
+                                                                                                                                    + 1)</strong>
+                                                        <br />
+                                                        <small class="text-muted">@perm.Description</small>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                                                                        }
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 }
@@ -61,8 +122,7 @@
                         else
                         {
                             <div class="alert alert-secondary">
-                                Chưa có danh sách Quyền (Permissions) trong hệ thống. Vui lòng thêm dữ liệu vào bảng
-                                Permissions.
+                                Chưa có danh sách Quyền (Permissions) trong hệ thống.
                             </div>
                         }
 
@@ -86,3 +146,20 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var selectAllCheckboxes = document.querySelectorAll(".select-all-group");
+
+        selectAllCheckboxes.forEach(function (selectAllBox) {
+            selectAllBox.addEventListener("change", function () {
+                var groupKey = this.getAttribute("data-group");
+                var childCheckboxes = document.querySelectorAll(".group-" + groupKey);
+
+                childCheckboxes.forEach(function (childBox) {
+                    childBox.checked = selectAllBox.checked;
+                });
+            });
+        });
+    });
+</script>
