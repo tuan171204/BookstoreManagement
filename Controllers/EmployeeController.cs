@@ -40,7 +40,7 @@ namespace BookstoreManagement.Controllers
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                query = query.Where(u => u.FullName.Contains(searchString) 
+                query = query.Where(u => u.FullName.Contains(searchString)
                                       || u.Email.Contains(searchString));
             }
 
@@ -75,6 +75,7 @@ namespace BookstoreManagement.Controllers
                     PhoneNumber = model.PhoneNumber,
                     Address = model.Address,
                     IsActive = true,
+                    IsDefaultPassword = true,
                     CreatedAt = DateTime.Now
                 };
 

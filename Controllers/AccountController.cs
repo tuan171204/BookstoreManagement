@@ -56,6 +56,14 @@ namespace BookstoreManagement.Controllers
 
             if (result.Succeeded)
             {
+                var user = await _userManager.FindByEmailAsync(email);
+
+                if (user != null && user.IsDefaultPassword)
+                {
+                    TempData["WarningMessage"] = "Bạn đang sử dụng mật khẩu mặc định. Vui lòng đổi mật khẩu ngay để bảo mật tài khoản!";
+                    return RedirectToAction("Index", "Setting");
+                }
+
                 return RedirectToAction("Index", "Book");
             }
 
@@ -153,7 +161,14 @@ namespace BookstoreManagement.Controllers
 
             var result = await _userManager.ResetPasswordAsync(user, model.Token, model.Password);
             if (result.Succeeded)
+            {
+                user.IsDefaultPassword = false;
+                user.UpdatedAt = DateTime.Now;
+
+                await _userManager.UpdateAsync(user);
+
                 return RedirectToAction(nameof(ResetPasswordConfirmation));
+            }
 
             foreach (var error in result.Errors)
                 ModelState.AddModelError("", error.Description);
@@ -165,5 +180,30 @@ namespace BookstoreManagement.Controllers
         [HttpGet]
         [AllowAnonymous]
         public IActionResult ResetPasswordConfirmation() => View();
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RequestChangePassword()
+        {
+            // 1. Lấy user hiện tại
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login");
+
+            // 2. Tạo token reset password
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            // 3. Tạo link callback (trỏ về action ResetPassword có sẵn)
+            var resetLink = Url.Action("ResetPassword", "Account",
+                new { token = token, email = user.Email },
+                protocol: Request.Scheme);
+
+            // 4. Gửi Email
+            await _emailSender.SendEmailAsync(user.Email, "Yêu cầu đổi mật khẩu",
+                $"<p>Bạn đã yêu cầu đổi mật khẩu. Nhấn vào <a href='{resetLink}'>đây</a> để thiết lập mật khẩu mới.</p>");
+
+            // 5. Chuyển hướng đến trang thông báo (Tái sử dụng View xác nhận quên mật khẩu hoặc tạo mới)
+            return View("ForgotPasswordConfirmation");
+        }
     }
 }
