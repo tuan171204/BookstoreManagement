@@ -78,14 +78,14 @@
                             </div>
 
                             <!-- Số lượng tồn kho -->
-                            <div class="col-md-6">
+                            <div class="col-md-6" style="display: none;">
                                 <label asp-for="StockQuantity" class="form-label"></label>
                                 <input asp-for="StockQuantity" class="form-control" type="number" />
                                 <span asp-validation-for="StockQuantity" class="text-danger"></span>
                             </div>
 
                             <!-- Ngưỡng cảnh báo -->
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label asp-for="LowStockThreshold" class="form-label"></label>
                                 <input asp-for="LowStockThreshold" class="form-control" type="number" />
                                 <span asp-validation-for="LowStockThreshold" class="text-danger"></span>
@@ -93,7 +93,7 @@
 
                             <!-- Thể loại sách -->
                             <div class="col-md-12">
-                                <label asp-for="SelectedCategoryIds" class="form-label fw-bold">Thể loại sách</label>
+                                <label asp-for="SelectedCategoryIds" class="form-label">Thể loại sách</label>
                                 <select asp-for="SelectedCategoryIds" class="form-select" id="ddlCategories"
                                     asp-items="Model.Categories" multiple>
                                 </select>

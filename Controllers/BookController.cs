@@ -19,11 +19,12 @@ namespace BookstoreManagement.Controllers
 
         // GET: Book
         [Authorize(Policy = "Book.View")]
-        public async Task<IActionResult> Index(string searchString, int? authorId, int? publisherId, int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string searchString, int? authorId, int? publisherId, int? categoryId, int pageNumber = 1, int pageSize = 10)
         {
             ViewData["CurrentFilter"] = searchString;
             ViewData["AuthorId"] = authorId;
             ViewData["PublisherId"] = publisherId;
+            ViewData["CategoryId"] = categoryId;
 
             var booksQuery = _context.Books
                 .Include(b => b.Author)
@@ -50,6 +51,15 @@ namespace BookstoreManagement.Controllers
             if (publisherId.HasValue)
             {
                 booksQuery = booksQuery.Where(b => b.PublisherId == publisherId);
+            }
+
+            // 4. Lọc theo Thể loại (MỚI)
+            if (categoryId.HasValue)
+            {
+                var bookIdsInCat = _context.BookCategories
+                                    .Where(bc => bc.CategoryId == categoryId)
+                                    .Select(bc => bc.BookId);
+                booksQuery = booksQuery.Where(b => bookIdsInCat.Contains(b.BookId));
             }
 
             var totalItems = await booksQuery.CountAsync();
@@ -87,6 +97,7 @@ namespace BookstoreManagement.Controllers
             // Load dropdowns for filters
             ViewBag.Authors = new SelectList(await _context.Authors.OrderBy(a => a.Name).ToListAsync(), "AuthorId", "Name");
             ViewBag.Publishers = new SelectList(await _context.Publishers.OrderBy(p => p.Name).ToListAsync(), "PublisherId", "Name");
+            ViewBag.Categories = new SelectList(await _context.Categories.OrderBy(c => c.Name).ToListAsync(), "CategoryId", "Name");
 
             return View(books);
         }
@@ -137,8 +148,7 @@ namespace BookstoreManagement.Controllers
                 LowStockThreshold = book.LowStockThreshold,
                 CreatedAt = book.CreatedAt,
                 UpdatedAt = book.UpdatedAt,
-                IsDeleted = book.IsDeleted,
-                CategoryNames = categoryNames
+                IsDeleted = book.IsDeleted
             };
 
             return View(viewModel);
