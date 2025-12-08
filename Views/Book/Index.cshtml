@@ -44,7 +44,22 @@
                     <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control"
                         placeholder="Tên sách, tác giả, NXB..." />
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <label class="form-label">Thể loại</label>
+                    <select name="categoryId" class="form-select">
+                        <option value="">-- Tất cả --</option>
+                        @if (ViewBag.Categories != null)
+                        {
+                            foreach (var item in ViewBag.Categories as SelectList)
+                            {
+                                <option value="@item.Value" selected="@(item.Value == ViewData["CategoryId"]?.ToString())">
+                                    @item.Text
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <label class="form-label">Tác giả</label>
                     <select name="authorId" class="form-select">
                         <option value="">-- Tất cả --</option>
@@ -56,7 +71,7 @@
                         }
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label">Nhà xuất bản</label>
                     <select name="publisherId" class="form-select">
                         <option value="">-- Tất cả --</option>
@@ -68,6 +83,7 @@
                         }
                     </select>
                 </div>
+
                 <div class="col-md-2 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-search"></i> Tìm

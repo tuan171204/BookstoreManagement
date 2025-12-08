@@ -37,9 +37,11 @@
                                 Doanh thu hôm nay
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                @(ViewBag.TodaySummary != null ? ((dynamic)ViewBag.TodaySummary).DoanhThu.ToString("#,##0") : "0") ₫
+                                @(ViewBag.TodaySummary != null ?
+                                                                ((dynamic)ViewBag.TodaySummary).DoanhThu.ToString("#,##0") : "0") ₫
                             </div>
-                            <small class="text-muted">@(ViewBag.TodaySummary != null ? ((dynamic)ViewBag.TodaySummary).SoDonHang : 0) đơn hàng</small>
+                            <small class="text-muted">@(ViewBag.TodaySummary != null ?
+                                                                ((dynamic)ViewBag.TodaySummary).SoDonHang : 0) đơn hàng</small>
                         </div>
                         <div class="col-auto">
                             <i class="bi bi-calendar-day fa-2x text-primary"></i>
@@ -56,10 +58,11 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Doanh thu tháng @DateTime.Now.ToString("MM/yyyy")
+                                Lợi nhuận tháng @DateTime.Now.ToString("MM/yyyy")
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                @(ViewBag.MonthRevenue != null ? ((decimal)ViewBag.MonthRevenue).ToString("#,##0") : "0") ₫
+                                @(ViewBag.MonthRevenue != null ? ((decimal)ViewBag.MonthRevenue).ToString("#,##0") :
+                                                                "0") ₫
                             </div>
                         </div>
                         <div class="col-auto">
@@ -80,7 +83,7 @@
                                 Tổng đơn hàng tháng này
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                               @(ViewBag.MonthSummary is null ? 0 : ((dynamic)ViewBag.MonthSummary).SoDonHang) đơn
+                                @(ViewBag.MonthSummary is null ? 0 : ((dynamic)ViewBag.MonthSummary).SoDonHang) đơn
                             </div>
                         </div>
                         <div class="col-auto">
@@ -140,7 +143,8 @@
                                     <td class="text-center align-middle">
                                         @if (index <= 3)
                                         {
-                                            <span class="badge bg-@(index == 1 ? "warning text-dark" : index == 2 ? "secondary" : "danger") fs-6">
+                                            <span
+                                                class="badge bg-@(index == 1 ? "warning text-dark" : index == 2 ? "secondary" : "danger") fs-6">
                                                 @(index == 1 ? "1st" : index == 2 ? "2nd" : "3rd")
                                             </span>
                                         }
@@ -176,7 +180,9 @@
 </div>
 
 @section Scripts {
-    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -251,6 +257,8 @@
     </script>
 
     <style>
-        #revenueChart { height: 420px !important; }
+        #revenueChart {
+            height: 420px !important;
+        }
     </style>
 }
