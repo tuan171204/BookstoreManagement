@@ -18,10 +18,81 @@ builder.Services.AddDbContext<BookstoreContext>(
 
 builder.Services.AddIdentity<AppUser, AppRole>()
 	.AddEntityFrameworkStores<BookstoreContext>()
-	.AddDefaultTokenProviders();
+	.AddDefaultTokenProviders()
+	.AddClaimsPrincipalFactory<CustomClaimsPrincipalFactory>();
 
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddScoped<ReportService>();
+
+builder.Services.AddAuthorization(options =>
+{
+	// Quản lý Đơn hàng (Order)
+	options.AddPolicy("Order.View", policy => policy.RequireClaim("Permission", "Order.View"));
+	options.AddPolicy("Order.Create", policy => policy.RequireClaim("Permission", "Order.Create"));
+	options.AddPolicy("Order.Update", policy => policy.RequireClaim("Permission", "Order.Update"));
+	options.AddPolicy("Order.Delete", policy => policy.RequireClaim("Permission", "Order.Delete"));
+	options.AddPolicy("Order.Approve", policy => policy.RequireClaim("Permission", "Order.Approve"));
+
+	// Quản lý Sách (Book)
+	options.AddPolicy("Book.View", policy => policy.RequireClaim("Permission", "Book.View"));
+	options.AddPolicy("Book.Create", policy => policy.RequireClaim("Permission", "Book.Create"));
+	options.AddPolicy("Book.Update", policy => policy.RequireClaim("Permission", "Book.Update"));
+	options.AddPolicy("Book.Delete", policy => policy.RequireClaim("Permission", "Book.Delete"));
+
+	// Quản lý Tác giả (Author) - MỚI
+	options.AddPolicy("Author.View", policy => policy.RequireClaim("Permission", "Author.View"));
+	options.AddPolicy("Author.Create", policy => policy.RequireClaim("Permission", "Author.Create"));
+	options.AddPolicy("Author.Update", policy => policy.RequireClaim("Permission", "Author.Update"));
+	options.AddPolicy("Author.Delete", policy => policy.RequireClaim("Permission", "Author.Delete"));
+
+	// Quản lý Nhà xuất bản (Publisher) - MỚI
+	options.AddPolicy("Publisher.View", policy => policy.RequireClaim("Permission", "Publisher.View"));
+	options.AddPolicy("Publisher.Create", policy => policy.RequireClaim("Permission", "Publisher.Create"));
+	options.AddPolicy("Publisher.Update", policy => policy.RequireClaim("Permission", "Publisher.Update"));
+	options.AddPolicy("Publisher.Delete", policy => policy.RequireClaim("Permission", "Publisher.Delete"));
+
+	// Quản lý Danh mục & Nhà cung cấp (Category/Supplier)
+	options.AddPolicy("Category.Manage", policy => policy.RequireClaim("Permission", "Category.Manage"));
+
+	options.AddPolicy("Supplier.View", policy => policy.RequireClaim("Permission", "Supplier.View"));
+	options.AddPolicy("Supplier.Create", policy => policy.RequireClaim("Permission", "Supplier.Create"));
+	options.AddPolicy("Supplier.Update", policy => policy.RequireClaim("Permission", "Supplier.Update"));
+	options.AddPolicy("Supplier.Delete", policy => policy.RequireClaim("Permission", "Supplier.Delete"));
+	options.AddPolicy("Supplier.Manage", policy => policy.RequireClaim("Permission", "Supplier.Manage"));
+
+	// Quản lý Khách hàng (Customer) - MỚI
+	options.AddPolicy("Customer.View", policy => policy.RequireClaim("Permission", "Customer.View"));
+	options.AddPolicy("Customer.Create", policy => policy.RequireClaim("Permission", "Customer.Create"));
+	options.AddPolicy("Customer.Update", policy => policy.RequireClaim("Permission", "Customer.Update"));
+	options.AddPolicy("Customer.Delete", policy => policy.RequireClaim("Permission", "Customer.Delete"));
+
+	// Quản lý Khuyến mãi (Promotion) - MỚI
+	options.AddPolicy("Promotion.View", policy => policy.RequireClaim("Permission", "Promotion.View"));
+	options.AddPolicy("Promotion.Create", policy => policy.RequireClaim("Permission", "Promotion.Create"));
+	options.AddPolicy("Promotion.Update", policy => policy.RequireClaim("Permission", "Promotion.Update"));
+	options.AddPolicy("Promotion.Delete", policy => policy.RequireClaim("Permission", "Promotion.Delete"));
+
+	// Quản lý Kho (Warehouse) - MỚI
+	options.AddPolicy("Warehouse.View", policy => policy.RequireClaim("Permission", "Warehouse.View"));
+	options.AddPolicy("Warehouse.Import", policy => policy.RequireClaim("Permission", "Warehouse.Import"));
+	options.AddPolicy("Warehouse.Export", policy => policy.RequireClaim("Permission", "Warehouse.Export"));
+
+	// Báo cáo (Report)
+	options.AddPolicy("Report.View", policy => policy.RequireClaim("Permission", "Report.View"));
+	options.AddPolicy("Report.Revenue", policy => policy.RequireClaim("Permission", "Report.Revenue"));
+	options.AddPolicy("Report.Inventory", policy => policy.RequireClaim("Permission", "Report.Inventory"));
+	options.AddPolicy("Report.Export", policy => policy.RequireClaim("Permission", "Report.Export"));
+
+	// Quản lý Người dùng & Chức vụ (User/Role)
+	options.AddPolicy("User.View", policy => policy.RequireClaim("Permission", "User.View"));
+	options.AddPolicy("User.Create", policy => policy.RequireClaim("Permission", "User.Create"));
+	options.AddPolicy("User.Update", policy => policy.RequireClaim("Permission", "User.Update"));
+	options.AddPolicy("User.Delete", policy => policy.RequireClaim("Permission", "User.Delete"));
+	options.AddPolicy("Role.Manage", policy => policy.RequireClaim("Permission", "Role.Manage"));
+
+	// Cấu hình hệ thống (Settings)
+	options.AddPolicy("System.Settings", policy => policy.RequireClaim("Permission", "System.Settings"));
+});
 
 // set biến môi trường ASPNETCORE_ENVIRONMENT=Development/Production trong Properties/launchSettings.json
 if (builder.Environment.IsDevelopment())
@@ -89,7 +160,7 @@ if (builder.Environment.IsProduction())
 		options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // lâu hơn chút
 		options.LoginPath = "/login/";
 		options.LogoutPath = "/logout/";
-		options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+		options.AccessDeniedPath = "/Home/HandleError/403";
 		options.SlidingExpiration = true;
 	});
 
@@ -103,77 +174,6 @@ if (builder.Environment.IsProduction())
 var app = builder.Build();
 
 
-// --- Seed dữ liệu người dùng mặc định ---
-using (var scope = app.Services.CreateScope())
-{
-	var services = scope.ServiceProvider;
-
-	try
-	{
-		var userManager = services.GetRequiredService<UserManager<AppUser>>();
-		var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
-		var context = services.GetRequiredService<BookstoreContext>();
-
-		// Tạo role "Admin" nếu chưa có
-		if (!await roleManager.RoleExistsAsync("Admin"))
-		{
-			await roleManager.CreateAsync(new AppRole
-			{
-				Name = "Admin",
-				Description = "Quản trị hệ thống",
-				CreatedAt = DateTime.Now
-			});
-		}
-
-		// Seed PromotionType codes
-		if (!context.Codes.Any(c => c.Entity == "PromotionType"))
-		{
-			var promotionTypes = new[]
-			{
-				new Code { Entity = "PromotionType", Key = 1, Value = "Giảm giá theo phần trăm", CreatedAt = DateTime.Now },
-				new Code { Entity = "PromotionType", Key = 2, Value = "Giảm giá cố định", CreatedAt = DateTime.Now },
-				new Code { Entity = "PromotionType", Key = 3, Value = "Tặng sách", CreatedAt = DateTime.Now }
-			};
-			context.Codes.AddRange(promotionTypes);
-			await context.SaveChangesAsync();
-			Console.WriteLine("Đã seed PromotionType codes!");
-		}
-
-		// Tạo user admin nếu chưa có
-		string adminEmail = "admin@bookstore.com";
-		var adminUser = await userManager.FindByEmailAsync(adminEmail);
-		if (adminUser == null)
-		{
-			var user = new AppUser
-			{
-				UserName = adminEmail,
-				Email = adminEmail,
-				FullName = "Administrator",
-				IsActive = true,
-				CreatedAt = DateTime.Now
-			};
-
-			var result = await userManager.CreateAsync(user, "123456");
-			if (result.Succeeded)
-			{
-				await userManager.AddToRoleAsync(user, "Admin");
-				Console.WriteLine("Đã tạo tài khoản Admin mặc định!");
-			}
-			else
-			{
-				Console.WriteLine("Lỗi khi tạo tài khoản Admin:");
-				foreach (var err in result.Errors)
-					Console.WriteLine($" - {err.Description}");
-			}
-		}
-	}
-	catch (Exception ex)
-	{
-		Console.WriteLine($"Seed dữ liệu lỗi: {ex.Message}");
-	}
-}
-
-
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -182,6 +182,7 @@ if (!app.Environment.IsDevelopment())
 	app.UseHsts();
 }
 
+app.UseStatusCodePagesWithReExecute("/Home/HandleError", "?statusCode={0}");
 
 app.UseHttpsRedirection();
 
@@ -195,7 +196,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
 	name: "default",
-	pattern: "{controller=Home}/{action=Index}/{id?}");
+	pattern: "{controller=Book}/{action=Index}/{id?}");
 
 app.MapRazorPages();
 

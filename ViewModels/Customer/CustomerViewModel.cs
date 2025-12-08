@@ -4,7 +4,6 @@ namespace BookstoreManagement.ViewModels.Customer
 {
     public class CustomerViewModel
     {
-        [Required]
         public string? CustomerId { get; set; }
 
         [Required(ErrorMessage = "Họ tên không được bỏ trống")]
@@ -19,6 +18,7 @@ namespace BookstoreManagement.ViewModels.Customer
 
         [StringLength(255)]
         public string? Address { get; set; }
+        public List<BookstoreManagement.Models.Order>? Orders { get; set; }
 
         public bool IsActive { get; set; } = true;
     }

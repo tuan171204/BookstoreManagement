@@ -18,9 +18,8 @@
     <div class="card mb-4">
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label">Tìm kiếm</label>
-                    <input type="text" name="inputTxt" class="form-control" placeholder="Tên, Email..."
+                <div class="col-md-10">
+                    <input type="text" name="searchString" class="form-control" placeholder="Tìm theo tên, email..."
                         value="@ViewData["CurrentFilter"]" />
                 </div>
                 <div class="col-md-2">

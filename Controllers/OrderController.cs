@@ -21,10 +21,10 @@ namespace BookstoreManagement.Controllers
         {
             TempData["CurrentFeature"] = "Order";
             var orders = await _context.Orders
-                .Include(o => o.Customer)      // Lấy thông tin Khách hàng
-                .Include(o => o.User)          // Lấy thông tin Nhân viên bán
-                .Include(o => o.PaymentMethod) // Lấy phương thức thanh toán
-                .OrderByDescending(o => o.OrderDate) // Mới nhất lên đầu
+                .Include(o => o.Customer)     
+                .Include(o => o.User)          
+                .Include(o => o.PaymentMethod) 
+                .OrderByDescending(o => o.OrderDate) 
                 .ToListAsync();
 
             return View(orders);
@@ -42,8 +42,8 @@ namespace BookstoreManagement.Controllers
                 .Include(o => o.Customer)
                 .Include(o => o.User)
                 .Include(o => o.PaymentMethod)
-                .Include(o => o.OrderDetails)       // Lấy danh sách chi tiết
-                    .ThenInclude(od => od.Book)     // Lấy thông tin Sách trong chi tiết
+                .Include(o => o.OrderDetails)       
+                    .ThenInclude(od => od.Book)    
                 .FirstOrDefaultAsync(m => m.OrderId == id);
 
             if (order == null)

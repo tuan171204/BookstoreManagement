@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace BookstoreManagement.Controllers
 {
@@ -40,7 +39,8 @@ namespace BookstoreManagement.Controllers
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                query = query.Where(u => u.FullName.Contains(searchString) || u.Email.Contains(searchString));
+                query = query.Where(u => u.FullName.Contains(searchString)
+                                      || u.Email.Contains(searchString));
             }
 
             var employees = await query.Distinct().ToListAsync();
@@ -74,6 +74,7 @@ namespace BookstoreManagement.Controllers
                     PhoneNumber = model.PhoneNumber,
                     Address = model.Address,
                     IsActive = true,
+                    IsDefaultPassword = true,
                     CreatedAt = DateTime.Now
                 };
 
@@ -144,7 +145,7 @@ namespace BookstoreManagement.Controllers
                 user.IsActive = model.IsActive;
                 user.UpdatedAt = DateTime.Now;
 
-                // Nếu cho phép sửa Email thì bỏ comment dòng dưới 
+                // Nếu cho sửa Email thì bỏ comment dòng dưới 
                 // user.Email = model.Email; 
                 // user.UserName = model.Email;
 

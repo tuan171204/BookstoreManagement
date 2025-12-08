@@ -17,9 +17,8 @@ namespace BookstoreManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            TempData["CurrentFeature"] = "Report"; // để sidebar active đúng
+            TempData["CurrentFeature"] = "Report"; 
 
-            // Dữ liệu cho các card tổng quan + bảng top sách
             ViewBag.MonthSummary   = await _reportService.GetCurrentMonthSummaryAsync();
             ViewBag.TodaySummary = await _reportService.GetTodaySummaryAsync();
             ViewBag.MonthRevenue = await _reportService.GetCurrentMonthRevenueAsync();
@@ -52,7 +51,6 @@ namespace BookstoreManagement.Controllers
 
             var data = await _reportService.GetRevenueByDateRangeAsync(fromDate, toDate, groupBy);
 
-            // Đảm bảo JSON trả về đúng định dạng: [{ label: "01/2025", revenue: 125000000 }, ...]
             return Json(data.Select(x => new
             {
                 label = ((dynamic)x).Label,

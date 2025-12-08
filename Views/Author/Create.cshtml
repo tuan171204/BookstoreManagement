@@ -1,47 +1,106 @@
 @model BookstoreManagement.ViewModels.Author.AuthorCreateViewModel
 
 @{
-    ViewData["Title"] = "Thêm tác giả";
+    ViewData["Title"] = "Thêm tác giả mới";
 }
 
 <div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Thêm tác giả</h4>
-                </div>
-                <div class="card-body">
-                    <form asp-action="Create" method="post">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-                        
-                        <div class="mb-3">
-                            <label asp-for="Name" class="form-label"></label>
-                            <input asp-for="Name" class="form-control" />
-                            <span asp-validation-for="Name" class="text-danger"></span>
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="bi bi-person-plus-fill me-2"></i>Thêm tác giả mới</h4>
+            <a asp-action="Index" class="btn btn-sm btn-light text-primary fw-bold"><i class="bi bi-arrow-left"></i>
+                Quay lại</a>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Name" class="form-label fw-bold"></label>
+                                <input asp-for="Name" class="form-control" placeholder="Ví dụ: Nguyễn Nhật Ánh" />
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Pseudonym" class="form-label fw-bold"></label>
+                                <input asp-for="Pseudonym" class="form-control" placeholder="Nếu có..." />
+                                <span asp-validation-for="Pseudonym" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DateOfBirth" class="form-label fw-bold"></label>
+                                <input asp-for="DateOfBirth" class="form-control" />
+                                <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Nationality" class="form-label fw-bold"></label>
+                                <input asp-for="Nationality" class="form-control" placeholder="Ví dụ: Việt Nam" />
+                                <span asp-validation-for="Nationality" class="text-danger"></span>
+                            </div>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Bio" class="form-label"></label>
-                            <textarea asp-for="Bio" class="form-control" rows="4"></textarea>
+                            <label asp-for="Website" class="form-label fw-bold"></label>
+                            <input asp-for="Website" class="form-control" placeholder="https://..." />
+                            <span asp-validation-for="Website" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Bio" class="form-label fw-bold"></label>
+                            <textarea asp-for="Bio" class="form-control" rows="5"
+                                placeholder="Nhập tiểu sử tác giả..."></textarea>
                             <span asp-validation-for="Bio" class="text-danger"></span>
                         </div>
+                    </div>
 
-                        <div class="mt-4">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save"></i> Lưu
-                            </button>
-                            <a asp-action="Index" class="btn btn-secondary">
-                                <i class="bi bi-x-circle"></i> Hủy
-                            </a>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <label asp-for="AvatarImage" class="form-label fw-bold d-block">Ảnh đại diện</label>
+
+                                <div class="mb-3">
+                                    <img id="imgPreview" src="https://via.placeholder.com/200x250?text=No+Image"
+                                        alt="Avatar Preview" class="img-thumbnail"
+                                        style="width: 200px; height: 250px; object-fit: cover;">
+                                </div>
+
+                                <input asp-for="AvatarImage" type="file" class="form-control" accept="image/*"
+                                    onchange="previewImage(this)" />
+                                <span asp-validation-for="AvatarImage" class="text-danger"></span>
+                                <small class="text-muted d-block mt-2">Định dạng: .jpg, .png, .jpeg</small>
+                            </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                        <i class="bi bi-save me-2"></i> Lưu Tác Giả
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#imgPreview').attr('src', e.target.result);
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
 }

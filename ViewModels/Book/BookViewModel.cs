@@ -35,6 +35,12 @@ namespace BookstoreManagement.ViewModels.Book
         [Display(Name = "Mô tả")]
         public string? Description { get; set; }
 
+        [Display(Name = "Nhà cung cấp")]
+        public string? SupplierName { get; set; }
+
+        [Display(Name = "Giá nhập")]
+        public decimal DefaultCostPrice { get; set; }
+
         [Display(Name = "Ngưỡng cảnh báo")]
         public int? LowStockThreshold { get; set; }
 
@@ -50,5 +56,7 @@ namespace BookstoreManagement.ViewModels.Book
 
         [Display(Name = "Trạng thái")]
         public string Status => IsDeleted == true ? "Đã xóa" : "Hoạt động";
+
+        public List<string> CategoryNames { get; set; } = new List<string>();
     }
 }

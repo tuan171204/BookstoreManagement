@@ -1,13 +1,13 @@
 @model BookstoreManagement.ViewModels.Role.RoleViewModel
 
 @{
-    ViewData["Title"] = "Cập nhật chức vụ";
+    ViewData["Title"] = "Cập nhật chức vụ & Phân quyền";
     Layout = "_Layout";
 }
 
 <div class="container py-4">
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-md-8"> @* Tăng độ rộng cột để chứa bảng quyền *@
             <div class="card shadow-sm">
                 <div class="card-header bg-warning">
                     <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Cập nhật chức vụ</h4>
@@ -17,27 +17,118 @@
                         <input type="hidden" asp-for="Id" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-                        <div class="mb-3">
-                            <label asp-for="Name" class="form-label">Tên chức vụ</label>
-                            <input asp-for="Name" class="form-control" />
-                            <span asp-validation-for="Name" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Salary" class="form-label">Lương cơ bản</label>
-                            <input asp-for="Salary" class="form-control" type="number" />
-                            <span asp-validation-for="Salary" class="text-danger"></span>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Name" class="form-label">Tên chức vụ</label>
+                                <input asp-for="Name" class="form-control" />
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Salary" class="form-label">Lương cơ bản</label>
+                                <input asp-for="Salary" class="form-control" type="number" />
+                                <span asp-validation-for="Salary" class="text-danger"></span>
+                            </div>
                         </div>
 
                         <div class="mb-3">
                             <label asp-for="Description" class="form-label">Mô tả</label>
-                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-                            <span asp-validation-for="Description" class="text-danger"></span>
+                            <textarea asp-for="Description" class="form-control" rows="2"></textarea>
                         </div>
 
-                        <div class="mt-4 pt-2 border-top">
+                        <hr />
+
+                        <h5 class="mb-3 text-primary"><i class="bi bi-shield-lock"></i> Phân quyền truy cập</h5>
+
+                        @if (Model.AllPermissions != null && Model.AllPermissions.Any())
+                        {
+
+                            var permissionGroups = Model.AllPermissions
+                            .GroupBy(p => p.PermissionName.Contains('.') ? p.PermissionName.Split('.')[0] : "Other")
+                            .OrderBy(g => g.Key);
+
+                            var moduleNames = new Dictionary<string, string>
+                                                {
+                                                { "Order", "Quản lý Đơn hàng (Order)" },
+                                                { "Book", "Quản lý Sách (Book)" },
+                                                { "Category", "Quản lý Danh mục (Category)" },
+                                                { "Supplier", "Quản lý Nhà cung cấp (Supplier)" },
+                                                { "Author", "Quản lý Tác giả (Author)" },
+                                                { "Publisher", "Quản lý NXB (Publisher)" },
+                                                { "Customer", "Quản lý Khách hàng (Customer)" },
+                                                { "Report", "Báo cáo & Thống kê (Report)" },
+                                                { "User", "Quản lý Nhân viên (User)" },
+                                                { "Role", "Quản lý Chức vụ (Role)" },
+                                                { "Warehouse", "Quản lý Kho (Warehouse)" },
+                                                { "System", "Hệ thống (System)" },
+                                                { "Promotion", "Khuyến mãi (Promotion)" }
+                                                };
+
+                            <div class="accordion" id="permissionsAccordion">
+                                @foreach (var group in permissionGroups)
+                                {
+                                    // Lấy tên tiếng Việt, nếu không có thì dùng tên gốc
+                                    string groupDisplayName = moduleNames.ContainsKey(group.Key) ? moduleNames[group.Key] :
+                                    group.Key;
+                                    string collapseId = "collapse_" + group.Key; // ID duy nhất cho mỗi dropdown
+
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="heading_@group.Key">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                                data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
+                                                <strong>@groupDisplayName</strong>
+                                                <span class="badge bg-secondary ms-2">@group.Count() quyền</span>
+                                            </button>
+                                        </h2>
+                                        <div id="@collapseId" class="accordion-collapse collapse"
+                                            aria-labelledby="heading_@group.Key">
+                                            <div class="accordion-body">
+
+                                                <div class="form-check mb-3 border-bottom pb-2">
+                                                    <input class="form-check-input select-all-group" type="checkbox"
+                                                        data-group="@group.Key" id="selectAll_@group.Key">
+                                                    <label class="form-check-label fw-bold text-primary"
+                                                        for="selectAll_@group.Key">
+                                                        Chọn tất cả nhóm @groupDisplayName
+                                                    </label>
+                                                </div>
+
+                                                <div class="row">
+                                                    @foreach (var perm in group)
+                                                    {
+                                                        <div class="col-md-6">
+                                                            <div class="form-check mb-2">
+                                                                <input class="form-check-input perm-checkbox group-@group.Key"
+                                                                    type="checkbox" name="SelectedPermissionIds"
+                                                                    value="@perm.PermissionId" id="perm_@perm.PermissionId"
+                                                                    @(Model.SelectedPermissionIds.Contains(perm.PermissionId) ?
+                                                                                                                            "checked" : "")>
+
+                                                                <label class="form-check-label" for="perm_@perm.PermissionId">
+                                                                    <strong>@perm.PermissionName.Substring(perm.PermissionName.IndexOf('.')
+                                                                                                                                    + 1)</strong>
+                                                        <br />
+                                                        <small class="text-muted">@perm.Description</small>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                                                                        }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-secondary">
+                                Chưa có danh sách Quyền (Permissions) trong hệ thống.
+                            </div>
+                        }
+
+                        <div class="mt-4 pt-2 border-top d-flex gap-2">
                             <button type="submit" class="btn btn-warning">
-                                <i class="bi bi-save"></i> Cập nhật
+                                <i class="bi bi-save"></i> Lưu thay đổi
                             </button>
                             <a asp-action="Index" class="btn btn-secondary">
                                 <i class="bi bi-x-circle"></i> Hủy
@@ -55,3 +146,20 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var selectAllCheckboxes = document.querySelectorAll(".select-all-group");
+
+        selectAllCheckboxes.forEach(function (selectAllBox) {
+            selectAllBox.addEventListener("change", function () {
+                var groupKey = this.getAttribute("data-group");
+                var childCheckboxes = document.querySelectorAll(".group-" + groupKey);
+
+                childCheckboxes.forEach(function (childBox) {
+                    childBox.checked = selectAllBox.checked;
+                });
+            });
+        });
+    });
+</script>

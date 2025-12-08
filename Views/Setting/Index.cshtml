@@ -3,12 +3,55 @@
     ViewData["Title"] = "Cài đặt tài khoản";
 }
 
-<h2>@ViewData["Title"]</h2>
-<form asp-controller="Account" asp-action="Logout" method="post" class=" ">
-    <button type="submit"
-        class="logout-button btn btn-danger text-light px-4 py-2 d-flex flex-row align-items-center justify-content-center gap-2"
-        style="text-decoration:none;">
-        <i class="fa-solid fa-arrow-right-from-bracket" style="font-size: 24px"></i>
-        Đăng xuất
-    </button>
-</form>
+<div class="container mt-5">
+    <h2>@ViewData["Title"]</h2>
+
+    @* Hiển thị cảnh báo nếu TempData có dữ liệu (từ lúc Login) *@
+    @if (TempData["WarningMessage"] != null)
+    {
+        <div class="alert alert-warning border-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @TempData["WarningMessage"]
+        </div>
+    }
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-user-shield me-2"></i> Bảo mật
+        </div>
+        <div class="card-body">
+            <div class="row align-items-center mb-5 border-bottom-3">
+                <div class="col-md-8">
+                    <h5>Đổi mật khẩu</h5>
+                    <p class="text-muted mb-0">
+                        Để bảo mật, hệ thống sẽ gửi một liên kết xác nhận đến email của bạn:
+                        <strong>@User.Identity?.Name</strong>
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    @* Form gửi yêu cầu đổi mật khẩu *@
+                    <form asp-controller="Account" asp-action="RequestChangePassword" method="post">
+                        <button type="submit" class="btn btn-warning text-dark">
+                            <i class="fas fa-key me-1"></i> Gửi email đổi mật khẩu
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5>Đăng xuất</h5>
+                </div>
+                <div class="col-md-4 text-end">
+                    @* Form gửi yêu cầu đổi mật khẩu *@
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        <button type="submit" class="btn btn-danger text-light" style="text-decoration:none;">
+                            <i class="fa-solid fa-arrow-right-from-bracket" style="font-size: 24px"></i>
+                            Đăng xuất
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

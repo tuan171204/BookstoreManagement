@@ -20,15 +20,16 @@ namespace BookstoreManagement.Controllers
         public async Task<IActionResult> Index(string searchString)
         {
             ViewData["CurrentFilter"] = searchString;
-            TempData["CurrentFeature"] = "Customer"; // Để active menu nếu cần
-
+            TempData["CurrentFeature"] = "Customer"; 
             var query = _context.Customers.AsQueryable();
+
+            query = query.Where(c => c.Phone != "0000000000");
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                query = query.Where(c => c.FullName.Contains(searchString)
-                                      || c.Phone.Contains(searchString)
-                                      || c.Email.Contains(searchString));
+                query = query.Where(u => u.FullName.Contains(searchString)
+                                      || u.Email.Contains(searchString)
+                                      || u.Phone.Contains(searchString));
             }
 
             var customers = await query.OrderByDescending(c => c.CreatedAt).ToListAsync();
@@ -40,7 +41,11 @@ namespace BookstoreManagement.Controllers
         {
             if (id == null) return NotFound();
 
-            var customer = await _context.Customers.FindAsync(id);
+            var customer = await _context.Customers
+                .Include(c => c.Orders)
+                    .ThenInclude(o => o.OrderDetails)
+                .FirstOrDefaultAsync(m => m.CustomerId == id);
+
             if (customer == null) return NotFound();
 
             var viewModel = new CustomerViewModel
@@ -50,11 +55,14 @@ namespace BookstoreManagement.Controllers
                 Phone = customer.Phone,
                 Email = customer.Email,
                 Address = customer.Address,
-                IsActive = customer.IsActive
+                IsActive = customer.IsActive,
+
+                Orders = customer.Orders.OrderByDescending(o => o.OrderDate).ToList()
             };
 
             return View(viewModel);
         }
+
 
         [HttpGet]
         public IActionResult Create()
@@ -66,6 +74,7 @@ namespace BookstoreManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CustomerViewModel model)
         {
+            Console.WriteLine("Gọi đến action Create trong CustomerController ... ");
             if (ModelState.IsValid)
             {
                 var customer = new Customer
@@ -80,11 +89,21 @@ namespace BookstoreManagement.Controllers
                     UpdatedAt = DateTime.Now
                 };
 
+                Console.WriteLine("Khách hàng mới: ", customer.ToString());
+
                 _context.Add(customer);
                 await _context.SaveChangesAsync();
 
                 TempData["SuccessMessage"] = "Thêm khách hàng thành công!";
                 return RedirectToAction(nameof(Index));
+            }
+            else
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors);
+                foreach (var error in errors)
+                {
+                    Console.WriteLine($"Lỗi xác thực: {error.ErrorMessage}");
+                }
             }
             return View(model);
         }

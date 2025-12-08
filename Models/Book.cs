@@ -24,7 +24,7 @@ public partial class Book
 
     public int? StockQuantity { get; set; }
 
-    [Column(TypeName = "nvarchar(255)")]
+    [Column(TypeName = "nvarchar(500)")]
     public string? Description { get; set; }
 
     public int? LowStockThreshold { get; set; }
@@ -46,4 +46,7 @@ public partial class Book
     public virtual ICollection<Promotion> Promotions { get; set; } = new List<Promotion>();
 
     public virtual Publisher Publisher { get; set; } = null!;
+
+    public virtual ICollection<SupplierBook> SupplierBooks { get; set; } = new List<SupplierBook>();
+
 }

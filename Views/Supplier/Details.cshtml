@@ -1,0 +1,76 @@
+@model BookstoreManagement.Models.Supplier
+
+@{
+    ViewData["Title"] = "Chi tiết Nhà cung cấp";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Chi tiết Nhà cung cấp</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-action="Index">Danh sách</a></li>
+        <li class="breadcrumb-item active">Chi tiết</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-info-circle me-1"></i>
+            Thông tin: <strong>@Model.Name</strong>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Tên Nhà cung cấp:</dt>
+                <dd class="col-sm-9">@Model.Name</dd>
+
+                <dt class="col-sm-3">Thông tin liên hệ:</dt>
+                <dd class="col-sm-9">
+                    @if (!string.IsNullOrEmpty(Model.ContactInfo))
+                    {
+                        <a href="mailto:@Model.ContactInfo" class="text-decoration-none">@Model.ContactInfo</a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Chưa cập nhật</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3">Địa chỉ:</dt>
+                <dd class="col-sm-9">@(Model.Address ?? "Chưa cập nhật")</dd>
+
+                <dt class="col-sm-3">Trạng thái:</dt>
+                <dd class="col-sm-9">
+                    @if (Model.IsActive)
+                    {
+                        <span class="badge bg-success">Đang hoạt động</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Ngừng hoạt động</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3">Ngày tạo:</dt>
+                <dd class="col-sm-9">@Model.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                <dt class="col-sm-3">Cập nhật lần cuối:</dt>
+                <dd class="col-sm-9">@Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")</dd>
+            </dl>
+
+            @if (Model.SupplierBooks != null && Model.SupplierBooks.Any())
+            {
+                <hr />
+                <h5>Sách cung cấp (@Model.SupplierBooks.Count)</h5>
+                <ul>
+                    @foreach (var sb in Model.SupplierBooks)
+                    {
+                        <li>@sb.Book.Title (Giá nhập hiện tại: @sb.DefaultCostPrice?.ToString("N0") đ)</li>
+                    }
+                </ul>
+            }
+        </div>
+        <div class="card-footer">
+            <a asp-action="Edit" asp-route-id="@Model.SupplierId" class="btn btn-warning">Chỉnh sửa</a>
+            <a asp-action="Index" class="btn btn-secondary ms-2">Quay lại</a>
+        </div>
+    </div>
+</div>

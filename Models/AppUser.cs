@@ -20,6 +20,8 @@ public partial class AppUser : IdentityUser
     public DateTime? UpdatedAt { get; set; }
     public bool IsActive { get; set; } = true;
 
+    public bool IsDefaultPassword { get; set; } = true;
+
     public virtual ICollection<ExportTicket> ExportTickets { get; set; } = new List<ExportTicket>();
     public virtual ICollection<ImportTicket> ImportTickets { get; set; } = new List<ImportTicket>();
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();

@@ -1,0 +1,84 @@
+@model BookstoreManagement.ViewModels.Author.AuthorViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết tác giả";
+    var photoPath = "~/images/authors/" + (Model.ImageUrl ?? "no-image.png");
+}
+
+<div class="container py-4">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="bi bi-person-lines-fill me-2"></i>Hồ sơ tác giả</h4>
+            <div>
+                <a asp-action="Edit" asp-route-id="@Model.AuthorId" class="btn btn-sm btn-warning fw-bold">
+                    <i class="bi bi-pencil"></i> Sửa
+                </a>
+                <a asp-action="Index" class="btn btn-sm btn-light text-info fw-bold">
+                    <i class="bi bi-arrow-left"></i> Quay lại
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-md-3 text-center mb-3">
+                    <img src="@photoPath" asp-append-version="true" class="img-fluid rounded shadow"
+                        style="width: 100%; max-width: 250px; object-fit: cover; border: 5px solid #f8f9fa;" />
+                </div>
+
+                <div class="col-md-9">
+                    <h2 class="text-primary fw-bold mb-1">@Model.Name</h2>
+                    @if (!string.IsNullOrEmpty(Model.Pseudonym))
+                    {
+                        <h5 class="text-muted fst-italic mb-3">Bút danh: @Model.Pseudonym</h5>
+                    }
+                    else
+                    {
+                        <hr class="mt-2 mb-3" />
+                    }
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong><i class="bi bi-calendar-event me-1"></i> Ngày sinh:</strong><br />
+                            <span class="text-dark">@(Model.DateOfBirth?.ToString("dd/MM/yyyy") ?? "Chưa cập                       nhật")</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong><i class="bi bi-geo-alt me-1"></i> Quốc tịch:</strong><br />
+                            <span class="text-dark">@(Model.Nationality ?? "Chưa cập nhật")</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong><i class="bi bi-book me-1"></i> Số lượng sách:</strong><br />
+                            <span class="badge bg-success fs-6">@Model.BooksCount cuốn</span>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Website))
+                    {
+                        <div class="mb-3">
+                            <strong><i class="bi bi-globe me-1"></i> Website:</strong>
+                            <a href="@Model.Website" target="_blank" class="text-decoration-none">@Model.Website</a>
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <strong><i class="bi bi-file-text me-1"></i> Tiểu sử:</strong>
+                        <div class="p-3 bg-light rounded mt-2 border">
+                            @if (!string.IsNullOrEmpty(Model.Bio))
+                            {
+                                @Html.Raw(Model.Bio.Replace("\n", "<br>"))
+                            }
+                            else
+                            {
+                                <span class="text-muted">Chưa có thông tin tiểu sử.</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="text-end text-muted small">
+                        Ngày tạo: @(Model.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A") |
+                        Cập nhật lần cuối: @(Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

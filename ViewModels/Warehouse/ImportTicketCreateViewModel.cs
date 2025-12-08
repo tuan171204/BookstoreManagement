@@ -20,6 +20,8 @@ namespace BookstoreManagement.ViewModels.Warehouse
         // Đây là ViewModel chính cho View "Create"
         public class ImportTicketCreateViewModel
         {
+
+            
             // === Phần 1: Thông tin Master (ImportTicket) ===
             [Required(ErrorMessage = "Vui lòng chọn nhà cung cấp")]
             public int SupplierId { get; set; }

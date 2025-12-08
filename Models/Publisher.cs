@@ -14,8 +14,21 @@ public partial class Publisher
     [Column(TypeName = "nvarchar(255)")]
     public string? Address { get; set; }
 
-    public DateTime? CreatedAt { get; set; }
+    [Column(TypeName = "varchar(20)")]
+    public string? Phone { get; set; }
 
+    [Column(TypeName = "varchar(100)")]
+    public string? Email { get; set; }
+
+    [Column(TypeName = "nvarchar(255)")]
+    public string? Website { get; set; }
+
+    public string? ImageUrl { get; set; }
+
+    [Column(TypeName = "nvarchar(max)")]
+    public string? Description { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 
     public virtual ICollection<Book> Books { get; set; } = new List<Book>();

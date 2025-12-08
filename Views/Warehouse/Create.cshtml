@@ -94,11 +94,11 @@
         </td>
         <td>
             <input type="number" name="Details[__INDEX__].Quantity" class="form-control quantity-input" value="1"
-                   min="1" required />
+                min="1" required />
         </td>
         <td>
             <input type="number" name="Details[__INDEX__].CostPrice" class="form-control cost-input cost-price-input"
-                   value="0" min="0" step="1" required readonly />
+                value="0" min="0" step="1" required readonly />
         </td>
         <td>
             <strong class="subtotal">0 VNĐ</strong>
@@ -122,14 +122,14 @@
             let rowIndex = 0;
             window.supplierBooksData = [];
 
-            $('#SupplierId').on('change', function() {
+            $('#SupplierId').on('change', function () {
                 var supplierId = $(this).val();
 
                 $("#detailsValidation").text("");
                 $("#addBookRow").prop('disabled', true);
                 window.supplierBooksData = [];
 
-                $("#bookDetailsBody tr").each(function() {
+                $("#bookDetailsBody tr").each(function () {
                     lockRowFields($(this));
                 });
 
@@ -138,7 +138,7 @@
                         url: '@Url.Action("GetBooksBySupplier", "Warehouse")',
                         type: 'GET',
                         data: { supplierId: supplierId },
-                        success: function(data) {
+                        success: function (data) {
                             if (data && data.length > 0) {
                                 window.supplierBooksData = data;
 
@@ -151,7 +151,7 @@
                                 $("#detailsValidation").text("Nhà cung cấp này chưa có sách được định giá. Vui lòng chọn nhà cung cấp khác.");
                             }
                         },
-                        error: function() {
+                        error: function () {
                             alert("Lỗi khi tải danh sách sách từ nhà cung cấp.");
                         }
                     });
@@ -170,8 +170,8 @@
 
             function renderBookDropdown(dropdownElement) {
                 var options = '<option value="">-- Chọn Sách --</option>';
-                $.each(window.supplierBooksData, function(index, item) {
-                  
+                $.each(window.supplierBooksData, function (index, item) {
+
                     options += '<option value="' + item.bookId + '" data-price="' + item.costPrice + '">' + item.title + '</option>';
                 });
 
@@ -190,7 +190,7 @@
                 let newRow = $("<tr>" + template + "</tr>");
                 $("#bookDetailsBody").append(newRow);
 
-       
+
                 renderBookDropdown(newRow.find(".book-dropdown"));
 
                 newRow.find(".book-dropdown").prop('disabled', false);
@@ -202,7 +202,7 @@
             });
 
             $("#bookDetailsBody").on("click", ".remove-row", function () {
-           
+
                 if (!$(this).prop('disabled')) {
                     $(this).closest("tr").remove();
                     updateTotalCost();
@@ -216,16 +216,16 @@
                 let costPriceInput = row.find(".cost-input");
 
                 if (costPrice !== undefined) {
-                 
+
                     costPriceInput.val(costPrice);
-                  
+
                     costPriceInput.removeClass('form-control').addClass('form-control-plaintext');
                 } else {
-                  
+
                     costPriceInput.val(0);
                     costPriceInput.removeClass('form-control').addClass('form-control-plaintext');
                 }
-               
+
                 costPriceInput.trigger('input');
             });
 
@@ -238,14 +238,14 @@
 
                 row.find(".subtotal").text(subtotal.toLocaleString('vi-VN') + " VNĐ");
 
-              
+
                 updateTotalCost();
             });
 
             function updateTotalCost() {
                 let total = 0;
                 $("#bookDetailsBody tr").each(function () {
-                
+
                     let quantity = parseInt($(this).find(".quantity-input").val()) || 0;
                     let costPrice = parseFloat($(this).find(".cost-input").val()) || 0;
                     total += quantity * costPrice;

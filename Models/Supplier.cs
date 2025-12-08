@@ -18,7 +18,11 @@ public partial class Supplier
 
     public DateTime? UpdatedAt { get; set; }
 
-    public bool? IsActive { get; set; }
+    public bool IsActive { get; set; } = true;
 
     public virtual ICollection<ImportTicket> ImportTickets { get; set; } = new List<ImportTicket>();
+
+    public virtual ICollection<SupplierBook> SupplierBooks { get; set; } = new List<SupplierBook>();
+
+
 }

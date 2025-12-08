@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using BookstoreManagement.Models;
 
 namespace BookstoreManagement.ViewModels.Role
 {
@@ -16,5 +17,10 @@ namespace BookstoreManagement.ViewModels.Role
         [Display(Name = "Lương cơ bản")]
         [Range(0, double.MaxValue, ErrorMessage = "Lương phải lớn hơn hoặc bằng 0")]
         public decimal Salary { get; set; }
+
+        public List<Permission>? AllPermissions { get; set; }
+
+        // Danh sách ID các quyền đã được chọn cho Role này
+        public List<int> SelectedPermissionIds { get; set; } = new List<int>();
     }
 }
