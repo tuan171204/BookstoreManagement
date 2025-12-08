@@ -56,5 +56,7 @@ namespace BookstoreManagement.ViewModels.Book
 
         [Display(Name = "Trạng thái")]
         public string Status => IsDeleted == true ? "Đã xóa" : "Hoạt động";
+
+        public List<string> CategoryNames { get; set; } = new List<string>();
     }
 }

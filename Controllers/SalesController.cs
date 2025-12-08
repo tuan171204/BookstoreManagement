@@ -15,16 +15,14 @@ namespace BookstoreManagement.Controllers
             _context = context;
         }
 
-        // ============================================================
         // 1. CÁC ACTION TRẢ VỀ GIAO DIỆN
-        // ============================================================
         [HttpGet]
         public IActionResult Index()
         {
             ViewBag.Categories = _context.Categories.OrderBy(c => c.Name).ToList();
 
             ViewBag.Employees = _context.Users
-                .Where(u => u.IsActive == true) // Chỉ lấy nhân viên đang hoạt động
+                .Where(u => u.IsActive == true) 
                 .Select(u => new { u.Id, u.FullName })
                 .OrderBy(x => x.FullName)
                 .ToList();
@@ -35,7 +33,6 @@ namespace BookstoreManagement.Controllers
                 .Take(20)
                 .Select(b => new
                 {
-                    // SỬA: Dùng chữ thường cho đồng bộ JS
                     id = b.BookId,
                     title = b.Title,
                     price = b.Price,
@@ -60,9 +57,7 @@ namespace BookstoreManagement.Controllers
             return View(orders);
         }
 
-        // ============================================================
         // 2. API TÌM KIẾM & DỮ LIỆU HỖ TRỢ
-        // ============================================================
         [HttpGet]
         public IActionResult SearchBooks(string term, int? categoryId)
         {
@@ -87,7 +82,6 @@ namespace BookstoreManagement.Controllers
                     title = b.Title,
                     price = b.Price,
                     stock = b.StockQuantity ?? 0,
-                    //isbn = b.SKU ?? "",
                     imageUrl = b.ImageUrl
                 })
                 .Take(10).ToList();
@@ -114,7 +108,6 @@ namespace BookstoreManagement.Controllers
                     min = p.MinPurchaseAmount ?? 0,
                     giftName = p.GiftBook != null ? p.GiftBook.Title : "",
                     giftStock = p.GiftBook != null ? (p.GiftBook.StockQuantity ?? 0) : 0,
-                    // THÊM: Lấy giá bán của sách tặng
                     giftPrice = p.GiftBook != null ? p.GiftBook.Price : 0
                 }).ToList();
 
@@ -156,9 +149,7 @@ namespace BookstoreManagement.Controllers
             return Json(customers);
         }
 
-        // ============================================================
         // 3. API THANH TOÁN (CHECKOUT)
-        // ============================================================
         [HttpPost]
         public async Task<IActionResult> Checkout([FromBody] CheckoutRequest request)
         {
@@ -168,7 +159,7 @@ namespace BookstoreManagement.Controllers
             using var transaction = _context.Database.BeginTransaction();
             try
             {
-                // A. XỬ LÝ KHÁCH HÀNG
+                // XỬ LÝ KHÁCH HÀNG
                 Customer customer;
                 string phone = string.IsNullOrWhiteSpace(request.CustomerPhone) ? "00000000" : request.CustomerPhone.Trim();
                 string name = string.IsNullOrWhiteSpace(request.CustomerName) ? "khách lẻ" : request.CustomerName.Trim();
@@ -198,11 +189,10 @@ namespace BookstoreManagement.Controllers
                     }
                 }
 
-                // --- B. XỬ LÝ NHÂN VIÊN BÁN HÀNG (MỚI) ---
-                // Ưu tiên lấy ID nhân viên từ Dropdown
+                // B. XỬ LÝ NHÂN VIÊN BÁN HÀNG (MỚI)
                 string userId = request.EmployeeId;
 
-                // Nếu không chọn (hoặc null), fallback về người đang đăng nhập
+                // Nếu không chọn (hoặc null), fallback về user đang đăng nhập
                 if (string.IsNullOrEmpty(userId))
                 {
                     userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -216,7 +206,7 @@ namespace BookstoreManagement.Controllers
 
                 int paymentMethodId = (request.PaymentMethod == "Transfer") ? 2 : 1;
 
-                // C. TẠO ORDER
+                // TẠO ORDER
                 var order = new Order
                 {
                     CustomerId = customer.CustomerId,
@@ -233,10 +223,10 @@ namespace BookstoreManagement.Controllers
                 _context.Orders.Add(order);
                 await _context.SaveChangesAsync();
 
-                // D. TẠO PHIẾU XUẤT KHO
+                // TẠO PHIẾU XUẤT KHO
                 var exportTicket = new ExportTicket
                 {
-                    UserId = userId, // Lưu người xuất kho
+                    UserId = userId, 
                     ReferenceId = order.OrderId,
                     Date = DateTime.Now,
                     Status = "Completed",
@@ -247,7 +237,7 @@ namespace BookstoreManagement.Controllers
                 };
                 _context.ExportTickets.Add(exportTicket);
 
-                // E. CHI TIẾT
+                // CHI TIẾT
                 decimal subTotal = 0;
                 int totalQty = 0;
 
@@ -269,7 +259,7 @@ namespace BookstoreManagement.Controllers
                     totalQty += item.Quantity;
                 }
 
-                // F. KHUYẾN MÃI
+                // KHUYẾN MÃI
                 decimal discountVal = 0;
                 if (order.PromotionId != null)
                 {
@@ -321,12 +311,11 @@ namespace BookstoreManagement.Controllers
             }
         }
 
-        // --- Class DTO ---
         public class CheckoutRequest
         {
             public string? CustomerPhone { get; set; }
             public string? CustomerName { get; set; }
-            public string? EmployeeId { get; set; } // <--- THÊM TRƯỜNG NÀY
+            public string? EmployeeId { get; set; } 
             public int PromotionId { get; set; }
             public string? PaymentMethod { get; set; }
             public List<CartItemRequest>? CartItems { get; set; }

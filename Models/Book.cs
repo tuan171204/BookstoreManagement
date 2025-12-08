@@ -48,4 +48,5 @@ public partial class Book
     public virtual Publisher Publisher { get; set; } = null!;
 
     public virtual ICollection<SupplierBook> SupplierBooks { get; set; } = new List<SupplierBook>();
+
 }

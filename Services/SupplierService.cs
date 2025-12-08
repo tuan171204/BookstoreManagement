@@ -11,13 +11,11 @@ namespace BookstoreManagement.Services
     {
         private readonly BookstoreContext _context;
 
-        // Dùng chính xác tên DbContext của bạn
         public SupplierService(BookstoreContext context)
         {
             _context = context;
         }
 
-        // Lấy tất cả (Chỉ lấy các nhà cung cấp đang hoạt động)
         public async Task<List<Supplier>> GetAllSuppliersAsync()
         {
             return await _context.Suppliers
@@ -26,7 +24,7 @@ namespace BookstoreManagement.Services
                                  .ToListAsync();
         }
 
-        // Lấy theo ID
+        // GetByID
         public async Task<Supplier> GetSupplierByIdAsync(int id)
         {
             // Vẫn cho phép lấy supplier đã bị "ẩn" để xem/chỉnh sửa
@@ -38,7 +36,7 @@ namespace BookstoreManagement.Services
         {
             supplier.CreatedAt = DateTime.Now;
             supplier.UpdatedAt = DateTime.Now;
-            supplier.IsActive = true; // Đặt là true khi tạo mới
+            supplier.IsActive = true;
 
             _context.Suppliers.Add(supplier);
             await _context.SaveChangesAsync();
@@ -53,7 +51,7 @@ namespace BookstoreManagement.Services
                 existingSupplier.Name = supplier.Name;
                 existingSupplier.ContactInfo = supplier.ContactInfo;
                 existingSupplier.Address = supplier.Address;
-                existingSupplier.IsActive = supplier.IsActive; // Cho phép cập nhật trạng thái
+                existingSupplier.IsActive = supplier.IsActive;
                 existingSupplier.UpdatedAt = DateTime.Now;
 
                 _context.Suppliers.Update(existingSupplier);
@@ -67,9 +65,9 @@ namespace BookstoreManagement.Services
             var supplier = await _context.Suppliers.FindAsync(id);
             if (supplier != null)
             {
-                supplier.IsActive = false; // Đặt là false
+                supplier.IsActive = false;
                 supplier.UpdatedAt = DateTime.Now;
-                _context.Suppliers.Update(supplier); // Dùng Update, không dùng Remove
+                _context.Suppliers.Update(supplier);
                 await _context.SaveChangesAsync();
             }
         }

@@ -1,0 +1,158 @@
+@model IEnumerable<BookstoreManagement.Models.Category>
+
+@{
+    ViewData["Title"] = "Quản lý Thể loại sách";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="bi bi-tags"></i> Quản lý Thể loại sách</h2>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Thêm thể loại mới
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="row g-3">
+                <div class="col-md-10">
+                    <input type="text" name="searchString" class="form-control"
+                        placeholder="Nhập tên thể loại để tìm kiếm..." value="@ViewData["CurrentFilter"]" />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Tìm kiếm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 25%">Tên thể loại</th>
+                            <th style="width: 40%">Mô tả</th>
+                            <th style="width: 15%">Ngày tạo</th>
+                            <th style="width: 10%">Ngày cập nhật</th>
+                            <th class="text-center" style="width: 10%">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="fw-bold text-primary">@item.Name</span>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.Description))
+                                        {
+                                            <span>@item.Description</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Chưa có mô tả</span>
+                                        }
+                                    </td>
+                                    <td class="small">@item.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="small">@item.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-action="Edit" asp-route-id="@item.CategoryId" class="btn btn-warning"
+                                                title="Sửa">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-danger" title="Xóa"
+                                                onclick="showDeleteModal(@item.CategoryId, '@Url.Action("Delete", "Category")', '@item.Name')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    Chưa có dữ liệu thể loại nào
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_DeleteModal")
+
+@section Scripts {
+    <form id="deleteForm">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <script>
+        // Tái sử dụng script xóa giống Book/Index
+        let deleteId = null;
+        let deleteUrl = null;
+
+        function showDeleteModal(id, url, itemName) {
+            deleteId = id;
+            deleteUrl = url;
+            document.getElementById('deleteMessage').textContent =
+                `Bạn có chắc chắn muốn xóa thể loại "${itemName}"? Hành động này không thể hoàn tác.`;
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+            if (deleteUrl && deleteId) {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                const formData = new FormData();
+                formData.append('id', deleteId);
+
+                fetch(deleteUrl, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token },
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        var deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                        deleteModal.hide();
+                        if (data.success) {
+                            alert(data.message);
+                            location.reload();
+                        } else {
+                            alert(data.message); // Hiển thị lỗi nếu đang có sách thuộc thể loại này
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Có lỗi xảy ra khi xóa.');
+                    });
+            }
+        });
+    </script>
+}

@@ -337,10 +337,60 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="qrModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-qrcode me-2"></i>Thanh toán Chuyển khoản</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <h6 class="text-danger fw-bold mb-3 animate__animated animate__pulse animate__infinite">
+                    Vui lòng quét mã để thanh toán
+                </h6>
+
+                <div class="position-relative d-inline-block">
+                    <img id="vietqr-image" src="" alt="QR Code"
+                        class="img-fluid border border-2 border-primary rounded p-2 mb-3 shadow"
+                        style="max-width: 300px; min-height: 300px;">
+                    <div id="qr-loading" class="position-absolute top-50 start-50 translate-middle"
+                        style="display:none;">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+
+                <h3 class="text-primary fw-bold mb-0" id="qr-amount">0 đ</h3>
+                <div class="text-muted small mt-1">Chủ TK: <b id="qr-name">...</b></div>
+                <div class="text-muted small">Nội dung: <b id="qr-content">...</b></div>
+
+                <div class="alert alert-warning mt-3 mb-0 small text-start">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Sau khi khách hàng chuyển khoản thành công, vui lòng kiểm tra tin nhắn ngân hàng rồi bấm nút <b>"Xác
+                        nhận đã thu tiền"</b> bên dưới.
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                <button type="button" class="btn btn-success btn-lg px-4" onclick="confirmTransferSuccess()">
+                    <i class="fas fa-check-circle me-2"></i> XÁC NHẬN ĐÃ THU TIỀN
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         var cart = [];
         var initialBooks = @Html.Raw(ViewBag.InitialBooksJson ?? "[]");
+
+        const MY_BANK = {
+            BANK_ID: 'BIDV',        // Mã ngân hàng (BIDV, VCB, MB...)
+            ACCOUNT_NO: '1170206622', // Số tài khoản của bạn
+            ACCOUNT_NAME: 'Văn Thành Thiện', // Tên chủ tài khoản (Viết hoa không dấu)
+            TEMPLATE: 'compact'     // Giao diện QR (compact, print, qr_only)
+        };
 
         $(document).ready(function () {
             loadPromotions();
@@ -385,13 +435,13 @@
                     '<div class="out-of-stock-badge">HẾT HÀNG</div>'
                     :
                     ''}<img src="${imgUrl}"
-                                                 alt="${title}"
-                                                 onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
-                                        <div class="book-info">
-                                        <div class="book-title" title="${title}">${title}
-                                        </div>
-                                        <div class="book-price">${price.toLocaleString('vi-VN')} đ</div>
-                                        <small class="text-${isOutOfStock ? 'muted' : 'success'}" style="font-size: 0.75rem;">${isOutOfStock ? 'Tạm hết' : 'Có sẵn: ' + stock}</small></div></div>`;
+                                                                     alt="${title}"
+                                                                     onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
+                                                            <div class="book-info">
+                                                            <div class="book-title" title="${title}">${title}
+                                                            </div>
+                                                            <div class="book-price">${price.toLocaleString('vi-VN')} đ</div>
+                                                            <small class="text-${isOutOfStock ? 'muted' : 'success'}" style="font-size: 0.75rem;">${isOutOfStock ? 'Tạm hết' : 'Có sẵn: ' + stock}</small></div></div>`;
                 grid.append(html);
             });
         }
@@ -473,12 +523,102 @@
         function searchBooks() { var k = $('#txtSearchBook').val(); var c = $('#ddlCategory').val(); if (!k && c == 0) { renderProductGrid(initialBooks); return; } $.get('/Sales/SearchBooks', { term: k, categoryId: c }, function (data) { renderProductGrid(data); }); }
 
         function handleCheckout() {
+            // 1. Kiểm tra giỏ hàng
             if (cart.length === 0) { showToast('Giỏ hàng trống!', 'warning'); return; }
+
+            // 2. Kiểm tra điều kiện KM
             var sel = $('#ddlPromotion option:selected'); var min = parseFloat(sel.attr('data-min')) || 0; var sub = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
             if (sel.val() > 0 && sub < min) { alert(`Đơn chưa đủ ĐK! Min: ${min.toLocaleString()}đ`); return; }
-            if (!confirm('Thanh toán?')) return;
-            var payload = { CustomerPhone: $('#txtCustomerPhone').val(), CustomerName: $('#txtCustomerName').val(), PromotionId: parseInt(sel.val()) || 0, PaymentMethod: $('#ddlPaymentMethod').val(), CartItems: cart.map(x => ({ BookId: x.id, Title: x.title, Quantity: x.quantity })) };
-            $.ajax({ url: '/Sales/Checkout', type: 'POST', contentType: 'application/json', data: JSON.stringify(payload), success: function (res) { if (res.success) { alert('✅ ' + res.message); location.reload(); } else alert('❌ ' + res.message); }, error: function () { alert('Lỗi kết nối!'); } });
+
+            // 3. Lấy phương thức thanh toán
+            var paymentMethod = $('#ddlPaymentMethod').val();
+
+            // NẾU LÀ CHUYỂN KHOẢN -> HIỆN QR
+            if (paymentMethod === 'Transfer') {
+                showQRCode();
+            } else {
+                // NẾU LÀ TIỀN MẶT -> XÁC NHẬN RỒI LƯU
+                if (confirm('Xác nhận thanh toán TIỀN MẶT?')) {
+                    submitOrder();
+                }
+            }
+        }
+
+        // --- HÀM HIỆN QR CODE ---
+        function showQRCode() {
+            // Lấy tổng tiền (lọc bỏ chữ đ và dấu chấm)
+            var totalText = $('#lblFinalTotal').text();
+            var amount = parseInt(totalText.replace(/\D/g, ''));
+
+            if (amount <= 0) { alert("Số tiền không hợp lệ!"); return; }
+
+            // Tạo nội dung chuyển khoản ngẫu nhiên (hoặc theo mã đơn)
+            var orderInfo = "DH" + Math.floor(Math.random() * 1000000);
+
+            // Tạo Link VietQR
+            var qrUrl = `https://img.vietqr.io/image/${MY_BANK.BANK_ID}-${MY_BANK.ACCOUNT_NO}-${MY_BANK.TEMPLATE}.png?amount=${amount}&addInfo=${orderInfo}&accountName=${encodeURIComponent(MY_BANK.ACCOUNT_NAME)}`;
+
+            // Gán dữ liệu vào Modal
+            $('#vietqr-image').attr('src', qrUrl);
+            $('#qr-amount').text(totalText);
+            $('#qr-content').text(orderInfo);
+            $('#qr-name').text(MY_BANK.ACCOUNT_NAME);
+
+            // Hiện Modal
+            var myModal = new bootstrap.Modal(document.getElementById('qrModal'));
+            myModal.show();
+        }
+
+        // --- HÀM XÁC NHẬN ĐÃ THU TIỀN TỪ QR ---
+        function confirmTransferSuccess() {
+            // Ẩn modal QR
+            var modalEl = document.getElementById('qrModal');
+            var modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+            // Gọi hàm lưu đơn
+            submitOrder();
+        }
+
+        // --- HÀM GỬI ĐƠN HÀNG VỀ SERVER (AJAX) ---
+        function submitOrder() {
+            var sel = $('#ddlPromotion option:selected');
+
+            var payload = {
+                CustomerPhone: $('#txtCustomerPhone').val(),
+                CustomerName: $('#txtCustomerName').val(),
+
+                // --- THÊM DÒNG NÀY ĐỂ GỬI ID NHÂN VIÊN ---
+                EmployeeId: $('#ddlEmployee').val(),
+                // ---------------------------------------
+
+                PromotionId: parseInt(sel.val()) || 0,
+                PaymentMethod: $('#ddlPaymentMethod').val(),
+                CartItems: cart.map(x => ({ BookId: x.id, Title: x.title, Quantity: x.quantity }))
+            };
+
+            // Hiển thị loading (tùy chọn)
+            $('#btnPay').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Đang xử lý...');
+
+            $.ajax({
+                url: '/Sales/Checkout',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function (res) {
+                    $('#btnPay').prop('disabled', false).html('Thanh toán ngay <i class="fas fa-arrow-right ms-2"></i>');
+                    if (res.success) {
+                        alert('✅ ' + res.message);
+                        location.reload();
+                    } else {
+                        alert('❌ ' + res.message);
+                    }
+                },
+                error: function () {
+                    $('#btnPay').prop('disabled', false).html('Thanh toán ngay <i class="fas fa-arrow-right ms-2"></i>');
+                    alert('Lỗi kết nối Server!');
+                }
+            });
         }
 
         function showToast(msg, type = 'success') { var c = $('#toast-container'); var cls = type === 'success' ? '' : 'warning'; var icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; var t = $(`<div class="toast-message ${cls}"><i class="fas ${icon} me-2"></i> ${msg}</div>`); c.append(t); setTimeout(() => t.remove(), 3000); }

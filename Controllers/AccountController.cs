@@ -187,23 +187,18 @@ namespace BookstoreManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RequestChangePassword()
         {
-            // 1. Lấy user hiện tại
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login");
 
-            // 2. Tạo token reset password
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            // 3. Tạo link callback (trỏ về action ResetPassword có sẵn)
             var resetLink = Url.Action("ResetPassword", "Account",
                 new { token = token, email = user.Email },
                 protocol: Request.Scheme);
 
-            // 4. Gửi Email
             await _emailSender.SendEmailAsync(user.Email, "Yêu cầu đổi mật khẩu",
                 $"<p>Bạn đã yêu cầu đổi mật khẩu. Nhấn vào <a href='{resetLink}'>đây</a> để thiết lập mật khẩu mới.</p>");
 
-            // 5. Chuyển hướng đến trang thông báo (Tái sử dụng View xác nhận quên mật khẩu hoặc tạo mới)
             return View("ForgotPasswordConfirmation");
         }
     }

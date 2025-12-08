@@ -32,16 +32,15 @@ namespace BookstoreManagement.Controllers
 			if (statusCode == 404)
 			{
 				ViewBag.ErrorMessage = "Xin lỗi, trang bạn tìm không tồn tại.";
-				return View("NotFound"); // Trả về view NotFound
+				return View("NotFound"); 
 			}
 
 			if (statusCode == 403)
 			{
 				ViewBag.ErrorMessage = "Xin lỗi, bạn không có quyền truy cập tính năng này.";
-				return View("AccessDenied"); // Trả về view AccessDenied
+				return View("AccessDenied"); 
 			}
 
-			// Xử lý các lỗi khác như 500, v.v.
 			return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
 		}
 

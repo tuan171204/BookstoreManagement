@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace BookstoreManagement.Controllers
 {
@@ -146,7 +145,7 @@ namespace BookstoreManagement.Controllers
                 user.IsActive = model.IsActive;
                 user.UpdatedAt = DateTime.Now;
 
-                // Nếu cho phép sửa Email thì bỏ comment dòng dưới 
+                // Nếu cho sửa Email thì bỏ comment dòng dưới 
                 // user.Email = model.Email; 
                 // user.UserName = model.Email;
 

@@ -26,32 +26,32 @@ builder.Services.AddScoped<ReportService>();
 
 builder.Services.AddAuthorization(options =>
 {
-	// 1. Quản lý Đơn hàng (Order)
+	// Quản lý Đơn hàng (Order)
 	options.AddPolicy("Order.View", policy => policy.RequireClaim("Permission", "Order.View"));
 	options.AddPolicy("Order.Create", policy => policy.RequireClaim("Permission", "Order.Create"));
 	options.AddPolicy("Order.Update", policy => policy.RequireClaim("Permission", "Order.Update"));
 	options.AddPolicy("Order.Delete", policy => policy.RequireClaim("Permission", "Order.Delete"));
 	options.AddPolicy("Order.Approve", policy => policy.RequireClaim("Permission", "Order.Approve"));
 
-	// 2. Quản lý Sách (Book)
+	// Quản lý Sách (Book)
 	options.AddPolicy("Book.View", policy => policy.RequireClaim("Permission", "Book.View"));
 	options.AddPolicy("Book.Create", policy => policy.RequireClaim("Permission", "Book.Create"));
 	options.AddPolicy("Book.Update", policy => policy.RequireClaim("Permission", "Book.Update"));
 	options.AddPolicy("Book.Delete", policy => policy.RequireClaim("Permission", "Book.Delete"));
 
-	// 3. Quản lý Tác giả (Author) - MỚI
+	// Quản lý Tác giả (Author) - MỚI
 	options.AddPolicy("Author.View", policy => policy.RequireClaim("Permission", "Author.View"));
 	options.AddPolicy("Author.Create", policy => policy.RequireClaim("Permission", "Author.Create"));
 	options.AddPolicy("Author.Update", policy => policy.RequireClaim("Permission", "Author.Update"));
 	options.AddPolicy("Author.Delete", policy => policy.RequireClaim("Permission", "Author.Delete"));
 
-	// 4. Quản lý Nhà xuất bản (Publisher) - MỚI
+	// Quản lý Nhà xuất bản (Publisher) - MỚI
 	options.AddPolicy("Publisher.View", policy => policy.RequireClaim("Permission", "Publisher.View"));
 	options.AddPolicy("Publisher.Create", policy => policy.RequireClaim("Permission", "Publisher.Create"));
 	options.AddPolicy("Publisher.Update", policy => policy.RequireClaim("Permission", "Publisher.Update"));
 	options.AddPolicy("Publisher.Delete", policy => policy.RequireClaim("Permission", "Publisher.Delete"));
 
-	// 5. Quản lý Danh mục & Nhà cung cấp (Category/Supplier)
+	// Quản lý Danh mục & Nhà cung cấp (Category/Supplier)
 	options.AddPolicy("Category.Manage", policy => policy.RequireClaim("Permission", "Category.Manage"));
 
 	options.AddPolicy("Supplier.View", policy => policy.RequireClaim("Permission", "Supplier.View"));
@@ -60,37 +60,37 @@ builder.Services.AddAuthorization(options =>
 	options.AddPolicy("Supplier.Delete", policy => policy.RequireClaim("Permission", "Supplier.Delete"));
 	options.AddPolicy("Supplier.Manage", policy => policy.RequireClaim("Permission", "Supplier.Manage"));
 
-	// 6. Quản lý Khách hàng (Customer) - MỚI
+	// Quản lý Khách hàng (Customer) - MỚI
 	options.AddPolicy("Customer.View", policy => policy.RequireClaim("Permission", "Customer.View"));
 	options.AddPolicy("Customer.Create", policy => policy.RequireClaim("Permission", "Customer.Create"));
 	options.AddPolicy("Customer.Update", policy => policy.RequireClaim("Permission", "Customer.Update"));
 	options.AddPolicy("Customer.Delete", policy => policy.RequireClaim("Permission", "Customer.Delete"));
 
-	// 7. Quản lý Khuyến mãi (Promotion) - MỚI
+	// Quản lý Khuyến mãi (Promotion) - MỚI
 	options.AddPolicy("Promotion.View", policy => policy.RequireClaim("Permission", "Promotion.View"));
 	options.AddPolicy("Promotion.Create", policy => policy.RequireClaim("Permission", "Promotion.Create"));
 	options.AddPolicy("Promotion.Update", policy => policy.RequireClaim("Permission", "Promotion.Update"));
 	options.AddPolicy("Promotion.Delete", policy => policy.RequireClaim("Permission", "Promotion.Delete"));
 
-	// 8. Quản lý Kho (Warehouse) - MỚI
+	// Quản lý Kho (Warehouse) - MỚI
 	options.AddPolicy("Warehouse.View", policy => policy.RequireClaim("Permission", "Warehouse.View"));
 	options.AddPolicy("Warehouse.Import", policy => policy.RequireClaim("Permission", "Warehouse.Import"));
 	options.AddPolicy("Warehouse.Export", policy => policy.RequireClaim("Permission", "Warehouse.Export"));
 
-	// 9. Báo cáo (Report)
+	// Báo cáo (Report)
 	options.AddPolicy("Report.View", policy => policy.RequireClaim("Permission", "Report.View"));
 	options.AddPolicy("Report.Revenue", policy => policy.RequireClaim("Permission", "Report.Revenue"));
 	options.AddPolicy("Report.Inventory", policy => policy.RequireClaim("Permission", "Report.Inventory"));
 	options.AddPolicy("Report.Export", policy => policy.RequireClaim("Permission", "Report.Export"));
 
-	// 10. Quản lý Người dùng & Chức vụ (User/Role)
+	// Quản lý Người dùng & Chức vụ (User/Role)
 	options.AddPolicy("User.View", policy => policy.RequireClaim("Permission", "User.View"));
 	options.AddPolicy("User.Create", policy => policy.RequireClaim("Permission", "User.Create"));
 	options.AddPolicy("User.Update", policy => policy.RequireClaim("Permission", "User.Update"));
 	options.AddPolicy("User.Delete", policy => policy.RequireClaim("Permission", "User.Delete"));
 	options.AddPolicy("Role.Manage", policy => policy.RequireClaim("Permission", "Role.Manage"));
 
-	// 11. Cấu hình hệ thống (Settings)
+	// Cấu hình hệ thống (Settings)
 	options.AddPolicy("System.Settings", policy => policy.RequireClaim("Permission", "System.Settings"));
 });
 

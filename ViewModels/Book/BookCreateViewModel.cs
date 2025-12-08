@@ -57,5 +57,9 @@ namespace BookstoreManagement.ViewModels.Book
         // Dropdown lists
         public List<SelectListItem>? Authors { get; set; }
         public List<SelectListItem>? Publishers { get; set; }
+
+        public List<SelectListItem>? Categories { get; set; }
+
+        public List<int>? SelectedCategoryIds { get; set; }
     }
 }

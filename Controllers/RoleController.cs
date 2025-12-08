@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookstoreManagement.Controllers
 {
-    // Thường chỉ Admin mới được quản lý quyền
+    // chỉ Admin mới được quản lý quyền
     [Authorize(Roles = "Admin")]
     public class RoleController : Controller
     {
@@ -27,8 +27,6 @@ namespace BookstoreManagement.Controllers
             TempData["CurrentFeature"] = "Role"; // Active menu
             var roles = await _roleManager.Roles.OrderBy(r => r.Name).ToListAsync();
 
-            // Map sang ViewModel để hiển thị (nếu cần) hoặc dùng Model trực tiếp
-            // Ở đây dùng Model AppRole trực tiếp cho Index vì đơn giản
             return View(roles);
         }
 
@@ -46,7 +44,6 @@ namespace BookstoreManagement.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Kiểm tra xem role đã tồn tại chưa
                 if (await _roleManager.RoleExistsAsync(model.Name))
                 {
                     ModelState.AddModelError("Name", "Tên chức vụ này đã tồn tại.");
@@ -86,10 +83,8 @@ namespace BookstoreManagement.Controllers
             var role = await _roleManager.FindByIdAsync(id);
             if (role == null) return NotFound();
 
-            // Lấy danh sách tất cả quyền trong DB
             var allPermissions = await _context.Permissions.OrderBy(p => p.PermissionName).ToListAsync();
 
-            // Lấy danh sách quyền hiện tại của Role này
             var currentPermissionIds = await _context.RolePermissions
                 .Where(rp => rp.RoleId == id)
                 .Select(rp => rp.PermissionId)
@@ -102,7 +97,6 @@ namespace BookstoreManagement.Controllers
                 Description = role.Description,
                 Salary = role.Salary,
 
-                // Gán dữ liệu vào ViewModel
                 AllPermissions = allPermissions,
                 SelectedPermissionIds = currentPermissionIds
             };
@@ -117,7 +111,6 @@ namespace BookstoreManagement.Controllers
         {
             if (id != model.Id) return NotFound();
 
-            // Load lại danh sách permission nếu validate lỗi để không bị null view
             if (!ModelState.IsValid)
             {
                 model.AllPermissions = await _context.Permissions.OrderBy(p => p.PermissionName).ToListAsync();
@@ -127,7 +120,6 @@ namespace BookstoreManagement.Controllers
             var role = await _roleManager.FindByIdAsync(id);
             if (role == null) return NotFound();
 
-            // 1. Cập nhật thông tin cơ bản
             role.Name = model.Name;
             role.Description = model.Description;
             role.Salary = model.Salary;
@@ -136,18 +128,15 @@ namespace BookstoreManagement.Controllers
             var result = await _roleManager.UpdateAsync(role);
             if (result.Succeeded)
             {
-                // 2. Xử lý lưu quyền (Transaction cho an toàn)
                 using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    // A. Xóa hết quyền cũ của Role này
                     var oldPermissions = await _context.RolePermissions
                         .Where(rp => rp.RoleId == id)
                         .ToListAsync();
                     _context.RolePermissions.RemoveRange(oldPermissions);
                     await _context.SaveChangesAsync();
 
-                    // B. Thêm quyền mới được chọn
                     if (model.SelectedPermissionIds != null && model.SelectedPermissionIds.Any())
                     {
                         var newPermissions = model.SelectedPermissionIds.Select(permId => new RolePermission
@@ -166,7 +155,6 @@ namespace BookstoreManagement.Controllers
                 {
                     await transaction.RollbackAsync();
                     ModelState.AddModelError("", "Lỗi lưu quyền: " + ex.Message);
-                    // Load lại list nếu lỗi
                     model.AllPermissions = await _context.Permissions.ToListAsync();
                     return View(model);
                 }
@@ -179,7 +167,6 @@ namespace BookstoreManagement.Controllers
                 ModelState.AddModelError("", error.Description);
             }
 
-            // Load lại list nếu lỗi Identity
             model.AllPermissions = await _context.Permissions.ToListAsync();
             return View(model);
         }
@@ -192,8 +179,6 @@ namespace BookstoreManagement.Controllers
             var role = await _roleManager.FindByIdAsync(id);
             if (role != null)
             {
-                // Lưu ý: Nếu xóa Role đang có User gán vào thì Identity có thể báo lỗi hoặc User đó mất quyền.
-                // Nên kiểm tra trước khi xóa nếu cần kỹ hơn.
                 var result = await _roleManager.DeleteAsync(role);
                 if (result.Succeeded)
                 {

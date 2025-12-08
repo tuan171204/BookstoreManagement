@@ -91,6 +91,14 @@
                                 <span asp-validation-for="LowStockThreshold" class="text-danger"></span>
                             </div>
 
+                            <!-- Thể loại sách -->
+                            <div class="col-md-12">
+                                <label asp-for="SelectedCategoryIds" class="form-label fw-bold">Thể loại sách</label>
+                                <select asp-for="SelectedCategoryIds" class="form-select" id="ddlCategories"
+                                    asp-items="Model.Categories" multiple>
+                                </select>
+                                <span asp-validation-for="SelectedCategoryIds" class="text-danger"></span>
+                            </div>
                             <!-- Mô tả -->
                             <div class="col-md-12">
                                 <label asp-for="Description" class="form-label"></label>
@@ -119,4 +127,21 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#ddlCategories').select2({
+                theme: 'bootstrap-5',
+                placeholder: "Chọn thể loại...",
+                closeOnSelect: false,
+                allowClear: true
+            });
+        });
+    </script>
 }

@@ -161,7 +161,6 @@ namespace BookstoreManagement.Controllers
                 _context.Add(promotion);
                 await _context.SaveChangesAsync();
 
-                // Add book promotions
                 if (viewModel.SelectedBookIds != null && viewModel.SelectedBookIds.Any())
                 {
                     foreach (var bookId in viewModel.SelectedBookIds)
@@ -179,7 +178,6 @@ namespace BookstoreManagement.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Reload dropdowns if validation fails
             viewModel.PromotionTypes = await GetPromotionTypesAsync();
             viewModel.Books = await GetBooksAsync();
 
@@ -256,7 +254,6 @@ namespace BookstoreManagement.Controllers
 
                     _context.Update(promotion);
 
-                    // Update book promotions
                     var existingBookPromotions = await _context.Set<BookPromotion>()
                         .Where(bp => bp.PromotionId == id)
                         .ToListAsync();
@@ -293,7 +290,6 @@ namespace BookstoreManagement.Controllers
                 }
             }
 
-            // Reload dropdowns if validation fails
             viewModel.PromotionTypes = await GetPromotionTypesAsync();
             viewModel.Books = await GetBooksAsync();
 
@@ -314,13 +310,11 @@ namespace BookstoreManagement.Controllers
                 return Json(new { success = false, message = "Không tìm thấy chương trình khuyến mãi" });
             }
 
-            // Check if promotion has been used in orders
             if (promotion.Orders.Any())
             {
                 return Json(new { success = false, message = "Không thể xóa chương trình khuyến mãi đã được sử dụng trong đơn hàng" });
             }
 
-            // Remove book promotions first
             var bookPromotions = await _context.Set<BookPromotion>()
                 .Where(bp => bp.PromotionId == id)
                 .ToListAsync();

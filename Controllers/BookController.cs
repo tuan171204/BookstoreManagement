@@ -113,6 +113,12 @@ namespace BookstoreManagement.Controllers
 
             var primarySupplierBook = book.SupplierBooks.FirstOrDefault();
 
+            var categoryNames = await _context.BookCategories
+                .Where(bc => bc.BookId == id)
+                .Include(bc => bc.Category)
+                .Select(bc => bc.Category.Name)
+                .ToListAsync();
+
             var viewModel = new BookViewModel
             {
                 BookId = book.BookId,
@@ -131,7 +137,8 @@ namespace BookstoreManagement.Controllers
                 LowStockThreshold = book.LowStockThreshold,
                 CreatedAt = book.CreatedAt,
                 UpdatedAt = book.UpdatedAt,
-                IsDeleted = book.IsDeleted
+                IsDeleted = book.IsDeleted,
+                CategoryNames = categoryNames
             };
 
             return View(viewModel);
@@ -164,6 +171,11 @@ namespace BookstoreManagement.Controllers
                     .Where(s => s.IsActive == true) // Chỉ lấy nhà cung cấp đang hoạt động
                     .OrderBy(s => s.Name)
                     .Select(s => new SelectListItem { Value = s.SupplierId.ToString(), Text = s.Name })
+                    .ToListAsync(),
+
+                Categories = await _context.Categories
+                    .OrderBy(c => c.Name)
+                    .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
                     .ToListAsync()
             };
 
@@ -215,6 +227,20 @@ namespace BookstoreManagement.Controllers
                     await _context.SaveChangesAsync();
                 }
 
+                if (viewModel.SelectedCategoryIds != null)
+                {
+                    foreach (var catId in viewModel.SelectedCategoryIds)
+                    {
+                        var bookCategory = new BookCategory
+                        {
+                            BookId = book.BookId,
+                            CategoryId = catId
+                        };
+                        _context.Add(bookCategory);
+                    }
+                    await _context.SaveChangesAsync();
+                }
+
 
                 TempData["SuccessMessage"] = "Thêm sách thành công!";
                 return RedirectToAction(nameof(Index));
@@ -243,6 +269,11 @@ namespace BookstoreManagement.Controllers
                 .Where(s => s.IsActive == true)
                 .OrderBy(s => s.Name)
                 .Select(s => new SelectListItem { Value = s.SupplierId.ToString(), Text = s.Name }).ToListAsync();
+
+            viewModel.Categories = await _context.Categories
+                .OrderBy(c => c.Name)
+                .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
+                .ToListAsync();
 
 
             return View(viewModel);
@@ -273,6 +304,11 @@ namespace BookstoreManagement.Controllers
             var allAuthors = await _context.Authors.ToListAsync();
             var allPublishers = await _context.Publishers.ToListAsync();
 
+            var currentCategoryIds = await _context.BookCategories
+                .Where(bc => bc.BookId == id)
+                .Select(bc => bc.CategoryId)
+                .ToListAsync();
+
             var viewModel = new BookEditViewModel
             {
                 BookId = book.BookId,
@@ -290,7 +326,13 @@ namespace BookstoreManagement.Controllers
                 IsDeleted = book.IsDeleted,
                 SupplierList = new SelectList(allSuppliers, "SupplierId", "Name", primarySupplierBook?.SupplierId),
                 Authors = new SelectList(allAuthors, "AuthorId", "Name", book.AuthorId).ToList(),
-                Publishers = new SelectList(allPublishers, "PublisherId", "Name", book.PublisherId).ToList()
+                Publishers = new SelectList(allPublishers, "PublisherId", "Name", book.PublisherId).ToList(),
+
+                SelectedCategoryIds = currentCategoryIds,
+                Categories = await _context.Categories
+                    .OrderBy(c => c.Name)
+                    .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
+                    .ToListAsync()
             };
 
             return View(viewModel);
@@ -339,6 +381,17 @@ namespace BookstoreManagement.Controllers
                     // primarySupplierBook.SupplierId = viewModel.SupplierId;
                     primarySupplierBook.DefaultCostPrice = viewModel.DefaultCostPrice;
 
+                    var oldCategories = await _context.BookCategories.Where(bc => bc.BookId == id).ToListAsync();
+                    _context.BookCategories.RemoveRange(oldCategories);
+
+                    if (viewModel.SelectedCategoryIds != null)
+                    {
+                        foreach (var catId in viewModel.SelectedCategoryIds)
+                        {
+                            _context.Add(new BookCategory { BookId = id, CategoryId = catId });
+                        }
+                    }
+
                     _context.Update(book);
                     await _context.SaveChangesAsync();
 
@@ -375,6 +428,11 @@ namespace BookstoreManagement.Controllers
                     Value = p.PublisherId.ToString(),
                     Text = p.Name
                 })
+                .ToListAsync();
+
+            viewModel.Categories = await _context.Categories
+                .OrderBy(c => c.Name)
+                .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
                 .ToListAsync();
 
             return View(viewModel);

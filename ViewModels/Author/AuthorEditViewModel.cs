@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
 namespace BookstoreManagement.ViewModels.Author
@@ -5,15 +6,31 @@ namespace BookstoreManagement.ViewModels.Author
     public class AuthorEditViewModel
     {
         public int AuthorId { get; set; }
-        
-        [Required(ErrorMessage = "Tên tác giả là bắt buộc")]
-        [StringLength(100, ErrorMessage = "Tên tác giả không được vượt quá 100 ký tự")]
-        [Display(Name = "Tên tác giả")]
+
+        [Required(ErrorMessage = "Tên tác giả không được để trống")]
+        [Display(Name = "Tên thật")]
         public string Name { get; set; } = null!;
-        
-        [StringLength(500, ErrorMessage = "Tiểu sử không được vượt quá 500 ký tự")]
+
+        [Display(Name = "Bút danh")]
+        public string? Pseudonym { get; set; }
+
+        [Display(Name = "Ngày sinh")]
+        [DataType(DataType.Date)]
+        public DateTime? DateOfBirth { get; set; }
+
+        [Display(Name = "Quốc tịch")]
+        public string? Nationality { get; set; }
+
         [Display(Name = "Tiểu sử")]
-        [DataType(DataType.MultilineText)]
         public string? Bio { get; set; }
+
+        [Display(Name = "Website")]
+        [Url]
+        public string? Website { get; set; }
+
+        public string? ExistingImageUrl { get; set; }
+
+        [Display(Name = "Thay đổi ảnh đại diện")]
+        public IFormFile? AvatarImage { get; set; }
     }
 }

@@ -32,9 +32,8 @@ namespace BookstoreManagement.Services
             var revenue = await GetRevenueAsync(firstDay, lastDay);
             var cost = await _context.ImportTickets
                 .Where(i => i.Date >= firstDay && i.Date <= lastDay && i.Status == "Completed")
-                .SumAsync(i => i.TotalCost ?? 0m); // chỉ chỗ này dùng ?? 0m vì TotalCost nullable
-
-            return revenue - cost; // Lợi nhuận thực tế
+                .SumAsync(i => i.TotalCost ?? 0m); 
+            return revenue - cost; 
         }
 
         public async Task<object> GetCurrentMonthSummaryAsync()
@@ -145,7 +144,6 @@ namespace BookstoreManagement.Services
             };
         }
 
-        // CHỈ SỬA HÀM NÀY – ĐÃ LOẠI BỎ ?? Ở FinalAmount
         public async Task<List<object>> GetRevenueByDateRangeAsync(
             DateTime fromDate,
             DateTime toDate,
