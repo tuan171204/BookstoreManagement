@@ -26,53 +26,52 @@ builder.Services.AddScoped<ReportService>();
 
 builder.Services.AddAuthorization(options =>
 {
-	// Quản lý Đơn hàng (Order)
+	// Quản lý Đơn hàng 
 	options.AddPolicy("Order.View", policy => policy.RequireClaim("Permission", "Order.View"));
 	options.AddPolicy("Order.Create", policy => policy.RequireClaim("Permission", "Order.Create"));
 	options.AddPolicy("Order.Update", policy => policy.RequireClaim("Permission", "Order.Update"));
 	options.AddPolicy("Order.Delete", policy => policy.RequireClaim("Permission", "Order.Delete"));
 	options.AddPolicy("Order.Approve", policy => policy.RequireClaim("Permission", "Order.Approve"));
 
-	// Quản lý Sách (Book)
+	// Quản lý Sách 
 	options.AddPolicy("Book.View", policy => policy.RequireClaim("Permission", "Book.View"));
 	options.AddPolicy("Book.Create", policy => policy.RequireClaim("Permission", "Book.Create"));
 	options.AddPolicy("Book.Update", policy => policy.RequireClaim("Permission", "Book.Update"));
 	options.AddPolicy("Book.Delete", policy => policy.RequireClaim("Permission", "Book.Delete"));
 
-	// Quản lý Tác giả (Author) - MỚI
+	// Quản lý Tác giả 
 	options.AddPolicy("Author.View", policy => policy.RequireClaim("Permission", "Author.View"));
 	options.AddPolicy("Author.Create", policy => policy.RequireClaim("Permission", "Author.Create"));
 	options.AddPolicy("Author.Update", policy => policy.RequireClaim("Permission", "Author.Update"));
 	options.AddPolicy("Author.Delete", policy => policy.RequireClaim("Permission", "Author.Delete"));
 
-	// Quản lý Nhà xuất bản (Publisher) - MỚI
+	// Quản lý Nhà xuất bản 
 	options.AddPolicy("Publisher.View", policy => policy.RequireClaim("Permission", "Publisher.View"));
 	options.AddPolicy("Publisher.Create", policy => policy.RequireClaim("Permission", "Publisher.Create"));
 	options.AddPolicy("Publisher.Update", policy => policy.RequireClaim("Permission", "Publisher.Update"));
 	options.AddPolicy("Publisher.Delete", policy => policy.RequireClaim("Permission", "Publisher.Delete"));
 
-	// Quản lý Danh mục & Nhà cung cấp (Category/Supplier)
+	// Quản lý Danh mục & Nhà cung cấp 
 	options.AddPolicy("Category.Manage", policy => policy.RequireClaim("Permission", "Category.Manage"));
-
 	options.AddPolicy("Supplier.View", policy => policy.RequireClaim("Permission", "Supplier.View"));
 	options.AddPolicy("Supplier.Create", policy => policy.RequireClaim("Permission", "Supplier.Create"));
 	options.AddPolicy("Supplier.Update", policy => policy.RequireClaim("Permission", "Supplier.Update"));
 	options.AddPolicy("Supplier.Delete", policy => policy.RequireClaim("Permission", "Supplier.Delete"));
 	options.AddPolicy("Supplier.Manage", policy => policy.RequireClaim("Permission", "Supplier.Manage"));
 
-	// Quản lý Khách hàng (Customer) - MỚI
+	// Quản lý Khách hàng (Customer) 
 	options.AddPolicy("Customer.View", policy => policy.RequireClaim("Permission", "Customer.View"));
 	options.AddPolicy("Customer.Create", policy => policy.RequireClaim("Permission", "Customer.Create"));
 	options.AddPolicy("Customer.Update", policy => policy.RequireClaim("Permission", "Customer.Update"));
 	options.AddPolicy("Customer.Delete", policy => policy.RequireClaim("Permission", "Customer.Delete"));
 
-	// Quản lý Khuyến mãi (Promotion) - MỚI
+	// Quản lý Khuyến mãi (Promotion) 
 	options.AddPolicy("Promotion.View", policy => policy.RequireClaim("Permission", "Promotion.View"));
 	options.AddPolicy("Promotion.Create", policy => policy.RequireClaim("Permission", "Promotion.Create"));
 	options.AddPolicy("Promotion.Update", policy => policy.RequireClaim("Permission", "Promotion.Update"));
 	options.AddPolicy("Promotion.Delete", policy => policy.RequireClaim("Permission", "Promotion.Delete"));
 
-	// Quản lý Kho (Warehouse) - MỚI
+	// Quản lý Kho (Warehouse) 
 	options.AddPolicy("Warehouse.View", policy => policy.RequireClaim("Permission", "Warehouse.View"));
 	options.AddPolicy("Warehouse.Import", policy => policy.RequireClaim("Permission", "Warehouse.Import"));
 	options.AddPolicy("Warehouse.Export", policy => policy.RequireClaim("Permission", "Warehouse.Export"));

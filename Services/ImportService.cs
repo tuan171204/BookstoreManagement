@@ -17,7 +17,7 @@ namespace BookstoreManagement.Services
         {
 
             using var transaction = await _context.Database.BeginTransactionAsync();
-            
+
             try
             {
 
@@ -35,21 +35,21 @@ namespace BookstoreManagement.Services
 
                 ticket.TotalCost = totalCost;
                 ticket.TotalQuantity = totalQty;
-                ticket.Status = "Completed"; 
+                ticket.Status = "Pending";
                 ticket.CreatedAt = DateTime.Now;
                 ticket.UpdatedAt = DateTime.Now;
-    
+
 
                 _context.ImportTickets.Add(ticket);
-                await _context.SaveChangesAsync(); 
+                await _context.SaveChangesAsync();
 
                 foreach (var detail in ticket.ImportDetails)
                 {
-                    
+
                     var book = await _context.Books.FindAsync(detail.BookId);
                     if (book != null)
                     {
-                        
+
                         book.StockQuantity = (book.StockQuantity ?? 0) + detail.Quantity;
                         book.UpdatedAt = DateTime.Now;
                         _context.Books.Update(book);
@@ -62,9 +62,9 @@ namespace BookstoreManagement.Services
             }
             catch (Exception)
             {
-   
+
                 await transaction.RollbackAsync();
-                throw; 
+                throw;
             }
         }
     }

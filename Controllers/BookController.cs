@@ -53,7 +53,6 @@ namespace BookstoreManagement.Controllers
                 booksQuery = booksQuery.Where(b => b.PublisherId == publisherId);
             }
 
-            // 4. Lọc theo Thể loại (MỚI)
             if (categoryId.HasValue)
             {
                 var bookIdsInCat = _context.BookCategories

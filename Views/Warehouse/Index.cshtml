@@ -35,7 +35,7 @@
                 <div class="col-md-5">
                     <label class="form-label">Tìm kiếm</label>
                     <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control"
-                           placeholder="Mã phiếu, mã đơn hàng, NCC..." />
+                        placeholder="Mã phiếu, mã đơn hàng, NCC..." />
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Loại phiếu</label>
@@ -96,12 +96,28 @@
                                     <td>@item.TotalQuantity</td>
                                     <td>@(item.TotalCost?.ToString("N0")) ₫</td>
                                     <td>
-                                        <span class="badge bg-secondary">@item.Status</span>
+
+                                        @if (item.Status == "Pending")
+                                        {
+
+                                            <span class="badge bg-warning text-dark">@item.Status</span>
+
+                                        }
+                                        else if (item.Status == "Completed")
+                                        {
+                                            <span class="badge bg-success">@item.Status</span>
+                                        }
+                                        else if (item.Status == "Cancelled")
+                                        {
+                                            <span class="badge bg-danger">@item.Status</span>
+                                        }
                                     </td>
+
+
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm">
                                             <a asp-action="Details" asp-route-id="@item.Id" asp-route-type="@item.Type"
-                                               class="btn btn-info" title="Chi tiết">
+                                                class="btn btn-info" title="Chi tiết">
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                         </div>
