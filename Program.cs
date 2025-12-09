@@ -172,6 +172,92 @@ if (builder.Environment.IsProduction())
 
 var app = builder.Build();
 
+// ---Seed dữ liệu người dùng mặc định ---
+using (var scope = app.Services.CreateScope())
+{
+	var services = scope.ServiceProvider;
+
+	try
+	{
+		var userManager = services.GetRequiredService<UserManager<AppUser>>();
+		var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
+		var context = services.GetRequiredService<BookstoreContext>();
+
+		// Tạo role "Admin" nếu chưa có
+
+
+
+		if (!await roleManager.RoleExistsAsync("Admin"))
+		{
+			await roleManager.CreateAsync(new AppRole
+			{
+				Name = "Admin",
+				Description = "Quản trị hệ thống",
+				CreatedAt = DateTime.Now
+			});
+		}
+
+		// Seed PromotionType codes
+		if (!context.Codes.Any(c => c.Entity == "PromotionType"))
+		{
+			var promotionTypes = new[]
+			{
+				new Code { Entity = "PromotionType", Key = 1, Value = "Giảm giá theo phần trăm", CreatedAt = DateTime.Now },
+				new Code { Entity = "PromotionType", Key = 2, Value = "Giảm giá cố định", CreatedAt = DateTime.Now },
+				new Code { Entity = "PromotionType", Key = 3, Value = "Tặng sách", CreatedAt = DateTime.Now }
+			};
+			context.Codes.AddRange(promotionTypes);
+			await context.SaveChangesAsync();
+			Console.WriteLine("Đã seed PromotionType codes!");
+		}
+
+		if (!context.Codes.Any(c => c.Entity == "PaymentMethod"))
+		{
+			var promotionTypes = new[]
+			{
+				new Code { Entity = "PaymentMethod", Key = 1, Value = "Tiền mặt", CreatedAt = DateTime.Now },
+				new Code { Entity = "PaymentMethod", Key = 2, Value = "Chuyển khoản", CreatedAt = DateTime.Now }
+			};
+			context.Codes.AddRange(promotionTypes);
+			await context.SaveChangesAsync();
+			Console.WriteLine("Đã seed PromotionType codes!");
+		}
+
+
+
+		// Tạo user admin nếu chưa có
+		string adminEmail = "admin@bookstore.com";
+		var adminUser = await userManager.FindByEmailAsync(adminEmail);
+		if (adminUser == null)
+		{
+			var user = new AppUser
+			{
+				UserName = adminEmail,
+				Email = adminEmail,
+				FullName = "Administrator",
+				IsActive = true,
+				CreatedAt = DateTime.Now
+			};
+
+			var result = await userManager.CreateAsync(user, "123456");
+			if (result.Succeeded)
+			{
+				await userManager.AddToRoleAsync(user, "Admin");
+				Console.WriteLine("Đã tạo tài khoản Admin mặc định!");
+			}
+			else
+			{
+				Console.WriteLine("Lỗi khi tạo tài khoản Admin:");
+				foreach (var err in result.Errors)
+					Console.WriteLine($" - {err.Description}");
+			}
+		}
+	}
+	catch (Exception ex)
+	{
+		Console.WriteLine($"Seed dữ liệu lỗi: {ex.Message}");
+	}
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
