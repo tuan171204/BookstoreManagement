@@ -33,28 +33,27 @@
                 {
                     foreach (var item in Model)
                     {
-                        @if (item.Name != "Admin")
-                        {
-                            <tr>
-                                <td>
-                                    <span class="fw-bold text-primary">@item.Name</span>
-                                </td>
-                                <td>@item.Description</td>
-                                <td>@item.Salary.ToString("N0") ₫</td>
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm">
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning" title="Sửa">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-danger" title="Xóa"
-                                            onclick="confirmDelete('@item.Id', '@item.Name')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
 
-                                    </div>
-                                </td>
-                            </tr>
-                        }
+                        <tr>
+                            <td>
+                                <span class="fw-bold text-primary">@item.Name</span>
+                            </td>
+                            <td>@item.Description</td>
+                            <td>@item.Salary.ToString("N0") ₫</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning" title="Sửa">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-danger" title="Xóa"
+                                        onclick="confirmDelete('@item.Id', '@item.Name')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+
+                                </div>
+                            </td>
+                        </tr>
+
                     }
                 }
                 else
