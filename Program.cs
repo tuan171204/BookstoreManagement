@@ -26,6 +26,9 @@ builder.Services.AddScoped<ReportService>();
 
 builder.Services.AddAuthorization(options =>
 {
+	// Quyền truy cập quản trị
+	options.AddPolicy("Admin.View", policy => policy.RequireClaim("Permission", "Admin.View"));
+
 	// Quản lý Đơn hàng 
 	options.AddPolicy("Order.View", policy => policy.RequireClaim("Permission", "Order.View"));
 	options.AddPolicy("Order.Create", policy => policy.RequireClaim("Permission", "Order.Create"));
@@ -281,7 +284,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
 	name: "default",
-	pattern: "{controller=Book}/{action=Index}/{id?}");
+	pattern: "{controller=Shopping}/{action=Index}/{id?}");
 
 app.MapRazorPages();
 

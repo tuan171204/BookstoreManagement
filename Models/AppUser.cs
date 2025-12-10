@@ -25,5 +25,7 @@ public partial class AppUser : IdentityUser
     public virtual ICollection<ExportTicket> ExportTickets { get; set; } = new List<ExportTicket>();
     public virtual ICollection<ImportTicket> ImportTickets { get; set; } = new List<ImportTicket>();
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+
+    public virtual ICollection<BookRating> BookRatings { get; set; } = new List<BookRating>();
 }
 
