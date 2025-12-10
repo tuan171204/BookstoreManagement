@@ -27,11 +27,10 @@ namespace BookstoreManagement.Services
                 return new List<string>();
             }
 
-            // Query bảng RolePermission để lấy tất cả PermissionId 
-            // Join bảng Permissions để lấy PermissionName 
+            // Join bảng Permissions lấy PermissionName 
             var permissions = await _context.RolePermissions
                 .Where(rp => userRoleIds.Contains(rp.RoleId))
-                .Select(rp => rp.Permission.PermissionName) 
+                .Select(rp => rp.Permission.PermissionName)
                 .Distinct()
                 .ToListAsync();
 

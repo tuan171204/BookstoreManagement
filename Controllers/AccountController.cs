@@ -64,7 +64,7 @@ namespace BookstoreManagement.Controllers
                     return RedirectToAction("Index", "Setting");
                 }
 
-                return RedirectToAction("Index", "Book");
+                return RedirectToAction("Index", "Shopping");
             }
 
             if (result.IsLockedOut)

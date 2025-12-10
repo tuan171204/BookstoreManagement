@@ -26,53 +26,55 @@ builder.Services.AddScoped<ReportService>();
 
 builder.Services.AddAuthorization(options =>
 {
-	// Quản lý Đơn hàng (Order)
+	// Quyền truy cập quản trị
+	options.AddPolicy("Admin.View", policy => policy.RequireClaim("Permission", "Admin.View"));
+
+	// Quản lý Đơn hàng 
 	options.AddPolicy("Order.View", policy => policy.RequireClaim("Permission", "Order.View"));
 	options.AddPolicy("Order.Create", policy => policy.RequireClaim("Permission", "Order.Create"));
 	options.AddPolicy("Order.Update", policy => policy.RequireClaim("Permission", "Order.Update"));
 	options.AddPolicy("Order.Delete", policy => policy.RequireClaim("Permission", "Order.Delete"));
 	options.AddPolicy("Order.Approve", policy => policy.RequireClaim("Permission", "Order.Approve"));
 
-	// Quản lý Sách (Book)
+	// Quản lý Sách 
 	options.AddPolicy("Book.View", policy => policy.RequireClaim("Permission", "Book.View"));
 	options.AddPolicy("Book.Create", policy => policy.RequireClaim("Permission", "Book.Create"));
 	options.AddPolicy("Book.Update", policy => policy.RequireClaim("Permission", "Book.Update"));
 	options.AddPolicy("Book.Delete", policy => policy.RequireClaim("Permission", "Book.Delete"));
 
-	// Quản lý Tác giả (Author) - MỚI
+	// Quản lý Tác giả 
 	options.AddPolicy("Author.View", policy => policy.RequireClaim("Permission", "Author.View"));
 	options.AddPolicy("Author.Create", policy => policy.RequireClaim("Permission", "Author.Create"));
 	options.AddPolicy("Author.Update", policy => policy.RequireClaim("Permission", "Author.Update"));
 	options.AddPolicy("Author.Delete", policy => policy.RequireClaim("Permission", "Author.Delete"));
 
-	// Quản lý Nhà xuất bản (Publisher) - MỚI
+	// Quản lý Nhà xuất bản 
 	options.AddPolicy("Publisher.View", policy => policy.RequireClaim("Permission", "Publisher.View"));
 	options.AddPolicy("Publisher.Create", policy => policy.RequireClaim("Permission", "Publisher.Create"));
 	options.AddPolicy("Publisher.Update", policy => policy.RequireClaim("Permission", "Publisher.Update"));
 	options.AddPolicy("Publisher.Delete", policy => policy.RequireClaim("Permission", "Publisher.Delete"));
 
-	// Quản lý Danh mục & Nhà cung cấp (Category/Supplier)
+	// Quản lý Danh mục & Nhà cung cấp 
 	options.AddPolicy("Category.Manage", policy => policy.RequireClaim("Permission", "Category.Manage"));
-
 	options.AddPolicy("Supplier.View", policy => policy.RequireClaim("Permission", "Supplier.View"));
 	options.AddPolicy("Supplier.Create", policy => policy.RequireClaim("Permission", "Supplier.Create"));
 	options.AddPolicy("Supplier.Update", policy => policy.RequireClaim("Permission", "Supplier.Update"));
 	options.AddPolicy("Supplier.Delete", policy => policy.RequireClaim("Permission", "Supplier.Delete"));
 	options.AddPolicy("Supplier.Manage", policy => policy.RequireClaim("Permission", "Supplier.Manage"));
 
-	// Quản lý Khách hàng (Customer) - MỚI
+	// Quản lý Khách hàng (Customer) 
 	options.AddPolicy("Customer.View", policy => policy.RequireClaim("Permission", "Customer.View"));
 	options.AddPolicy("Customer.Create", policy => policy.RequireClaim("Permission", "Customer.Create"));
 	options.AddPolicy("Customer.Update", policy => policy.RequireClaim("Permission", "Customer.Update"));
 	options.AddPolicy("Customer.Delete", policy => policy.RequireClaim("Permission", "Customer.Delete"));
 
-	// Quản lý Khuyến mãi (Promotion) - MỚI
+	// Quản lý Khuyến mãi (Promotion) 
 	options.AddPolicy("Promotion.View", policy => policy.RequireClaim("Permission", "Promotion.View"));
 	options.AddPolicy("Promotion.Create", policy => policy.RequireClaim("Permission", "Promotion.Create"));
 	options.AddPolicy("Promotion.Update", policy => policy.RequireClaim("Permission", "Promotion.Update"));
 	options.AddPolicy("Promotion.Delete", policy => policy.RequireClaim("Permission", "Promotion.Delete"));
 
-	// Quản lý Kho (Warehouse) - MỚI
+	// Quản lý Kho (Warehouse) 
 	options.AddPolicy("Warehouse.View", policy => policy.RequireClaim("Permission", "Warehouse.View"));
 	options.AddPolicy("Warehouse.Import", policy => policy.RequireClaim("Permission", "Warehouse.Import"));
 	options.AddPolicy("Warehouse.Export", policy => policy.RequireClaim("Permission", "Warehouse.Export"));
@@ -173,6 +175,92 @@ if (builder.Environment.IsProduction())
 
 var app = builder.Build();
 
+// ---Seed dữ liệu người dùng mặc định ---
+using (var scope = app.Services.CreateScope())
+{
+	var services = scope.ServiceProvider;
+
+	try
+	{
+		var userManager = services.GetRequiredService<UserManager<AppUser>>();
+		var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
+		var context = services.GetRequiredService<BookstoreContext>();
+
+		// Tạo role "Admin" nếu chưa có
+
+
+
+		if (!await roleManager.RoleExistsAsync("Admin"))
+		{
+			await roleManager.CreateAsync(new AppRole
+			{
+				Name = "Admin",
+				Description = "Quản trị hệ thống",
+				CreatedAt = DateTime.Now
+			});
+		}
+
+		// Seed PromotionType codes
+		if (!context.Codes.Any(c => c.Entity == "PromotionType"))
+		{
+			var promotionTypes = new[]
+			{
+				new Code { Entity = "PromotionType", Key = 1, Value = "Giảm giá theo phần trăm", CreatedAt = DateTime.Now },
+				new Code { Entity = "PromotionType", Key = 2, Value = "Giảm giá cố định", CreatedAt = DateTime.Now },
+				new Code { Entity = "PromotionType", Key = 3, Value = "Tặng sách", CreatedAt = DateTime.Now }
+			};
+			context.Codes.AddRange(promotionTypes);
+			await context.SaveChangesAsync();
+			Console.WriteLine("Đã seed PromotionType codes!");
+		}
+
+		if (!context.Codes.Any(c => c.Entity == "PaymentMethod"))
+		{
+			var promotionTypes = new[]
+			{
+				new Code { Entity = "PaymentMethod", Key = 1, Value = "Tiền mặt", CreatedAt = DateTime.Now },
+				new Code { Entity = "PaymentMethod", Key = 2, Value = "Chuyển khoản", CreatedAt = DateTime.Now }
+			};
+			context.Codes.AddRange(promotionTypes);
+			await context.SaveChangesAsync();
+			Console.WriteLine("Đã seed PromotionType codes!");
+		}
+
+
+
+		// Tạo user admin nếu chưa có
+		string adminEmail = "admin@bookstore.com";
+		var adminUser = await userManager.FindByEmailAsync(adminEmail);
+		if (adminUser == null)
+		{
+			var user = new AppUser
+			{
+				UserName = adminEmail,
+				Email = adminEmail,
+				FullName = "Administrator",
+				IsActive = true,
+				CreatedAt = DateTime.Now
+			};
+
+			var result = await userManager.CreateAsync(user, "123456");
+			if (result.Succeeded)
+			{
+				await userManager.AddToRoleAsync(user, "Admin");
+				Console.WriteLine("Đã tạo tài khoản Admin mặc định!");
+			}
+			else
+			{
+				Console.WriteLine("Lỗi khi tạo tài khoản Admin:");
+				foreach (var err in result.Errors)
+					Console.WriteLine($" - {err.Description}");
+			}
+		}
+	}
+	catch (Exception ex)
+	{
+		Console.WriteLine($"Seed dữ liệu lỗi: {ex.Message}");
+	}
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -196,7 +284,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
 	name: "default",
-	pattern: "{controller=Book}/{action=Index}/{id?}");
+	pattern: "{controller=Shopping}/{action=Index}/{id?}");
 
 app.MapRazorPages();
 

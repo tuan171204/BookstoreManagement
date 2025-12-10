@@ -55,6 +55,8 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
 
     public virtual DbSet<SupplierBook> SupplierBooks { get; set; }
 
+    public virtual DbSet<BookRating> BookRatings { get; set; }
+
     // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     // #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
     //     => optionsBuilder.UseSqlServer("Server=DESKTOP-DCPVQ6B\\SQLEXPRESS01;Database=Bookstore;Trusted_Connection=True;TrustServerCertificate=True");
@@ -95,6 +97,8 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
                 .HasMaxLength(255)
                 .IsUnicode(true);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.AverageRating).HasDefaultValue(0);
+            entity.Property(e => e.TotalRatings).HasDefaultValue(0);
 
             entity.HasOne(d => d.Author).WithMany(p => p.Books)
                 .HasForeignKey(d => d.AuthorId)
@@ -114,7 +118,8 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
             entity.Property(e => e.BookId).HasColumnName("BookID");
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
 
-            entity.HasOne(d => d.Book).WithMany()
+            entity.HasOne(d => d.Book)
+                .WithMany(p => p.BookCategories) // <--- QUAN TRỌNG
                 .HasForeignKey(d => d.BookId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__BookCateg__BookI__06CD04F7");
@@ -552,6 +557,26 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
                 .HasConstraintName("FK__SupplierB__Suppl__1AD3FDA4");
         });
 
+        modelBuilder.Entity<BookRating>(entity =>
+        {
+            entity.HasKey(e => e.RatingId);
+
+            entity.Property(e => e.RatingValue).IsRequired();
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+
+            // Quan hệ với Book
+            entity.HasOne(d => d.Book)
+                .WithMany(p => p.BookRatings)
+                .HasForeignKey(d => d.BookId)
+                .OnDelete(DeleteBehavior.Cascade); // Xóa sách -> Xóa luôn đánh giá
+
+            // Quan hệ với User
+            entity.HasOne(d => d.User)
+                .WithMany(p => p.BookRatings)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         OnModelCreatingPartial(modelBuilder);
 
         modelBuilder.Entity<AppUser>().ToTable("Users");
@@ -579,6 +604,9 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
         {
             entity.HasKey(t => new { t.UserId, t.LoginProvider, t.Name });
         });
+
+
+
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

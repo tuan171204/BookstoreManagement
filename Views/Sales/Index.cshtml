@@ -293,8 +293,6 @@
                     <div class="mb-3">
                         <label class="small text-muted">Phương thức TT:</label>
                         <select class="form-select" id="ddlPaymentMethod">
-                            <option value="Cash">Tiền mặt</option>
-                            <option value="Transfer">Chuyển khoản</option>
                         </select>
                     </div>
 
@@ -394,6 +392,7 @@
 
         $(document).ready(function () {
             loadPromotions();
+            loadPaymentMethods();
             renderProductGrid(initialBooks);
 
             var searchTimer;
@@ -435,13 +434,13 @@
                     '<div class="out-of-stock-badge">HẾT HÀNG</div>'
                     :
                     ''}<img src="${imgUrl}"
-                                                                     alt="${title}"
-                                                                     onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
-                                                            <div class="book-info">
-                                                            <div class="book-title" title="${title}">${title}
-                                                            </div>
-                                                            <div class="book-price">${price.toLocaleString('vi-VN')} đ</div>
-                                                            <small class="text-${isOutOfStock ? 'muted' : 'success'}" style="font-size: 0.75rem;">${isOutOfStock ? 'Tạm hết' : 'Có sẵn: ' + stock}</small></div></div>`;
+                                                                                                                     alt="${title}"
+                                                                                                                     onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
+                                                                                                            <div class="book-info">
+                                                                                                            <div class="book-title" title="${title}">${title}
+                                                                                                            </div>
+                                                                                                            <div class="book-price">${price.toLocaleString('vi-VN')} đ</div>
+                                                                                                            <small class="text-${isOutOfStock ? 'muted' : 'success'}" style="font-size: 0.75rem;">${isOutOfStock ? 'Tạm hết' : 'Có sẵn: ' + stock}</small></div></div>`;
                 grid.append(html);
             });
         }
@@ -462,6 +461,20 @@
 
                     // Lưu giftPrice vào data attribute
                     ddl.append(`<option value="${p.id}" data-type="${p.typeId}" data-value="${p.value}" data-min="${p.min}" data-gift-stock="${p.giftStock}" data-gift-price="${p.giftPrice}">${label}${note}</option>`);
+                });
+            });
+        }
+
+        // --- 1. HÀM LOAD PHƯƠNG THỨC THANH TOÁN TỪ DB ---
+        function loadPaymentMethods() {
+            $.get('/Sales/GetPaymentMethods', function (data) {
+                var ddl = $('#ddlPaymentMethod');
+                ddl.empty();
+
+                data.forEach(item => {
+                    // Lưu 'code' (Key) vào data attribute để dùng cho logic QR
+                    // Ví dụ: item.code = "2" là Chuyển khoản
+                    ddl.append(`<option value="${item.id}" data-code="${item.code}">${item.name}</option>`);
                 });
             });
         }
@@ -523,22 +536,26 @@
         function searchBooks() { var k = $('#txtSearchBook').val(); var c = $('#ddlCategory').val(); if (!k && c == 0) { renderProductGrid(initialBooks); return; } $.get('/Sales/SearchBooks', { term: k, categoryId: c }, function (data) { renderProductGrid(data); }); }
 
         function handleCheckout() {
-            // 1. Kiểm tra giỏ hàng
             if (cart.length === 0) { showToast('Giỏ hàng trống!', 'warning'); return; }
 
-            // 2. Kiểm tra điều kiện KM
-            var sel = $('#ddlPromotion option:selected'); var min = parseFloat(sel.attr('data-min')) || 0; var sub = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
-            if (sel.val() > 0 && sub < min) { alert(`Đơn chưa đủ ĐK! Min: ${min.toLocaleString()}đ`); return; }
+            // Kiểm tra khuyến mãi (giữ nguyên)
+            var selPromo = $('#ddlPromotion option:selected');
+            var min = parseFloat(selPromo.attr('data-min')) || 0;
+            var sub = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
+            if (selPromo.val() > 0 && sub < min) { alert(`Đơn chưa đủ ĐK! Min: ${min.toLocaleString()}đ`); return; }
 
-            // 3. Lấy phương thức thanh toán
-            var paymentMethod = $('#ddlPaymentMethod').val();
+            // Lấy thông tin phương thức thanh toán đang chọn
+            var selectedOption = $('#ddlPaymentMethod option:selected');
+            var methodId = selectedOption.val();       // ID thật (ví dụ: 6)
+            var methodCode = selectedOption.data('code'); // Key (ví dụ: "2")
+            var methodName = selectedOption.text();    // Tên (ví dụ: "Chuyển khoản")
 
-            // NẾU LÀ CHUYỂN KHOẢN -> HIỆN QR
-            if (paymentMethod === 'Transfer') {
+            // Logic hiển thị QR: Dựa vào Tên hoặc Key trong DB
+            // Giả sử trong DB bạn lưu Key="2" là Chuyển khoản (như trong ảnh bạn gửi)
+            if (methodCode == '2' || methodName.toLowerCase().includes('chuyển khoản')) {
                 showQRCode();
             } else {
-                // NẾU LÀ TIỀN MẶT -> XÁC NHẬN RỒI LƯU
-                if (confirm('Xác nhận thanh toán TIỀN MẶT?')) {
+                if (confirm(`Xác nhận thanh toán bằng: ${methodName}?`)) {
                     submitOrder();
                 }
             }
@@ -596,6 +613,8 @@
                 PaymentMethod: $('#ddlPaymentMethod').val(),
                 CartItems: cart.map(x => ({ BookId: x.id, Title: x.title, Quantity: x.quantity }))
             };
+
+            console.log("Phương thức: ", payload.PaymentMethod)
 
             // Hiển thị loading (tùy chọn)
             $('#btnPay').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Đang xử lý...');

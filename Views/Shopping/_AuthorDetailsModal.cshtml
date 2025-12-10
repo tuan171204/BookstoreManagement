@@ -1,0 +1,80 @@
+@model BookstoreManagement.Models.Author
+
+<div class="modal-header border-0 pb-0">
+    <h5 class="modal-title fw-bold text-primary"><i class="fas fa-pen-nib me-2"></i>Thông tin tác giả</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body">
+    <div class="d-flex align-items-start mb-4">
+        <div class="me-3">
+            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+            {
+                <img src="/images/authors/@Model.ImageUrl" class="rounded-circle shadow-sm border"
+                    style="width: 100px; height: 100px; object-fit: cover;">
+            }
+            else
+            {
+                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center text-muted border"
+                    style="width: 100px; height: 100px;">
+                    <i class="fas fa-user fa-3x"></i>
+                </div>
+            }
+        </div>
+        <div class="flex-grow-1">
+            <h3 class="fw-bold mb-1">@Model.Name</h3>
+            <p class="text-muted small mb-2">
+                @(Model.Books.Count(b => b.IsDeleted != true)) tác phẩm
+            </p>
+            <p class="small text-secondary" style="max-height: 80px; overflow-y: auto;">
+                @(string.IsNullOrEmpty(Model.Bio) ? "Chưa có thông tin tiểu sử." : Model.Bio)
+            </p>
+        </div>
+    </div>
+
+    <hr />
+
+    <h6 class="fw-bold mb-3 text-uppercase text-secondary small">Tác phẩm tiêu biểu</h6>
+
+    <div class="row row-cols-2 row-cols-md-3 g-3" style="max-height: 400px; overflow-y: auto; overflow-x: hidden;">
+        @foreach (var book in Model.Books.Where(b => b.IsDeleted != true).OrderByDescending(b => b.CreatedAt))
+        {
+            <div class="col">
+                <div class="card h-100 border shadow-sm book-card-small" onclick="showBookDetails(@book.BookId)"
+                    style="cursor: pointer;">
+
+                    <div class="position-relative text-center bg-white p-2">
+                        @if (!string.IsNullOrEmpty(book.ImageUrl))
+                        {
+                            <img src="@book.ImageUrl" class="card-img-top" style="height: 120px; object-fit: contain;"
+                                alt="@book.Title">
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center justify-content-center bg-light text-muted"
+                                style="height: 120px;">
+                                <i class="fas fa-image fa-2x"></i>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="card-body p-2 d-flex flex-column">
+                        <h6 class="card-title fw-bold text-truncate small mb-1" title="@book.Title">@book.Title</h6>
+                        <div class="mt-auto d-flex justify-content-between align-items-center">
+                            <span class="text-danger fw-bold small">@book.Price.ToString("N0") đ</span>
+                            <i class="fas fa-chevron-right text-muted" style="font-size: 0.7rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .book-card-small:hover {
+        transform: translateY(-3px);
+        transition: transform 0.2s;
+        border-color: #0d6efd !important;
+    }
+</style>

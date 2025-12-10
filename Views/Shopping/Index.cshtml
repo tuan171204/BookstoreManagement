@@ -1,0 +1,313 @@
+@model IEnumerable<BookstoreManagement.Models.Book>
+@{
+    ViewData["Title"] = "Trang chủ";
+    Layout = "~/Views/Shared/_LayoutClient.cshtml";
+
+    var initialFeaturedBooks = ViewBag.FeaturedBooks as List<BookstoreManagement.Models.Book>;
+    var featuredBooks = ViewBag.FeaturedBooks as List<BookstoreManagement.Models.Book>;
+    string featuredTitle = ViewBag.FeaturedTitle as string;
+    string currentType = ViewBag.CurrentType as string;
+}
+@* 
+@if (currentType == "normal" || string.IsNullOrEmpty(currentType))
+{
+    <div class="container mt-4">
+        <div class="p-5 mb-4 bg-light rounded-3 shadow-sm border"
+            style="background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);">
+            <div class="container-fluid py-3">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="display-5 fw-bold text-primary">Chào mừng đến Bookstore</h1>
+                        <p class="lead mb-4">Khám phá thế giới tri thức vô tận với hàng ngàn đầu sách hấp dẫn đang chờ đón
+                            bạn.</p>
+                        <a href="#all-books-area" class="btn btn-primary btn-lg rounded-pill px-4">Mua ngay</a>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <img src="/images/banner-book.png"
+                            onerror="this.src='https://via.placeholder.com/200x300?text=Bookstore'" class="shadow rounded"
+                            alt="Hero Book" style="max-height: 250px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+} *@
+
+<div id="featured-container" class="container mb-5 mt-4">
+    @await Html.PartialAsync("_FeaturedSection", initialFeaturedBooks)
+</div>
+
+
+<div class="container mb-5" id="all-books-area">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold m-0 text-uppercase border-start border-4 border-secondary ps-2">Tất cả sách</h4>
+        <a href="#" class="text-decoration-none small text-muted">Xem thêm <i class="fas fa-chevron-down"></i></a>
+    </div>
+
+    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4">
+        @foreach (var book in Model)
+        {
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm book-card" onclick="showBookDetails(@book.BookId)"
+                    style="cursor: pointer;">
+                    <div class="position-relative text-center p-3 bg-white">
+                        <img src="@book.ImageUrl" class="card-img-top shadow-sm"
+                            style="height: 160px; width: auto; object-fit: cover;" alt="@book.Title">
+                        @if ((book.StockQuantity ?? 0) == 0)
+                        {
+                            <span class="position-absolute top-0 start-0 m-2 badge bg-secondary">Hết hàng</span>
+                        }
+                    </div>
+                    <div class="card-body d-flex flex-column p-2">
+                        <h6 class="card-title fw-bold text-truncate small mb-1" title="@book.Title">@book.Title</h6>
+                        <p class="card-text text-muted small mb-2" style="font-size: 0.8rem;">@book.Author?.Name</p>
+                        <div class="mt-auto d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-primary">@book.Price.ToString("N0") đ</span>
+                            <button class="btn btn-sm btn-outline-primary rounded-circle"
+                                onclick="event.stopPropagation(); addToCart(@book.BookId)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
+<div class="modal fade" id="authorDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" id="authorDetailContent">
+            <div class="text-center p-5">
+                <div class="spinner-border text-info" role="status"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="bookDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" id="bookDetailContent">
+            <div class="text-center p-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Đang tải...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="filterModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold"><i class="fas fa-sliders-h me-2"></i>Bộ lọc tìm kiếm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="filterForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Thể loại sách</label>
+                        <select class="form-select" id="filterCategory">
+                            <option value="">-- Tất cả thể loại --</option>
+                            @if (ViewBag.Categories != null)
+                            {
+                                foreach (var item in ViewBag.Categories)
+                                {
+                                    <option value="@item.CategoryId">@item.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Tác giả</label>
+                        <select class="form-select" id="filterAuthor">
+                            <option value="">-- Tất cả tác giả --</option>
+                            @if (ViewBag.Authors != null)
+                            {
+                                foreach (dynamic item in ViewBag.Authors)
+                                {
+                                    <option value="@item.AuthorId">@item.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Nhà xuất bản</label>
+                        <select class="form-select" id="filterPublisher">
+                            <option value="">-- Tất cả NXB --</option>
+                            @if (ViewBag.Publishers != null)
+                            {
+                                foreach (dynamic item in ViewBag.Publishers)
+                                {
+                                    <option value="@item.PublisherId">@item.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Khoảng giá (VNĐ)</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="number" class="form-control" id="filterMinPrice" placeholder="Từ" min="0"
+                                step="1000">
+                            <span>-</span>
+                            <input type="number" class="form-control" id="filterMaxPrice" placeholder="Đến" min="0"
+                                step="1000">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary px-4" id="btnApplyFilter">
+                    <i class="fas fa-search me-1"></i> Tìm ngay
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('.ajax-filter').click(function (e) {
+                e.preventDefault(); // Ngăn chặn load lại trang
+
+                var type = $(this).data('type');
+                var container = $('#featured-container');
+
+                // 1. Cập nhật UI Active cho menu
+                $('.ajax-filter').removeClass('text-primary fw-bold').addClass('text-dark');
+                $(this).removeClass('text-dark').addClass('text-primary fw-bold');
+
+                // 2. Hiển thị Loading
+                container.html(`
+                                        <div class="text-center py-5">
+                                            <div class="spinner-border text-primary" role="status"></div>
+                                            <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+                                        </div>
+                                    `);
+
+                // 3. Gọi AJAX về Server
+                $.ajax({
+                    url: '/Shopping/Index',
+                    type: 'GET',
+                    data: {
+                        type: type,
+                        isAjax: true // Báo hiệu cho Controller biết đây là AJAX
+                    },
+                    success: function (response) {
+                        // Đổ HTML nhận được vào container
+                        container.html(response);
+                    },
+                    error: function () {
+                        container.html('<div class="alert alert-danger text-center">Lỗi tải dữ liệu. Vui lòng thử lại.</div>');
+                    }
+                });
+            });
+
+            // --- XỬ LÝ BỘ LỌC NÂNG CAO ---
+            $('#btnApplyFilter').click(function () {
+                // 1. Lấy dữ liệu từ form
+                var categoryId = $('#filterCategory').val();
+                var authorId = $('#filterAuthor').val();
+                var publisherId = $('#filterPublisher').val();
+                var minPrice = $('#filterMinPrice').val();
+                var maxPrice = $('#filterMaxPrice').val();
+
+                // 2. Đóng modal
+                var filterModal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
+                filterModal.hide();
+
+                // 3. Hiển thị Loading & Scroll tới vùng kết quả
+                var container = $('#featured-container');
+                $('html, body').animate({
+                    scrollTop: container.offset().top - 100
+                }, 500);
+
+                container.html(`
+                                    <div class="text-center py-5">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                        <p class="mt-2 text-muted">Đang lọc dữ liệu...</p>
+                                    </div>
+                                `);
+
+                // 4. Reset style menu active (vì đang dùng filter riêng)
+                $('.ajax-filter').removeClass('text-primary fw-bold').addClass('text-dark');
+
+                // 5. Gọi AJAX
+                $.ajax({
+                    url: '/Shopping/Index',
+                    type: 'GET',
+                    data: {
+                        type: 'filter',
+                        isAjax: true,
+                        categoryId: categoryId,
+                        authorId: authorId,
+                        publisherId: publisherId,
+                        minPrice: minPrice,
+                        maxPrice: maxPrice
+                    },
+                    success: function (response) {
+                        container.html(response);
+                    },
+                    error: function () {
+                        container.html('<div class="alert alert-danger text-center">Có lỗi xảy ra khi lọc dữ liệu.</div>');
+                    }
+                });
+            });
+        });
+
+
+        // Hàm gọi AJAX để mở Modal
+        function showBookDetails(bookId) {
+            // 1. Hiển thị modal và icon loading trước
+            var myModal = new bootstrap.Modal(document.getElementById('bookDetailModal'));
+
+            // Reset nội dung về trạng thái loading (để tránh hiện nội dung cũ)
+            document.getElementById('bookDetailContent').innerHTML = `
+                            <div class="text-center p-5">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2 text-muted">Đang tải thông tin sách...</p>
+                            </div>`;
+
+            myModal.show();
+
+            // 2. Gọi AJAX lấy dữ liệu
+            $.ajax({
+                url: '/Shopping/GetBookDetails',
+                type: 'GET',
+                data: { id: bookId },
+                success: function (response) {
+                    // 3. Đổ HTML nhận được vào modal
+                    $('#bookDetailContent').html(response);
+                },
+                error: function () {
+                    $('#bookDetailContent').html(`
+                            <div class="text-center p-5 text-danger">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i><br>
+                                Không thể tải thông tin sách. Vui lòng thử lại.
+                            </div>
+                        `);
+                }
+            });
+        }
+
+        // Hàm tăng giảm số lượng trong modal
+        function adjustQty(amount) {
+            var input = document.getElementById('modalQuantity');
+            var currentVal = parseInt(input.value);
+            var maxVal = parseInt(input.max);
+
+            var newVal = currentVal + amount;
+            if (newVal >= 1 && newVal <= maxVal) {
+                input.value = newVal;
+            }
+        }
+    </script>
+}

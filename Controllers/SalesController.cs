@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BookstoreManagement.Models;
 using System.Security.Claims;
+using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 
 namespace BookstoreManagement.Controllers
 {
@@ -22,7 +23,7 @@ namespace BookstoreManagement.Controllers
             ViewBag.Categories = _context.Categories.OrderBy(c => c.Name).ToList();
 
             ViewBag.Employees = _context.Users
-                .Where(u => u.IsActive == true) 
+                .Where(u => u.IsActive == true)
                 .Select(u => new { u.Id, u.FullName })
                 .OrderBy(x => x.FullName)
                 .ToList();
@@ -44,6 +45,7 @@ namespace BookstoreManagement.Controllers
             ViewBag.InitialBooksJson = System.Text.Json.JsonSerializer.Serialize(initialBooks);
             return View();
         }
+
 
         [HttpGet]
         [Authorize]
@@ -121,7 +123,12 @@ namespace BookstoreManagement.Controllers
         {
             var paymentMethods = _context.Codes
                 .Where(c => c.Entity == "PaymentMethod")
-                .Select(c => new { id = c.CodeId, name = c.Value }).ToList();
+                .Select(c => new
+                {
+                    id = c.CodeId,
+                    name = c.Value,
+                    code = c.Key // Thêm cái này để JS nhận biết (Ví dụ: 1=Cash, 2=Transfer)
+                }).ToList();
             return Json(paymentMethods);
         }
 
@@ -204,7 +211,20 @@ namespace BookstoreManagement.Controllers
                 }
                 // -----------------------------------------
 
-                int paymentMethodId = (request.PaymentMethod == "Transfer") ? 2 : 1;
+                int paymentMethodId;
+
+                // Cố gắng parse ID từ request (Frontend sẽ gửi số "5", "6"...)
+                if (int.TryParse(request.PaymentMethod, out int pmId))
+                {
+                    // Kiểm tra xem ID này có thật trong DB không
+                    var exists = await _context.Codes.AnyAsync(c => c.CodeId == pmId);
+                    if (!exists) throw new Exception("Phương thức thanh toán không hợp lệ.");
+                    paymentMethodId = pmId;
+                }
+                else
+                {
+                    throw new Exception("Dữ liệu phương thức thanh toán bị lỗi.");
+                }
 
                 // TẠO ORDER
                 var order = new Order
@@ -226,7 +246,7 @@ namespace BookstoreManagement.Controllers
                 // TẠO PHIẾU XUẤT KHO
                 var exportTicket = new ExportTicket
                 {
-                    UserId = userId, 
+                    UserId = userId,
                     ReferenceId = order.OrderId,
                     Date = DateTime.Now,
                     Status = "Completed",
@@ -315,7 +335,7 @@ namespace BookstoreManagement.Controllers
         {
             public string? CustomerPhone { get; set; }
             public string? CustomerName { get; set; }
-            public string? EmployeeId { get; set; } 
+            public string? EmployeeId { get; set; }
             public int PromotionId { get; set; }
             public string? PaymentMethod { get; set; }
             public List<CartItemRequest>? CartItems { get; set; }

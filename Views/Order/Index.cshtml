@@ -7,7 +7,6 @@
 <div class="container-fluid px-4">
     <h1 class="mt-4">Quản lý Hóa đơn</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
         <li class="breadcrumb-item active">Danh sách Hóa đơn</li>
     </ol>
 
@@ -36,9 +35,12 @@
                             <td>#@item.OrderId</td>
                             <td>@item.OrderDate?.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>
-                                @if(item.CustomerId == "KH0000") {
+                                @if (item.CustomerId == "KH0000")
+                                {
                                     <span class="text-muted">Khách vãng lai</span>
-                                } else {
+                                }
+                                else
+                                {
                                     @item.Customer.FullName
                                 }
                             </td>
@@ -48,7 +50,8 @@
                                 @item.FinalAmount.ToString("N0") đ
                             </td>
                             <td class="text-center">
-                                <a asp-action="Details" asp-route-id="@item.OrderId" class="btn btn-info btn-sm text-white" title="Xem chi tiết">
+                                <a asp-action="Details" asp-route-id="@item.OrderId" class="btn btn-info btn-sm text-white"
+                                    title="Xem chi tiết">
                                     <i class="fas fa-eye"></i>
                                 </a>
                             </td>
@@ -65,7 +68,7 @@
         $(document).ready(function () {
             $('#datatablesSimple').DataTable({
                 "language": { "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Vietnamese.json" },
-                "order": [[ 0, "desc" ]]
+                "order": [[0, "desc"]]
             });
         });
     </script>

@@ -24,7 +24,7 @@ public class WarehouseController : Controller
     {
 
         ViewBag.TypeFilter = new SelectList(new[] { "Phiếu Nhập", "Phiếu Xuất" });
-        ViewBag.StatusFilter = new SelectList(new[] { "Đã hoàn thành", "Đang đợi", "Đã hủy" });
+        ViewBag.StatusFilter = new SelectList(new[] { "Completed", "Pending", "Cancelled" });
         ViewData["CurrentFilter"] = searchString;
 
 
@@ -181,7 +181,7 @@ public class WarehouseController : Controller
                 PaymentMethodId = viewModel.PaymentMethodId,
                 Note = viewModel.Note,
                 Date = DateTime.Now,
-                Status = "Completed",
+                Status = "Pending",
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
                 DocumentNumber = $"PN{DateTimeOffset.Now.ToUnixTimeSeconds()}"
@@ -201,8 +201,6 @@ public class WarehouseController : Controller
 
             try
             {
-
-
                 await _importService.CreateImportTicketAsync(importTicket);
 
                 TempData["SuccessMessage"] = "Tạo phiếu nhập thành công!";
@@ -347,5 +345,129 @@ public class WarehouseController : Controller
 
         viewModel.Books = new SelectList(await _context.Books.Where(b => b.IsDeleted != true).ToListAsync(), "BookId", "Title");
         return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApproveImport(int id)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var ticket = await _context.ImportTickets
+                .Include(t => t.ImportDetails)
+                .FirstOrDefaultAsync(t => t.ImportId == id);
+
+            if (ticket == null) return NotFound();
+
+            if (ticket.Status != "Pending")
+            {
+                TempData["ErrorMessage"] = "Phiếu này đã được xử lý trước đó.";
+                return RedirectToAction("Details", new { id = id, type = "Import" });
+            }
+
+            foreach (var detail in ticket.ImportDetails)
+            {
+                var book = await _context.Books.FindAsync(detail.BookId);
+                if (book != null)
+                {
+                    book.StockQuantity = (book.StockQuantity ?? 0) + detail.Quantity;
+                    book.UpdatedAt = DateTime.Now;
+                    _context.Books.Update(book);
+                }
+            }
+
+            ticket.Status = "Completed";
+            ticket.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            TempData["SuccessMessage"] = "Đã xác nhận nhập kho thành công!";
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            TempData["ErrorMessage"] = "Lỗi khi xác nhận: " + ex.Message;
+        }
+
+        return RedirectToAction("Details", new { id = id, type = "Import" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CancelImport(int id)
+    {
+        var ticket = await _context.ImportTickets.FindAsync(id);
+        if (ticket == null) return NotFound();
+
+        if (ticket.Status != "Pending")
+        {
+            TempData["ErrorMessage"] = "Chỉ có thể hủy phiếu đang ở trạng thái chờ.";
+            return RedirectToAction("Details", new { id = id, type = "Import" });
+        }
+
+        ticket.Status = "Cancelled";
+        ticket.UpdatedAt = DateTime.Now;
+
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = "Đã hủy phiếu nhập.";
+
+        return RedirectToAction("Details", new { id = id, type = "Import" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateImportQuantity(int importId, Dictionary<int, ImportDetailUpdateModel> details)
+    {
+        var ticket = await _context.ImportTickets
+            .Include(t => t.ImportDetails)
+            .FirstOrDefaultAsync(t => t.ImportId == importId);
+
+        if (ticket == null) return NotFound();
+
+        if (ticket.Status != "Pending")
+        {
+            TempData["ErrorMessage"] = "Không thể chỉnh sửa phiếu đã hoàn thành hoặc đã hủy.";
+            return RedirectToAction("Details", new { id = importId, type = "Import" });
+        }
+
+        try
+        {
+            decimal newTotalCost = 0;
+            int newTotalQuantity = 0;
+
+            foreach (var item in details.Values)
+            {
+                var detailEntity = ticket.ImportDetails.FirstOrDefault(d => d.ImportDetailId == item.DetailId);
+                if (detailEntity != null)
+                {
+                    detailEntity.Quantity = item.Quantity;
+                    detailEntity.Subtotal = detailEntity.Quantity * detailEntity.CostPrice;
+
+                    newTotalQuantity += detailEntity.Quantity;
+                    newTotalCost += detailEntity.Subtotal ?? 0;
+                }
+            }
+
+            ticket.TotalQuantity = newTotalQuantity;
+            ticket.TotalCost = newTotalCost;
+            ticket.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Cập nhật số lượng thành công!";
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = "Lỗi khi cập nhật: " + ex.Message;
+        }
+
+        return RedirectToAction("Details", new { id = importId, type = "Import" });
+    }
+
+    public class ImportDetailUpdateModel
+    {
+        public int DetailId { get; set; }
+        public int Quantity { get; set; }
     }
 }

@@ -29,6 +29,13 @@ public partial class Book
 
     public int? LowStockThreshold { get; set; }
 
+    public double AverageRating { get; set; } = 0; // Điểm trung bình (ví dụ: 4.5)
+
+    public int TotalRatings { get; set; } = 0;     // Tổng số lượt đánh giá
+
+    // Quan hệ với bảng Rating
+    public virtual ICollection<BookRating> BookRatings { get; set; } = new List<BookRating>();
+
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
@@ -48,5 +55,7 @@ public partial class Book
     public virtual Publisher Publisher { get; set; } = null!;
 
     public virtual ICollection<SupplierBook> SupplierBooks { get; set; } = new List<SupplierBook>();
+
+    public virtual ICollection<BookCategory> BookCategories { get; set; } = new List<BookCategory>();
 
 }
