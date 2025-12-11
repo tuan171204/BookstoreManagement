@@ -21,6 +21,10 @@ namespace BookstoreManagement.Controllers
         public async Task<IActionResult> Index(string searchString, bool? isActive, int pageNumber = 1, int pageSize = 10)
         {
             ViewData["CurrentFilter"] = searchString;
+            if (isActive.HasValue)
+            {
+                ViewData["IsActiveFilter"] = isActive.Value.ToString();
+            }
             ViewData["IsActive"] = isActive;
 
             var promotionsQuery = _context.Promotions
@@ -72,6 +76,7 @@ namespace BookstoreManagement.Controllers
             ViewBag.PageSize = pageSize;
             ViewBag.TotalPages = totalPages;
             ViewBag.TotalItems = totalItems;
+            ViewBag.IsActiveParam = isActive;
 
             return View(promotions);
         }
