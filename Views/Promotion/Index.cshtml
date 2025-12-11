@@ -28,6 +28,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3">
+                <input type="hidden" name="pageNumber" value="1" />
                 <div class="col-md-8">
                     <label class="form-label">Tìm kiếm</label>
                     <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control"
@@ -37,9 +38,8 @@
                     <label class="form-label">Trạng thái</label>
                     <select name="isActive" class="form-select">
                         <option value="">-- Tất cả --</option>
-                        <option value="true" selected="@(ViewData["IsActive"]?.ToString() == "True")">Hoạt động</option>
-                        <option value="false" selected="@(ViewData["IsActive"]?.ToString() == "False")">Không hoạt động
-                        </option>
+                        <option value="true" selected="@(ViewBag.IsActiveParam == true)">Hoạt động</option>
+                        <option value="false" selected="@(ViewBag.IsActiveParam == false)">Không hoạt động</option>
                     </select>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
@@ -54,6 +54,12 @@
     <!-- Promotions Table -->
     <div class="card">
         <div class="card-body">
+            @if (ViewBag.TotalItems > 0)
+            {
+                <div class="mb-3">
+                    <span class="text-muted">Hiển thị <strong>@((ViewBag.PageNumber - 1) * ViewBag.PageSize + 1)</strong> - <strong>@(Math.Min(ViewBag.PageNumber * ViewBag.PageSize, ViewBag.TotalItems))</strong> trong tổng số <strong>@ViewBag.TotalItems</strong> chương trình khuyến mãi</span>
+                </div>
+            }
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead class="table-light">
