@@ -114,6 +114,7 @@ namespace BookstoreManagement.Controllers
                 .Include(b => b.Publisher)
                 .Include(b => b.SupplierBooks)
                     .ThenInclude(sb => sb.Supplier)
+                .Include(b => b.PriceHistories)
                 .FirstOrDefaultAsync(m => m.BookId == id);
 
             if (book == null)
@@ -149,6 +150,32 @@ namespace BookstoreManagement.Controllers
                 UpdatedAt = book.UpdatedAt,
                 IsDeleted = book.IsDeleted
             };
+
+            var historyData = book.PriceHistories
+                .OrderBy(h => h.EffectiveDate)
+                .Select(h => new
+                {
+                    date = h.EffectiveDate.ToString("dd/MM/yyyy HH:mm"),
+                    cost = h.CostPrice,
+                    price = h.SellingPrice,
+                    margin = h.ProfitMargin
+                })
+                .ToList();
+
+            // Nếu chưa có lịch sử (sách mới tạo), thêm giá hiện tại vào làm mốc đầu tiên
+            if (!historyData.Any())
+            {
+                historyData.Add(new
+                {
+                    date = book.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
+                    cost = book.CostPrice,
+                    price = book.Price,
+                    margin = book.ProfitMargin
+                });
+            }
+
+            // Serialize sang JSON để JS đọc được
+            ViewBag.PriceHistoryJson = System.Text.Json.JsonSerializer.Serialize(historyData);
 
             return View(viewModel);
         }
@@ -204,6 +231,13 @@ namespace BookstoreManagement.Controllers
                     imagePath = await SaveImage(viewModel.ImageFile);
                 }
 
+                // --- LOGIC TÍNH GIÁ MỚI ---
+                // Giá bán = Giá vốn + (Giá vốn * %Lợi nhuận / 100)
+                decimal calculatedPrice = viewModel.CostPrice + (viewModel.CostPrice * (decimal)viewModel.ProfitMargin / 100);
+
+                // Làm tròn giá bán (ví dụ: làm tròn đến hàng nghìn) - Tùy chọn
+                // calculatedPrice = Math.Ceiling(calculatedPrice / 1000) * 1000;
+
                 var book = new Book
                 {
                     Title = viewModel.Title,
@@ -211,18 +245,30 @@ namespace BookstoreManagement.Controllers
                     AuthorId = viewModel.AuthorId,
                     PublisherId = viewModel.PublisherId,
                     PublicationYear = viewModel.PublicationYear,
-                    Price = viewModel.Price,
-                    StockQuantity = viewModel.StockQuantity ?? 0,
+                    CostPrice = viewModel.CostPrice,
+                    ProfitMargin = viewModel.ProfitMargin,
+                    Price = calculatedPrice,
+                    StockQuantity = 0,
                     Description = viewModel.Description,
                     LowStockThreshold = viewModel.LowStockThreshold ?? 10,
                     CreatedAt = DateTime.Now,
                     IsDeleted = false
                 };
 
-
-
                 _context.Add(book);
                 await _context.SaveChangesAsync();
+
+                // --- LƯU LỊCH SỬ GIÁ (MỚI) ---
+                var priceHistory = new BookPriceHistory
+                {
+                    BookId = book.BookId,
+                    CostPrice = book.CostPrice,
+                    ProfitMargin = book.ProfitMargin,
+                    SellingPrice = book.Price,
+                    EffectiveDate = DateTime.Now,
+                    UpdatedBy = User.Identity?.Name ?? "System" // Lưu người tạo (nếu có đăng nhập)
+                };
+                _context.BookPriceHistories.Add(priceHistory);
 
                 if (viewModel.SupplierId.HasValue)
                 {
@@ -230,7 +276,7 @@ namespace BookstoreManagement.Controllers
                     {
                         BookId = book.BookId,
                         SupplierId = viewModel.SupplierId.Value,
-                        DefaultCostPrice = viewModel.DefaultCostPrice
+                        DefaultCostPrice = viewModel.CostPrice
                     };
                     _context.Add(supplierBook);
                     await _context.SaveChangesAsync();
@@ -331,6 +377,8 @@ namespace BookstoreManagement.Controllers
                 Description = book.Description,
                 SupplierId = primarySupplierBook.SupplierId,
                 DefaultCostPrice = primarySupplierBook?.DefaultCostPrice ?? 0,
+                CostPrice = book.CostPrice,
+                ProfitMargin = book.ProfitMargin,
                 LowStockThreshold = book.LowStockThreshold,
                 IsDeleted = book.IsDeleted,
                 SupplierList = new SelectList(allSuppliers, "SupplierId", "Name", primarySupplierBook?.SupplierId),
@@ -378,17 +426,33 @@ namespace BookstoreManagement.Controllers
 
                     var primarySupplierBook = book.SupplierBooks.FirstOrDefault();
 
+                    // --- XỬ LÝ THAY ĐỔI GIÁ ---
+                    bool priceChanged = false;
+
+                    // Nếu Giá vốn hoặc % Lợi nhuận thay đổi
+                    if (book.CostPrice != viewModel.CostPrice || book.ProfitMargin != viewModel.ProfitMargin)
+                    {
+                        priceChanged = true;
+
+                        // Tính lại giá bán
+                        decimal newPrice = viewModel.CostPrice + (viewModel.CostPrice * (decimal)viewModel.ProfitMargin / 100);
+
+                        // Cập nhật Book
+                        book.CostPrice = viewModel.CostPrice;
+                        book.ProfitMargin = viewModel.ProfitMargin;
+                        book.Price = newPrice;
+                    }
+
                     book.Title = viewModel.Title;
                     book.AuthorId = viewModel.AuthorId;
                     book.PublisherId = viewModel.PublisherId;
                     book.PublicationYear = viewModel.PublicationYear;
-                    book.Price = viewModel.Price;
                     // book.StockQuantity = viewModel.StockQuantity;
                     book.Description = viewModel.Description;
                     book.LowStockThreshold = viewModel.LowStockThreshold;
                     book.UpdatedAt = DateTime.Now;
                     // primarySupplierBook.SupplierId = viewModel.SupplierId;
-                    primarySupplierBook.DefaultCostPrice = viewModel.DefaultCostPrice;
+                    primarySupplierBook.DefaultCostPrice = viewModel.CostPrice;
 
                     var oldCategories = await _context.BookCategories.Where(bc => bc.BookId == id).ToListAsync();
                     _context.BookCategories.RemoveRange(oldCategories);
@@ -402,6 +466,22 @@ namespace BookstoreManagement.Controllers
                     }
 
                     _context.Update(book);
+
+                    // --- LƯU LỊCH SỬ NẾU GIÁ ĐỔI ---
+                    if (priceChanged)
+                    {
+                        var history = new BookPriceHistory
+                        {
+                            BookId = book.BookId,
+                            CostPrice = book.CostPrice,
+                            ProfitMargin = book.ProfitMargin,
+                            SellingPrice = book.Price,
+                            EffectiveDate = DateTime.Now,
+                            UpdatedBy = User.Identity?.Name ?? "System"
+                        };
+                        _context.BookPriceHistories.Add(history);
+                    }
+
                     await _context.SaveChangesAsync();
 
                     TempData["SuccessMessage"] = "Cập nhật sách thành công!";

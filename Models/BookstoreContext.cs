@@ -57,6 +57,8 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
 
     public virtual DbSet<BookRating> BookRatings { get; set; }
 
+    public virtual DbSet<BookPriceHistory> BookPriceHistories { get; set; }
+
     // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     // #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
     //     => optionsBuilder.UseSqlServer("Server=DESKTOP-DCPVQ6B\\SQLEXPRESS01;Database=Bookstore;Trusted_Connection=True;TrustServerCertificate=True");
@@ -109,6 +111,14 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
                 .HasForeignKey(d => d.PublisherId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Books__Publisher__05D8E0BE");
+
+            // --- CẤU HÌNH MỚI CHO BOOK ---
+            entity.Property(e => e.CostPrice)
+                .HasDefaultValue(0)
+                .HasColumnType("decimal(18, 2)");
+
+            entity.Property(e => e.ProfitMargin)
+                .HasDefaultValue(0);
         });
 
         modelBuilder.Entity<BookCategory>(entity =>
@@ -585,6 +595,22 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+
+        // --- CẤU HÌNH CHO BOOK PRICE HISTORY ---
+        modelBuilder.Entity<BookPriceHistory>(entity =>
+        {
+            entity.HasKey(e => e.HistoryId);
+
+            entity.Property(e => e.CostPrice).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.SellingPrice).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.EffectiveDate).HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.Book)
+                .WithMany(p => p.PriceHistories)
+                .HasForeignKey(d => d.BookId)
+                .OnDelete(DeleteBehavior.Cascade); // Xóa sách -> Xóa luôn lịch sử giá
+        });
+
         OnModelCreatingPartial(modelBuilder);
 
         modelBuilder.Entity<AppUser>().ToTable("Users");
@@ -612,8 +638,6 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
         {
             entity.HasKey(t => new { t.UserId, t.LoginProvider, t.Name });
         });
-
-
 
     }
 

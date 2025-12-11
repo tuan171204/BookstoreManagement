@@ -20,6 +20,17 @@ public partial class Book
 
     public int? PublicationYear { get; set; }
 
+    // --- CÁC TRƯỜNG GIÁ CẢ MỚI ---
+
+    // 1. Giá nhập (Giá vốn) hiện tại
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal CostPrice { get; set; } = 0;
+
+    // 2. % Lợi nhuận mong muốn (VD: 20 nghĩa là 20%)
+    public double ProfitMargin { get; set; } = 0;
+
+    // 3. Giá bán (Price): Sẽ được tính = CostPrice * (1 + ProfitMargin/100)
+    // Giữ nguyên cột này để không bị lỗi code cũ, nhưng logic tính sẽ thay đổi
     public decimal Price { get; set; }
 
     public int? StockQuantity { get; set; }
@@ -57,5 +68,8 @@ public partial class Book
     public virtual ICollection<SupplierBook> SupplierBooks { get; set; } = new List<SupplierBook>();
 
     public virtual ICollection<BookCategory> BookCategories { get; set; } = new List<BookCategory>();
+
+    // Thêm quan hệ với bảng lịch sử giá
+    public virtual ICollection<BookPriceHistory> PriceHistories { get; set; } = new List<BookPriceHistory>();
 
 }
