@@ -57,7 +57,9 @@
             @if (ViewBag.TotalItems > 0)
             {
                 <div class="mb-3">
-                    <span class="text-muted">Hiển thị <strong>@((ViewBag.PageNumber - 1) * ViewBag.PageSize + 1)</strong> - <strong>@(Math.Min(ViewBag.PageNumber * ViewBag.PageSize, ViewBag.TotalItems))</strong> trong tổng số <strong>@ViewBag.TotalItems</strong> đơn hàng</span>
+                    <span class="text-muted">Hiển thị <strong>@((ViewBag.PageNumber - 1) * ViewBag.PageSize + 1)</strong> -
+                        <strong>@(Math.Min(ViewBag.PageNumber * ViewBag.PageSize, ViewBag.TotalItems))</strong> trong tổng
+                        số <strong>@ViewBag.TotalItems</strong> đơn hàng</span>
                 </div>
             }
             <div class="table-responsive">
@@ -105,14 +107,14 @@
                                                 _ => "bg-secondary"
                                             };
                                         }
-                                        <span class="badge @statusClass">@item.Status</span>
+                                        <span class="badge @statusClass w-50 p-2">@item.Status</span>
                                     </td>
                                     <td class="text-end fw-bold text-primary">
                                         @item.FinalAmount.ToString("N0") đ
                                     </td>
                                     <td class="text-center">
-                                        <a asp-action="Details" asp-route-id="@item.OrderId" class="btn btn-info btn-sm text-white"
-                                            title="Xem chi tiết">
+                                        <a asp-action="Details" asp-route-id="@item.OrderId"
+                                            class="btn btn-info btn-sm text-white" title="Xem chi tiết">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                     </td>
@@ -131,7 +133,7 @@
                     </tbody>
                 </table>
             </div>
-            
+
             <!-- Pagination -->
             @await Html.PartialAsync("_PaginationOrder")
         </div>
@@ -143,6 +145,7 @@
         .pagination .page-link {
             color: #0d6efd;
         }
+
         .pagination .page-item.active .page-link {
             background-color: #0d6efd;
             border-color: #0d6efd;
