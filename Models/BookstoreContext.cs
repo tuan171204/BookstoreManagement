@@ -215,6 +215,14 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
                 .HasMaxLength(20)
                 .IsUnicode(false);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Points).HasDefaultValue(0);
+
+            // Cấu hình quan hệ với bảng Code (Rank)
+            entity.HasOne(d => d.Rank)
+                  .WithMany() // Một Rank có nhiều Customer
+                  .HasForeignKey(d => d.RankId)
+                  .OnDelete(DeleteBehavior.SetNull) // Xóa Rank thì Customer không bị xóa, chỉ set null
+                  .HasConstraintName("FK_Customer_Rank");
         });
 
         modelBuilder.Entity<ExportDetail>(entity =>

@@ -320,6 +320,56 @@ namespace BookstoreManagement.Controllers
                 exportTicket.TotalQuantity = totalQty;
 
                 await _context.SaveChangesAsync();
+
+
+                // --- LOGIC TÍCH ĐIỂM & THĂNG HẠNG (MỚI) ---
+                // Chỉ tích điểm nếu không phải khách vãng lai (Phone != 00000000)
+                if (customer.Phone != "00000000")
+                {
+                    // 1. Tính điểm: 10% giá trị từng cuốn sách (Dựa theo VD: 50k -> 5k điểm)
+                    // Lưu ý: Tính trên giá gốc của sách trong đơn hàng (UnitPrice), bỏ qua Discount của Order
+                    int earnedPoints = 0;
+                    foreach (var item in request.CartItems)
+                    {
+                        var bookPrice = _context.OrderDetails
+                                        .Where(od => od.OrderId == order.OrderId && od.BookId == item.BookId)
+                                        .Select(od => od.UnitPrice)
+                                        .FirstOrDefault();
+
+                        // Công thức: Giá * Số lượng * 10%
+                        earnedPoints += (int)((bookPrice * item.Quantity) * 0.1m);
+                    }
+
+                    // 2. Cộng điểm vào Customer
+                    customer.Points += earnedPoints;
+
+                    // 3. Kiểm tra và Cập nhật Hạng (Rank)
+                    // Lấy danh sách Rank từ DB (Code) để lấy ID chính xác
+                    var ranks = await _context.Codes.Where(c => c.Entity == "MemberRank").ToListAsync();
+                    var silverRank = ranks.FirstOrDefault(r => r.Value == "Bạc")?.CodeId;
+                    var goldRank = ranks.FirstOrDefault(r => r.Value == "Vàng")?.CodeId;
+                    var diamondRank = ranks.FirstOrDefault(r => r.Value == "Kim Cương")?.CodeId;
+
+                    // Logic xét hạng (Lấy hạng cao nhất thỏa mãn)
+                    if (customer.Points >= 200000 && diamondRank.HasValue)
+                    {
+                        customer.RankId = diamondRank.Value;
+                    }
+                    else if (customer.Points >= 100000 && goldRank.HasValue)
+                    {
+                        // Chỉ update nếu chưa phải Kim Cương (tránh hạ cấp nếu logic phức tạp hơn)
+                        if (customer.RankId != diamondRank) customer.RankId = goldRank.Value;
+                    }
+                    else if (customer.Points >= 50000 && silverRank.HasValue)
+                    {
+                        if (customer.RankId != diamondRank && customer.RankId != goldRank) customer.RankId = silverRank.Value;
+                    }
+
+                    _context.Customers.Update(customer);
+                    await _context.SaveChangesAsync(); // Lưu thay đổi Customer
+                }
+                // ==================================================================================
+
                 await transaction.CommitAsync();
 
                 return Json(new { success = true, message = "Thanh toán thành công!", orderId = order.OrderId });

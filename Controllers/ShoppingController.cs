@@ -520,6 +520,50 @@ namespace BookstoreManagement.Controllers
                 exportTicket.TotalQuantity = totalQty;
 
                 await _context.SaveChangesAsync();
+
+
+
+                // ==================================================================================
+                // --- LOGIC TÍCH ĐIỂM (Copy logic tương tự SalesController nhưng điều chỉnh biến) ---
+                if (customer.Phone != "00000000") // Giả sử khách online cũng có thể nhập sđt rác, check cho chắc
+                {
+                    int earnedPoints = 0;
+                    foreach (var item in request.CartItems)
+                    {
+                        // Lấy giá sách từ DB (vì request online có thể không tin cậy về giá)
+                        var book = await _context.Books.FindAsync(item.BookId);
+                        if (book != null)
+                        {
+                            earnedPoints += (int)((book.Price * item.Quantity) * 0.1m); // 10%
+                        }
+                    }
+
+                    customer.Points += earnedPoints;
+
+                    // Lấy ID hạng từ DB
+                    var ranks = await _context.Codes.Where(c => c.Entity == "MemberRank").ToListAsync();
+                    var silverRank = ranks.FirstOrDefault(r => r.Value == "Bạc")?.CodeId;
+                    var goldRank = ranks.FirstOrDefault(r => r.Value == "Vàng")?.CodeId;
+                    var diamondRank = ranks.FirstOrDefault(r => r.Value == "Kim Cương")?.CodeId;
+
+                    // Xét hạng
+                    if (customer.Points >= 200000 && diamondRank.HasValue)
+                        customer.RankId = diamondRank.Value;
+                    else if (customer.Points >= 100000 && goldRank.HasValue)
+                    {
+                        if (customer.RankId != diamondRank) customer.RankId = goldRank.Value;
+                    }
+                    else if (customer.Points >= 50000 && silverRank.HasValue)
+                    {
+                        if (customer.RankId != diamondRank && customer.RankId != goldRank) customer.RankId = silverRank.Value;
+                    }
+
+                    _context.Customers.Update(customer);
+                    await _context.SaveChangesAsync();
+                }
+                // ==================================================================================
+
+
                 await transaction.CommitAsync();
 
                 return Json(new { success = true, message = "Đặt hàng thành công!", orderId = order.OrderId });
@@ -530,6 +574,129 @@ namespace BookstoreManagement.Controllers
                 return Json(new { success = false, message = "Lỗi: " + ex.Message });
             }
         }
+
+        // 4. QUẢN LÝ ĐƠN HÀNG CÁ NHÂN & TÀI KHOẢN
+        // ---------------------------------------------------------
+
+        // GET: /Shopping/MyOrders
+        [Authorize]
+        public async Task<IActionResult> MyOrders()
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var orders = await _context.Orders
+                .Include(o => o.PaymentMethod)
+                .Where(o => o.UserId == userId)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+
+            return View(orders);
+        }
+
+        // GET: /Shopping/GetOrderDetails/5 (API cho Modal)
+        [Authorize]
+        public async Task<IActionResult> GetOrderDetails(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var order = await _context.Orders
+                .Include(o => o.PaymentMethod)
+                .Include(o => o.Promotion)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Book)
+                .FirstOrDefaultAsync(o => o.OrderId == id && o.UserId == userId); // Bảo mật: Chỉ xem đơn của chính mình
+
+            if (order == null) return NotFound();
+
+            return PartialView("_OrderDetailsModal", order);
+        }
+
+        // GET: /Shopping/MyAccount
+        [Authorize]
+        public async Task<IActionResult> MyAccount()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Account");
+
+            // Lấy thông tin Customer kèm Rank
+            var customerInfo = await _context.Customers
+                .Include(c => c.Rank) // Include bảng Code
+                .FirstOrDefaultAsync(c => c.Phone == user.PhoneNumber || c.Email == user.Email);
+
+            ViewBag.CustomerAddress = customerInfo?.Address ?? "Chưa cập nhật";
+
+            // --- DỮ LIỆU THẬT ---
+            ViewBag.LoyaltyPoints = customerInfo?.Points ?? 0;
+            ViewBag.MemberRank = customerInfo?.Rank?.Value ?? "Thành viên mới"; // Nếu null thì là New
+                                                                                // --------------------
+
+            return View(user);
+        }
+
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile(string fullName, string phoneNumber, string address, string email)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Account");
+
+            // 1. Cập nhật bảng Users (AppUser)
+            user.FullName = fullName;
+            user.PhoneNumber = phoneNumber;
+            user.Address = address;
+            user.UpdatedAt = DateTime.Now;
+
+            // (Tùy chọn) Nếu cho phép đổi Email thì cần logic phức tạp hơn (gửi mail xác nhận lại)
+            // Ở đây tạm thời chỉ update field Email, nhưng Username vẫn giữ nguyên để tránh lỗi đăng nhập
+            user.Email = email;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                TempData["ErrorMessage"] = "Lỗi cập nhật tài khoản: " + string.Join(", ", result.Errors.Select(e => e.Description));
+                return RedirectToAction(nameof(MyAccount));
+            }
+
+            // 2. Cập nhật bảng Customers (Để đồng bộ dữ liệu mua hàng)
+            // Tìm Customer liên kết với User này (qua SĐT cũ hoặc Email cũ)
+            var customer = await _context.Customers
+                .FirstOrDefaultAsync(c => c.Phone == user.PhoneNumber || c.Email == user.Email);
+
+            if (customer != null)
+            {
+                // Nếu đã có hồ sơ khách hàng -> Cập nhật
+                customer.FullName = fullName;
+                customer.Phone = phoneNumber; // Cập nhật SĐT mới
+                customer.Address = address;
+                customer.Email = email;
+                customer.UpdatedAt = DateTime.Now;
+                _context.Customers.Update(customer);
+            }
+            else
+            {
+                // Nếu chưa có hồ sơ khách hàng -> Tạo mới (Để tích điểm sau này)
+                customer = new Customer
+                {
+                    FullName = fullName,
+                    Phone = phoneNumber,
+                    Email = email,
+                    Address = address,
+                    IsActive = true,
+                    CreatedAt = DateTime.Now,
+                    Points = 0
+                };
+                _context.Customers.Add(customer);
+            }
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Cập nhật thông tin thành công!";
+            return RedirectToAction(nameof(MyAccount));
+        }
+
 
         // Class DTO nhận dữ liệu từ Client
         public class OnlineCheckoutRequest

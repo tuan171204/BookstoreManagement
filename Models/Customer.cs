@@ -29,5 +29,12 @@ public partial class Customer
 
     public bool IsActive { get; set; } = true;
 
+    public int Points { get; set; } = 0; // Điểm tích lũy
+
+    public int? RankId { get; set; } // Khóa ngoại trỏ đến bảng Code
+
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+
+    [ForeignKey("RankId")]
+    public virtual Code? Rank { get; set; }
 }

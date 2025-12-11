@@ -37,6 +37,8 @@
                     <th>Số điện thoại</th>
                     <th>Email</th>
                     <th>Tình trạng</th>
+                    <th class="text-center">Điểm tích lũy</th>
+                    <th class="text-center">Hạng</th>
                     <th class="text-center" style="width: 150px;">Thao tác</th>
                 </tr>
             </thead>
@@ -59,6 +61,22 @@
                                     <span class="badge bg-secondary">Đã khóa</span>
                                 }
                             </td>
+
+                            <td class="text-center fw-bold text-primary">@item.Points.ToString("N0")</td>
+
+                            <td class="text-center">
+                                @if (item.Rank != null)
+                                {
+                                    var badgeClass = item.Rank.Value == "Kim Cương" ? "bg-info text-dark" :
+                                    (item.Rank.Value == "Vàng" ? "bg-warning text-dark" : "bg-secondary");
+                                    <span class="badge @badgeClass">@item.Rank.Value</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">-</span>
+                                }
+                            </td>
+
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm">
                                     <a asp-action="Details" asp-route-id="@item.CustomerId" class="btn btn-info text-white"

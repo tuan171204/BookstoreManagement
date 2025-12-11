@@ -20,10 +20,12 @@ namespace BookstoreManagement.Controllers
         public async Task<IActionResult> Index(string searchString)
         {
             ViewData["CurrentFilter"] = searchString;
-            TempData["CurrentFeature"] = "Customer"; 
+            TempData["CurrentFeature"] = "Customer";
             var query = _context.Customers.AsQueryable();
 
-            query = query.Where(c => c.Phone != "0000000000");
+            query = query.Include(c => c.Rank);
+
+            query = query.Where(c => c.Phone != "00000000" && c.Phone != "0000000000");
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -44,6 +46,7 @@ namespace BookstoreManagement.Controllers
             var customer = await _context.Customers
                 .Include(c => c.Orders)
                     .ThenInclude(o => o.OrderDetails)
+                .Include(c => c.Rank)
                 .FirstOrDefaultAsync(m => m.CustomerId == id);
 
             if (customer == null) return NotFound();
@@ -56,6 +59,9 @@ namespace BookstoreManagement.Controllers
                 Email = customer.Email,
                 Address = customer.Address,
                 IsActive = customer.IsActive,
+
+                Points = customer.Points,
+                RankName = customer.Rank?.Value ?? "Thành viên mới",
 
                 Orders = customer.Orders.OrderByDescending(o => o.OrderDate).ToList()
             };

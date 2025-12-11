@@ -1,0 +1,130 @@
+@model IEnumerable<BookstoreManagement.Models.Order>
+@{
+    ViewData["Title"] = "Đơn hàng của tôi";
+    Layout = "~/Views/Shared/_LayoutClient.cshtml";
+}
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-3 mb-4">
+            <div class="list-group shadow-sm">
+                <a asp-action="MyAccount" class="list-group-item list-group-item-action">
+                    <i class="fas fa-user-circle me-2"></i> Thông tin tài khoản
+                </a>
+                <a asp-action="MyOrders" class="list-group-item list-group-item-action active">
+                    <i class="fas fa-box-open me-2"></i> Đơn hàng của tôi
+                </a>
+                <a href="#" class="list-group-item list-group-item-action disabled">
+                    <i class="fas fa-heart me-2"></i> Sách yêu thích
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <h4 class="fw-bold text-primary mb-4">Lịch sử đơn hàng</h4>
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive shadow-sm rounded">
+                    <table class="table table-hover align-middle mb-0 bg-white">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Ngày đặt</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td><span class="fw-bold">#@item.OrderId</span></td>
+                                    <td>@item.OrderDate?.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="fw-bold text-primary">@item.FinalAmount.ToString("N0") đ</td>
+                                    <td>
+                                        @if (item.Status == "Completed")
+                                        {
+                                            <span class="badge bg-success rounded-pill p-2 w-75">Hoàn
+                                                thành</span>
+                                        }
+                                        else if (item.Status == "Shipping")
+                                        {
+
+                                            <span class="badge bg-primary rounded-pill p-2 w-75">Đang
+                                                giao hàng</span>
+                                        }
+                                        else if (item.Status == "Pending")
+                                        {
+
+                                            <span class="badge bg-warning text-dark rounded-pill p-2 w-75">Chờ xử lý</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                            onclick="showOrderDetails(@item.OrderId)">
+                                            Xem chi tiết
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 bg-white shadow-sm rounded">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2038/2038854.png" style="width: 100px; opacity: 0.5"
+                        class="mb-3">
+                    <p class="text-muted">Bạn chưa có đơn hàng nào.</p>
+                    <a asp-action="Index" class="btn btn-primary rounded-pill px-4">Mua sắm ngay</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" id="orderDetailContent">
+            <div class="text-center p-5">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showOrderDetails(orderId) {
+            var myModal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+
+            // Reset loading content
+            $('#orderDetailContent').html('<div class="text-center p-5"><div class="spinner-border text-primary"></div><p class="mt-2">Đang tải đơn hàng...</p></div>');
+
+            myModal.show();
+
+            $.ajax({
+                url: '/Shopping/GetOrderDetails',
+                type: 'GET',
+                data: { id: orderId },
+                success: function (res) {
+                    $('#orderDetailContent').html(res);
+                },
+                error: function () {
+                    $('#orderDetailContent').html('<div class="alert alert-danger m-3">Không thể tải thông tin đơn hàng.</div>');
+                }
+            });
+        }
+
+        // Hàm xử lý hủy đơn (Placeholder)
+        function requestCancelOrder(orderId) {
+            if (confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
+                alert("Tính năng hủy đơn hàng đang được phát triển.");
+                // Sau này gọi AJAX tới /Shopping/CancelOrder
+            }
+        }
+    </script>
+}

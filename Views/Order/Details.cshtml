@@ -5,18 +5,82 @@
 }
 
 <div class="container-fluid px-4">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success mt-3">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger mt-3">@TempData["ErrorMessage"]</div>
+    }
+
     <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
         <h1>Chi tiết Hóa đơn #@Model.OrderId</h1>
-        <div>
+        <div class="d-flex gap-2">
             <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
-            <button onclick="window.print()" class="btn btn-primary"><i class="fas fa-print"></i> In Hóa Đơn</button>
+
+            @if (Model.Status == "Pending")
+            {
+                <form asp-action="StartShipping" method="post"
+                    onsubmit="return confirm('Xác nhận duyệt đơn và bắt đầu giao hàng?');">
+                    <input type="hidden" name="id" value="@Model.OrderId" />
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-truck me-1"></i> Duyệt & Giao hàng
+                    </button>
+                </form>
+
+                <form asp-action="CancelOrder" method="post"
+                    onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');">
+                    <input type="hidden" name="id" value="@Model.OrderId" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times-circle me-1"></i> Hủy đơn
+                    </button>
+                </form>
+            }
+
+            @if (Model.Status == "Shipping")
+            {
+                <form asp-action="CompleteOrder" method="post"
+                    onsubmit="return confirm('Xác nhận khách đã nhận hàng và thanh toán thành công?');">
+                    <input type="hidden" name="id" value="@Model.OrderId" />
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check-double me-1"></i> Hoàn thành đơn
+                    </button>
+                </form>
+            }
+
+            <button onclick="window.print()" class="btn btn-outline-dark"><i class="fas fa-print"></i> In Hóa
+                Đơn</button>
         </div>
     </div>
 
     <div class="card mb-4" id="invoice-area">
         <div class="card-header">
             Thông tin đơn hàng
-            <span class="float-end">Ngày: <strong>@Model.OrderDate?.ToString("dd/MM/yyyy HH:mm")</strong></span>
+            <div>
+                @if (Model.Status == "Completed")
+                {
+                    <span class="badge bg-success fs-6">Hoàn thành</span>
+                }
+                else if (Model.Status == "Shipping")
+                {
+
+                    <span class="badge bg-primary fs-6">Đang giao hàng</span>
+                }
+                else
+                if (Model.Status == "Pending")
+                {
+
+                    <span class="badge bg-warning text-dark fs-6">Chờ xử lý</span>
+                }
+                else if (Model.Status == "Cancelled")
+                {
+
+                    <span class="badge bg-danger fs-6">Đã hủy</span>
+                }
+
+                <span class="ms-3 fw-bold">Ngày: @Model.OrderDate?.ToString("dd/MM/yyyy HH:mm")</span>
+            </div>
         </div>
         <div class="card-body">
             <div class="row mb-4">
@@ -48,7 +112,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @{ int i = 1; }
+                        @{
+                            int i = 1;
+                        }
                         @foreach (var detail in Model.OrderDetails)
                         {
                             <tr>
@@ -78,7 +144,8 @@
                             </tr>
                             <tr>
                                 <td class="left"><strong>Thành tiền</strong></td>
-                                <td class="text-end"><strong class="text-primary" style="font-size: 1.2em;">@Model.FinalAmount.ToString("N0") đ</strong></td>
+                                <td class="text-end"><strong class="text-primary"
+                                        style="font-size: 1.2em;">@Model.FinalAmount.ToString("N0") đ</strong></td>
                             </tr>
                             <tr>
                                 <td class="left"><em>Phương thức TT</em></td>
@@ -98,16 +165,21 @@
             body * {
                 visibility: hidden;
             }
-            #invoice-area, #invoice-area * {
+
+            #invoice-area,
+            #invoice-area * {
                 visibility: visible;
             }
+
             #invoice-area {
                 position: absolute;
                 left: 0;
                 top: 0;
                 width: 100%;
             }
-            .btn, .breadcrumb {
+
+            .btn,
+            .breadcrumb {
                 display: none !important;
             }
         }

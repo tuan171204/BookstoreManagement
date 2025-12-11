@@ -24,6 +24,7 @@
                         <th>Khách hàng</th>
                         <th>Người bán</th>
                         <th>Phương thức</th>
+                        <th class="text-center">Trạng thái</th>
                         <th class="text-end">Tổng tiền</th>
                         <th class="text-center">Thao tác</th>
                     </tr>
@@ -46,6 +47,28 @@
                             </td>
                             <td>@item.User.FullName</td>
                             <td>@item.PaymentMethod?.Value</td>
+                            <td class="text-center">
+                                @if (item.Status == "Completed")
+                                {
+                                    <span class="badge bg-success p-2 w-75">Hoàn thành</span>
+                                }
+                                else if (item.Status == "Shipping") // MỚI
+                                {
+                                    <span class="badge bg-primary p-2 w-75">Đang giao hàng</span>
+                                }
+                                else if (item.Status == "Pending")
+                                {
+                                    <span class="badge bg-warning text-dark p-2 w-75">Chờ xử lý</span>
+                                }
+                                else if (item.Status == "Cancelled")
+                                {
+                                    <span class="badge bg-danger p-2 w-75">Đã hủy</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary p-2 w-75">@item.Status</span>
+                                }
+                            </td>
                             <td class="text-end fw-bold text-primary">
                                 @item.FinalAmount.ToString("N0") đ
                             </td>
