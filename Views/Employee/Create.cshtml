@@ -1,16 +1,16 @@
 @model BookstoreManagement.ViewModels.Employee.EmployeeViewModel
 
 @{
-    ViewData["Title"] = "Thêm nhân viên mới";
+    ViewData["Title"] = "Thêm hồ sơ nhân viên";
     Layout = "_Layout";
 }
 
 <div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card shadow-sm">
+            <div class="card shadow">
                 <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="bi bi-person-plus"></i> Thêm nhân viên mới</h4>
+                    <h5 class="mb-0"><i class="bi bi-person-plus"></i> Tạo hồ sơ nhân viên mới</h5>
                 </div>
                 <div class="card-body">
                     <form asp-action="Create" method="post">
@@ -18,51 +18,53 @@
 
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label asp-for="FullName" class="form-label">Họ tên <span
+                                <label asp-for="FullName" class="form-label">Họ và tên <span
                                         class="text-danger">*</span></label>
-                                <input asp-for="FullName" class="form-control" placeholder="Nhập họ tên..." />
+                                <input asp-for="FullName" class="form-control" placeholder="Nguyễn Văn A" />
                                 <span asp-validation-for="FullName" class="text-danger"></span>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label asp-for="Email" class="form-label">Email (Tên đăng nhập) <span
-                                        class="text-danger">*</span></label>
-                                <input asp-for="Email" class="form-control" placeholder="example@gmail.com" />
-                                <span asp-validation-for="Email" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6">
                                 <label asp-for="PhoneNumber" class="form-label">Số điện thoại <span
                                         class="text-danger">*</span></label>
-                                <input asp-for="PhoneNumber" class="form-control" />
+                                <input asp-for="PhoneNumber" class="form-control" placeholder="09xxxxxxxx" />
                                 <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6">
-                                <label asp-for="RoleName" class="form-label">Chức vụ <span
+                                <label asp-for="Email" class="form-label">Email liên hệ <span
                                         class="text-danger">*</span></label>
+                                <input asp-for="Email" class="form-control" placeholder="email@example.com" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
 
-                                <select asp-for="RoleName" class="form-select" asp-items="ViewBag.Roles">
-                                    <option value="">-- Chọn chức vụ --</option>
-                                </select>
+                            <div class="col-md-6">
+                                <label asp-for="HireDate" class="form-label">Ngày vào làm</label>
+                                <input asp-for="HireDate" class="form-control" type="date"
+                                    value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                                <span asp-validation-for="HireDate" class="text-danger"></span>
+                            </div>
 
-                                <span asp-validation-for="RoleName" class="text-danger"></span>
+                            <div class="col-md-6">
+                                <label asp-for="Salary" class="form-label">Lương cơ bản (VNĐ)</label>
+                                <input asp-for="Salary" class="form-control" type="number" step="100000" />
+                                <span asp-validation-for="Salary" class="text-danger"></span>
                             </div>
 
                             <div class="col-12">
-                                <label asp-for="Address" class="form-label">Địa chỉ</label>
+                                <label asp-for="Address" class="form-label">Địa chỉ thường trú</label>
                                 <textarea asp-for="Address" class="form-control" rows="2"></textarea>
                                 <span asp-validation-for="Address" class="text-danger"></span>
                             </div>
                         </div>
 
-                        <div class="mt-4 pt-2 border-top">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save"></i> Lưu nhân viên
-                            </button>
+                        <div class="mt-4 pt-3 border-top d-flex gap-2 justify-content-end">
                             <a asp-action="Index" class="btn btn-secondary">
-                                <i class="bi bi-x-circle"></i> Hủy
+                                <i class="bi bi-x-lg"></i> Hủy bỏ
                             </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-save"></i> Lưu hồ sơ
+                            </button>
                         </div>
                     </form>
                 </div>

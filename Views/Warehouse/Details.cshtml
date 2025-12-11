@@ -24,212 +24,224 @@
             <a asp-action="Index" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Quay lại danh sách
             </a>
+
+            @{
+                var currentId = Model.TicketType == "Import" ? Model.ImportTicket?.ImportId : Model.ExportTicket?.ExportId;
+            }
+            @if (currentId != null)
+            {
+                <a asp-action="ExportTicketDetail" asp-route-id="@currentId" asp-route-type="@Model.TicketType"
+                    class="btn btn-success ms-2">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Xuất Excel Phiếu này
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+@if (Model.TicketType == "Import" && Model.ImportTicket != null)
+{
+    var ticket = Model.ImportTicket;
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>Thông tin Phiếu Nhập: @ticket.DocumentNumber</h5>
+
+            @if (ticket.Status == "Pending")
+            {
+                <span class="badge bg-warning text-dark">Đang chờ xử lý</span>
+            }
+            else if (ticket.Status == "Completed")
+            {
+                <span class="badge bg-success">Đã nhập kho</span>
+            }
+            else if (ticket.Status == "Cancelled")
+            {
+                <span class="badge bg-danger">Đã hủy</span>
+            }
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Nhà cung cấp:</dt>
+                <dd class="col-sm-9">@ticket.Supplier.Name</dd>
+
+                <dt class="col-sm-3">Ngày nhập:</dt>
+                <dd class="col-sm-9">@ticket.Date?.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                <dt class="col-sm-3">Người tạo:</dt>
+                <dd class="col-sm-9">@ticket.User.FullName</dd>
+
+                <dt class="col-sm-3">Tổng số lượng:</dt>
+                <dd class="col-sm-9">@ticket.TotalQuantity</dd>
+
+                <dt class="col-sm-3">Tổng chi phí:</dt>
+                <dd class="col-sm-9">@ticket.TotalCost?.ToString("N0") ₫</dd>
+
+                <dt class="col-sm-3">Phương thức thanh toán:</dt>
+                <dd class="col-sm-9">
+                    @(ticket.PaymentMethod?.Value ?? "Chưa xác định")
+                </dd>
+
+                <dt class="col-sm-3">Trạng thái:</dt>
+                <dd class="col-sm-9">@ticket.Status</dd>
+
+                <dt class="col-sm-3">Ghi chú:</dt>
+                <dd class="col-sm-9">@ticket.Note</dd>
+            </dl>
+
+            @if (ticket.Status == "Pending")
+            {
+                <div class="border-top pt-3 mt-3 d-flex gap-2">
+                    <form asp-action="ApproveImport" asp-route-id="@ticket.ImportId" method="post"
+                        onsubmit="return confirm('Xác nhận phiếu này? Kho sẽ được cập nhật.');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle-fill"></i> Xác nhận Nhập kho
+                        </button>
+                    </form>
+
+                    <form asp-action="CancelImport" asp-route-id="@ticket.ImportId" method="post"
+                        onsubmit="return confirm('Bạn có chắc chắn muốn HỦY phiếu nhập này không?');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-x-circle-fill"></i> Hủy phiếu
+                        </button>
+                    </form>
+                </div>
+            }
         </div>
     </div>
 
-    @if (Model.TicketType == "Import" && Model.ImportTicket != null)
-    {
-        var ticket = Model.ImportTicket;
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5>Thông tin Phiếu Nhập: @ticket.DocumentNumber</h5>
-
-                @if (ticket.Status == "Pending")
-                {
-                    <span class="badge bg-warning text-dark">Đang chờ xử lý</span>
-                }
-                else if (ticket.Status == "Completed")
-                {
-                    <span class="badge bg-success">Đã nhập kho</span>
-                }
-                else if (ticket.Status == "Cancelled")
-                {
-                    <span class="badge bg-danger">Đã hủy</span>
-                }
-            </div>
-            <div class="card-body">
-                <dl class="row">
-                    <dt class="col-sm-3">Nhà cung cấp:</dt>
-                    <dd class="col-sm-9">@ticket.Supplier.Name</dd>
-
-                    <dt class="col-sm-3">Ngày nhập:</dt>
-                    <dd class="col-sm-9">@ticket.Date?.ToString("dd/MM/yyyy HH:mm")</dd>
-
-                    <dt class="col-sm-3">Người tạo:</dt>
-                    <dd class="col-sm-9">@ticket.User.FullName</dd>
-
-                    <dt class="col-sm-3">Tổng số lượng:</dt>
-                    <dd class="col-sm-9">@ticket.TotalQuantity</dd>
-
-                    <dt class="col-sm-3">Tổng chi phí:</dt>
-                    <dd class="col-sm-9">@ticket.TotalCost?.ToString("N0") ₫</dd>
-
-                    <dt class="col-sm-3">Phương thức thanh toán:</dt>
-                    <dd class="col-sm-9">
-                        @(ticket.PaymentMethod?.Value ?? "Chưa xác định")
-                    </dd>
-
-                    <dt class="col-sm-3">Trạng thái:</dt>
-                    <dd class="col-sm-9">@ticket.Status</dd>
-
-                    <dt class="col-sm-3">Ghi chú:</dt>
-                    <dd class="col-sm-9">@ticket.Note</dd>
-                </dl>
-
-                @if (ticket.Status == "Pending")
-                {
-                    <div class="border-top pt-3 mt-3 d-flex gap-2">
-                        <form asp-action="ApproveImport" asp-route-id="@ticket.ImportId" method="post"
-                            onsubmit="return confirm('Xác nhận phiếu này? Kho sẽ được cập nhật.');">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-check-circle-fill"></i> Xác nhận Nhập kho
-                            </button>
-                        </form>
-
-                        <form asp-action="CancelImport" asp-route-id="@ticket.ImportId" method="post"
-                            onsubmit="return confirm('Bạn có chắc chắn muốn HỦY phiếu nhập này không?');">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-danger">
-                                <i class="bi bi-x-circle-fill"></i> Hủy phiếu
-                            </button>
-                        </form>
-                    </div>
-                }
-            </div>
+    <div class="card">
+        <div class="card-header">
+            <h5>Chi tiết hàng hóa</h5>
         </div>
+        <div class="card-body table-responsive">
+            <form asp-action="UpdateImportQuantity" method="post" id="updateQuantityForm">
+                <input type="hidden" name="importId" value="@ticket.ImportId" />
 
-        <div class="card">
-            <div class="card-header">
-                <h5>Chi tiết hàng hóa</h5>
-            </div>
-            <div class="card-body table-responsive">
-                <form asp-action="UpdateImportQuantity" method="post" id="updateQuantityForm">
-                    <input type="hidden" name="importId" value="@ticket.ImportId" />
-
-                    <table class="table align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Sách</th>
-                                <th class="text-center" style="width: 150px;">Số lượng</th>
-                                <th class="text-end">Giá nhập (VNĐ)</th>
-                                <th class="text-end">Thành tiền (VNĐ)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (int i = 0; i < ticket.ImportDetails.Count; i++)
-                            {
-                                var item = ticket.ImportDetails.ElementAt(i);
-                                <tr>
-                                    <td>
-                                        @item.Book.Title
-                                        <input type="hidden" name="details[@i].DetailId" value="@item.ImportDetailId" />
-                                    </td>
-                                    <td class="text-center">
-                                        @if (ticket.Status == "Pending")
-                                        {
-                                            <input type="number" name="details[@i].Quantity"
-                                                class="form-control text-center quantity-input" value="@item.Quantity" min="1"
-                                                required data-price="@item.CostPrice" />
-                                        }
-                                        else
-                                        {
-                                            @item.Quantity
-                                        }
-                                    </td>
-                                    <td class="text-end">@item.CostPrice.ToString("N0")</td>
-                                    <td class="text-end subtotal">@item.Subtotal?.ToString("N0")</td>
-                                </tr>
-                            }
-                        </tbody>
-                        <tfoot>
-                            <tr class="table-light fw-bold">
-                                <td colspan="3" class="text-end">Tổng cộng:</td>
-                                <td class="text-end text-danger total-cost">@ticket.TotalCost?.ToString("N0") ₫</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-
-                    @if (ticket.Status == "Pending")
-                    {
-                        <div class="mt-3 text-end">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save"></i> Cập nhật số lượng
-                            </button>
-                        </div>
-                    }
-                </form>
-            </div>
-        </div>
-    }
-    else if (Model.TicketType == "Export" && Model.ExportTicket != null)
-    {
-        var ticket = Model.ExportTicket;
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5>Thông tin Phiếu Xuất: @ticket.DocumentNumber</h5>
-            </div>
-            <div class="card-body">
-                <dl class="row">
-                    <dt class="col-sm-3">Lý do xuất:</dt>
-                    <dd class="col-sm-9">@ticket.Reason</dd>
-
-                    <dt class="col-sm-3">Đơn hàng liên quan:</dt>
-                    <dd class="col-sm-9">@ticket.Reference?.OrderId</dd>
-
-                    <dt class="col-sm-3">Ngày xuất:</dt>
-                    <dd class="col-sm-9">@ticket.Date?.ToString("dd/MM/yyyy HH:mm")</dd>
-
-                    <dt class="col-sm-3">Người tạo:</dt>
-                    <dd class="col-sm-9">@ticket.User.FullName</dd>
-
-                    <dt class="col-sm-3">Tổng số lượng:</dt>
-                    <dd class="col-sm-9">@ticket.TotalQuantity</dd>
-
-                    <dt class="col-sm-3">Trạng thái:</dt>
-                    <dd class="col-sm-9"><span class="badge bg-secondary">@ticket.Status</span></dd>
-
-                    <dt class="col-sm-3">Ghi chú:</dt>
-                    <dd class="col-sm-9">@ticket.Note</dd>
-                </dl>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h5>Chi tiết hàng hóa</h5>
-            </div>
-            <div class="card-body table-responsive">
-                <table class="table">
+                <table class="table align-middle">
                     <thead class="table-light">
                         <tr>
                             <th>Sách</th>
-                            <th class="text-end">Số lượng</th>
-                            <th class="text-end">Giá bán (VNĐ)</th>
+                            <th class="text-center" style="width: 150px;">Số lượng</th>
+                            <th class="text-end">Giá nhập (VNĐ)</th>
                             <th class="text-end">Thành tiền (VNĐ)</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in ticket.ExportDetails)
+                        @for (int i = 0; i < ticket.ImportDetails.Count; i++)
                         {
+                            var item = ticket.ImportDetails.ElementAt(i);
                             <tr>
-                                <td>@item.Book.Title</td>
-                                <td class="text-end">@item.Quantity</td>
-                                <td class="text-end">@item.UnitPrice.ToString("N0")</td>
-                                <td class="text-end">@item.Subtotal?.ToString("N0")</td>
+                                <td>
+                                    @item.Book.Title
+                                    <input type="hidden" name="details[@i].DetailId" value="@item.ImportDetailId" />
+                                </td>
+                                <td class="text-center">
+                                    @if (ticket.Status == "Pending")
+                                    {
+                                        <input type="number" name="details[@i].Quantity"
+                                            class="form-control text-center quantity-input" value="@item.Quantity" min="1" required
+                                            data-price="@item.CostPrice" />
+                                    }
+                                    else
+                                    {
+                                        @item.Quantity
+                                    }
+                                </td>
+                                <td class="text-end">@item.CostPrice.ToString("N0")</td>
+                                <td class="text-end subtotal">@item.Subtotal?.ToString("N0")</td>
                             </tr>
                         }
                     </tbody>
+                    <tfoot>
+                        <tr class="table-light fw-bold">
+                            <td colspan="3" class="text-end">Tổng cộng:</td>
+                            <td class="text-end text-danger total-cost">@ticket.TotalCost?.ToString("N0") ₫</td>
+                        </tr>
+                    </tfoot>
                 </table>
-            </div>
+
+                @if (ticket.Status == "Pending")
+                {
+                    <div class="mt-3 text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Cập nhật số lượng
+                        </button>
+                    </div>
+                }
+            </form>
         </div>
-    }
-    else
-    {
-        <div class="alert alert-danger">
-            <i class="bi bi-exclamation-triangle-fill"></i> Không tìm thấy thông tin phiếu.
+    </div>
+}
+else if (Model.TicketType == "Export" && Model.ExportTicket != null)
+{
+    var ticket = Model.ExportTicket;
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Thông tin Phiếu Xuất: @ticket.DocumentNumber</h5>
         </div>
-    }
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Lý do xuất:</dt>
+                <dd class="col-sm-9">@ticket.Reason</dd>
+
+                <dt class="col-sm-3">Đơn hàng liên quan:</dt>
+                <dd class="col-sm-9">@ticket.Reference?.OrderId</dd>
+
+                <dt class="col-sm-3">Ngày xuất:</dt>
+                <dd class="col-sm-9">@ticket.Date?.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                <dt class="col-sm-3">Người tạo:</dt>
+                <dd class="col-sm-9">@ticket.User.FullName</dd>
+
+                <dt class="col-sm-3">Tổng số lượng:</dt>
+                <dd class="col-sm-9">@ticket.TotalQuantity</dd>
+
+                <dt class="col-sm-3">Trạng thái:</dt>
+                <dd class="col-sm-9"><span class="badge bg-secondary">@ticket.Status</span></dd>
+
+                <dt class="col-sm-3">Ghi chú:</dt>
+                <dd class="col-sm-9">@ticket.Note</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Chi tiết hàng hóa</h5>
+        </div>
+        <div class="card-body table-responsive">
+            <table class="table">
+                <thead class="table-light">
+                    <tr>
+                        <th>Sách</th>
+                        <th class="text-end">Số lượng</th>
+                        <th class="text-end">Giá bán (VNĐ)</th>
+                        <th class="text-end">Thành tiền (VNĐ)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in ticket.ExportDetails)
+                    {
+                        <tr>
+                            <td>@item.Book.Title</td>
+                            <td class="text-end">@item.Quantity</td>
+                            <td class="text-end">@item.UnitPrice.ToString("N0")</td>
+                            <td class="text-end">@item.Subtotal?.ToString("N0")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle-fill"></i> Không tìm thấy thông tin phiếu.
+    </div>
+}
 </div>
 
 @section Scripts {

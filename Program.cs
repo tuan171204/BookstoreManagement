@@ -124,7 +124,7 @@ if (builder.Environment.IsDevelopment())
 		options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
 		options.LoginPath = "/Account/Login"; // Trang đăng nhập
 		options.LogoutPath = "/Account/Logout";
-		options.AccessDeniedPath = "/Account/AccessDenied"; // Trang khi bị cấm truy cập
+		options.AccessDeniedPath = "/Home/AccessDenied"; // Trang khi bị cấm truy cập
 		options.SlidingExpiration = true;
 	});
 

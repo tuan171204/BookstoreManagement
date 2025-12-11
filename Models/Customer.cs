@@ -37,4 +37,11 @@ public partial class Customer
 
     [ForeignKey("RankId")]
     public virtual Code? Rank { get; set; }
+
+    // --- CẬP NHẬT MỚI: LIÊN KẾT TÀI KHOẢN ---
+    // Trường này Null nghĩa là khách mua tại quầy chưa từng đăng ký online
+    public string? AccountId { get; set; }
+
+    [ForeignKey("AccountId")]
+    public virtual AppUser? AppUser { get; set; }
 }

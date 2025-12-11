@@ -573,5 +573,78 @@ namespace BookstoreManagement.Controllers
 
             return "/images/books/" + uniqueFileName;
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetInventoryFlow(int bookId, DateTime? fromDate, DateTime? toDate)
+        {
+            // 1. Thiết lập khoảng thời gian (Mặc định 30 ngày gần nhất nếu null)
+            var endDate = toDate?.Date ?? DateTime.Today;
+            var startDate = fromDate?.Date ?? endDate.AddDays(-29);
+
+            if (startDate > endDate) return BadRequest("Ngày bắt đầu phải nhỏ hơn ngày kết thúc");
+
+            // 2. Tính TỒN ĐẦU KỲ (Opening Stock)
+            // Logic: Tổng Nhập (trước startDate) - Tổng Xuất (trước startDate)
+            // Chỉ tính các phiếu có trạng thái "Completed"
+
+            var totalImportBefore = await _context.ImportDetails
+                .Include(d => d.Import)
+                .Where(d => d.BookId == bookId
+                            && d.Import.Status == "Completed"
+                            && d.Import.Date < startDate)
+                .SumAsync(d => d.Quantity);
+
+            var totalExportBefore = await _context.ExportDetails
+                .Include(d => d.Export)
+                .Where(d => d.BookId == bookId
+                            && d.Export.Status == "Completed"
+                            && d.Export.Date < startDate)
+                .SumAsync(d => d.Quantity);
+
+            int currentStock = totalImportBefore - totalExportBefore;
+
+            // 3. Lấy dữ liệu Nhập/Xuất TRONG KỲ
+            var importsInRange = await _context.ImportDetails
+                .Include(d => d.Import)
+                .Where(d => d.BookId == bookId
+                            && d.Import.Status == "Completed"
+                            && d.Import.Date >= startDate
+                            && d.Import.Date <= endDate)
+                .Select(d => new { Date = d.Import.Date.Value.Date, Qty = d.Quantity })
+                .ToListAsync();
+
+            var exportsInRange = await _context.ExportDetails
+                .Include(d => d.Export)
+                .Where(d => d.BookId == bookId
+                            && d.Export.Status == "Completed"
+                            && d.Export.Date >= startDate
+                            && d.Export.Date <= endDate)
+                .Select(d => new { Date = d.Export.Date.Value.Date, Qty = d.Quantity })
+                .ToListAsync();
+
+            // 4. Tổng hợp dữ liệu theo từng ngày
+            var data = new List<object>();
+
+            // Vòng lặp từ ngày bắt đầu đến ngày kết thúc
+            for (var day = startDate; day <= endDate; day = day.AddDays(1))
+            {
+                // Tính tổng nhập/xuất trong ngày đó
+                int dailyImport = importsInRange.Where(x => x.Date == day).Sum(x => x.Qty);
+                int dailyExport = exportsInRange.Where(x => x.Date == day).Sum(x => x.Qty);
+
+                // Tính tồn cuối ngày (Closing Stock)
+                currentStock = currentStock + dailyImport - dailyExport;
+
+                data.Add(new
+                {
+                    date = day.ToString("dd/MM/yyyy"),
+                    import = dailyImport,
+                    export = dailyExport,
+                    stock = currentStock
+                });
+            }
+
+            return Json(data);
+        }
     }
 }

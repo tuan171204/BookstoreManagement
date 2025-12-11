@@ -20,23 +20,27 @@
             <i class="fas fa-user-shield me-2"></i> Bảo mật
         </div>
         <div class="card-body">
-            <div class="row align-items-center mb-5 border-bottom-3">
-                <div class="col-md-8">
-                    <h5>Đổi mật khẩu</h5>
-                    <p class="text-muted mb-0">
-                        Để bảo mật, hệ thống sẽ gửi một liên kết xác nhận đến email của bạn:
-                        <strong>@User.Identity?.Name</strong>
-                    </p>
+            @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                <div class="row align-items-center mb-5 border-bottom-3">
+                    <div class="col-md-8">
+                        <h5>Chuyển đổi giao diện</h5>
+                        <p class="text-muted mb-0">
+                            <strong>Chức năng chỉ dùng cho Admin</strong>
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        @* Form gửi yêu cầu đổi mật khẩu *@
+                        <form asp-controller="Shopping" asp-action="Index" method="get">
+                            <button type="submit" class="btn btn-warning text-dark p-2">
+                                <i class="fas fa-user me-1"></i> Giao diện mua hàng online
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <div class="col-md-4 text-end">
-                    @* Form gửi yêu cầu đổi mật khẩu *@
-                    <form asp-controller="Shopping" asp-action="Index" method="get">
-                        <button type="submit" class="btn btn-warning text-dark p-2">
-                            <i class="fas fa-user me-1"></i> Giao diện mua hàng online
-                        </button>
-                    </form>
-                </div>
-            </div>
+            }
+
+
             <div class="row align-items-center">
                 <div class="col-md-8">
                     <h5>Đăng xuất</h5>
