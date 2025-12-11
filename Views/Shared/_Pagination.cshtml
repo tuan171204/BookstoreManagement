@@ -26,7 +26,7 @@
         queryParams.Add($"categoryId={ViewData["CategoryId"]}");
     }
     
-    // IsActive filter (for Customer, Employee)
+    // IsActive filter (for Customer, Employee, Supplier, Promotion)
     if (ViewData["IsActiveFilter"] != null && !string.IsNullOrEmpty(ViewData["IsActiveFilter"].ToString()))
     {
         queryParams.Add($"isActive={ViewData["IsActiveFilter"]}");
@@ -36,6 +36,18 @@
     if (ViewData["RoleFilter"] != null && !string.IsNullOrEmpty(ViewData["RoleFilter"].ToString()))
     {
         queryParams.Add($"roleName={Uri.EscapeDataString(ViewData["RoleFilter"].ToString())}");
+    }
+    
+    // Type filter (for Warehouse)
+    if (ViewData["TypeFilter"] != null && !string.IsNullOrEmpty(ViewData["TypeFilter"].ToString()))
+    {
+        queryParams.Add($"typeFilter={Uri.EscapeDataString(ViewData["TypeFilter"].ToString())}");
+    }
+    
+    // Status filter (for Warehouse)
+    if (ViewData["StatusFilter"] != null && !string.IsNullOrEmpty(ViewData["StatusFilter"].ToString()))
+    {
+        queryParams.Add($"statusFilter={Uri.EscapeDataString(ViewData["StatusFilter"].ToString())}");
     }
     
     // Helper function để tạo URL với pageNumber
