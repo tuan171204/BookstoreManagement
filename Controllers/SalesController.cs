@@ -49,13 +49,90 @@ namespace BookstoreManagement.Controllers
 
         [HttpGet]
         [Authorize]
-        public IActionResult List()
+        public async Task<IActionResult> List(
+            string searchString, 
+            string? status, 
+            string? employeeId,
+            DateTime? fromDate,
+            DateTime? toDate,
+            int pageNumber = 1, 
+            int pageSize = 10)
         {
-            var orders = _context.Orders
+            ViewData["CurrentFilter"] = searchString;
+            ViewData["StatusFilter"] = status;
+            ViewData["EmployeeFilter"] = employeeId;
+            ViewData["FromDateFilter"] = fromDate?.ToString("yyyy-MM-dd");
+            ViewData["ToDateFilter"] = toDate?.ToString("yyyy-MM-dd");
+            ViewData["IsSalesPage"] = "true"; // Flag để pagination biết dùng "status" thay vì "statusFilter"
+
+            var query = _context.Orders
                 .Include(o => o.Customer)
                 .Include(o => o.User)
+                .AsQueryable();
+
+            // Search filter
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(o => 
+                    o.Customer.FullName.Contains(searchString) ||
+                    o.Customer.Phone.Contains(searchString) ||
+                    o.User.FullName.Contains(searchString) ||
+                    o.OrderId.ToString().Contains(searchString));
+            }
+
+            // Status filter
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(o => o.Status == status);
+            }
+
+            // Employee filter
+            if (!string.IsNullOrEmpty(employeeId))
+            {
+                query = query.Where(o => o.UserId == employeeId);
+            }
+
+            // Date range filter
+            if (fromDate.HasValue)
+            {
+                query = query.Where(o => o.OrderDate >= fromDate.Value);
+            }
+
+            if (toDate.HasValue)
+            {
+                var endDate = toDate.Value.Date.AddDays(1).AddSeconds(-1);
+                query = query.Where(o => o.OrderDate <= endDate);
+            }
+
+            // Calculate pagination
+            var totalItems = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            // Apply pagination
+            var orders = await query
                 .OrderByDescending(o => o.OrderDate)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalItems;
+
+            // Load dropdowns for filters
+            ViewBag.Employees = _context.Users
+                .Where(u => u.IsActive == true)
+                .Select(u => new { u.Id, u.FullName })
+                .OrderBy(x => x.FullName)
                 .ToList();
+
+            ViewBag.Statuses = _context.Orders
+                .Select(o => o.Status)
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+
             return View(orders);
         }
 
