@@ -26,6 +26,18 @@
         queryParams.Add($"categoryId={ViewData["CategoryId"]}");
     }
     
+    // IsActive filter (for Customer, Employee)
+    if (ViewData["IsActiveFilter"] != null && !string.IsNullOrEmpty(ViewData["IsActiveFilter"].ToString()))
+    {
+        queryParams.Add($"isActive={ViewData["IsActiveFilter"]}");
+    }
+    
+    // Role filter (for Employee)
+    if (ViewData["RoleFilter"] != null && !string.IsNullOrEmpty(ViewData["RoleFilter"].ToString()))
+    {
+        queryParams.Add($"roleName={Uri.EscapeDataString(ViewData["RoleFilter"].ToString())}");
+    }
+    
     // Helper function để tạo URL với pageNumber
     Func<int, string> GetPageUrl = (pageNum) =>
     {
