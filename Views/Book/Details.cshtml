@@ -142,6 +142,61 @@
                         </div>
                     </div>
 
+                    <div class="col-12 mt-5">
+                        <hr />
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-success"><i class="bi bi-box-seam"></i> Thống kê Nhập - Xuất - Tồn</h5>
+
+                            <div class="d-flex gap-2">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">Từ</span>
+                                    <input type="date" id="statsFromDate" class="form-control"
+                                        value="@DateTime.Today.AddDays(-29).ToString("yyyy-MM-dd")">
+                                </div>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">Đến</span>
+                                    <input type="date" id="statsToDate" class="form-control"
+                                        value="@DateTime.Today.ToString("yyyy-MM-dd")">
+                                </div>
+                                <button class="btn btn-sm btn-primary" onclick="loadInventoryChart()">
+                                    <i class="bi bi-filter"></i> Lọc
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-12 mb-3">
+                                <div class="card bg-light border-0 shadow-sm h-100">
+                                    <div class="card-header bg-transparent border-0 fw-bold text-muted small">
+                                        DIỄN BIẾN THEO NGÀY
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="inventoryChart" style="min-height: 300px;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-12 mb-3">
+                                <div class="card bg-light border-0 shadow-sm h-100">
+                                    <div class="card-header bg-transparent border-0 fw-bold text-muted small">
+                                        TỔNG QUAN KỲ NÀY
+                                    </div>
+                                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                                        <div style="width: 250px; height: 250px;">
+                                            <canvas id="summaryPieChart"></canvas>
+                                        </div>
+                                        <div class="mt-3 text-center small text-muted">
+                                            <div class="mb-1">Tổng nhập: <strong class="text-success"
+                                                    id="lblTotalImport">0</strong></div>
+                                            <div>Tổng xuất: <strong class="text-danger" id="lblTotalExport">0</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mt-4">
                         <a asp-action="Edit" asp-route-id="@Model.BookId" class="btn btn-warning">
                             <i class="bi bi-pencil"></i> Chỉnh sửa
@@ -253,6 +308,130 @@
                     }
                 }
             });
+
+            loadInventoryChart();
         });
+
+
+        // --- LOGIC BIỂU ĐỒ NHẬP XUẤT TỒN ---
+        let inventoryChartInstance = null;
+        let summaryPieChartInstance = null;
+        const bookId = @Model.BookId; // Lấy BookId từ Model
+
+        async function loadInventoryChart() {
+            const fromDate = document.getElementById('statsFromDate').value;
+            const toDate = document.getElementById('statsToDate').value;
+
+            try {
+                const response = await fetch(`/Book/GetInventoryFlow?bookId=${bookId}&fromDate=${fromDate}&toDate=${toDate}`);
+                if (!response.ok) throw new Error("Lỗi tải dữ liệu");
+
+                const data = await response.json();
+
+                // 1. Dữ liệu cho Bar Chart (Biểu đồ diễn biến)
+                const labels = data.map(x => x.date);
+                const importData = data.map(x => x.import);
+                const exportData = data.map(x => x.export);
+                const stockData = data.map(x => x.stock);
+
+                // 2. Tính toán tổng cho Pie Chart
+                // Dùng reduce để cộng dồn mảng importData và exportData
+                const totalImport = importData.reduce((a, b) => a + b, 0);
+                const totalExport = exportData.reduce((a, b) => a + b, 0);
+
+                // Hiển thị số liệu text bên dưới Pie Chart
+                document.getElementById('lblTotalImport').innerText = new Intl.NumberFormat('vi-VN').format(totalImport);
+                document.getElementById('lblTotalExport').innerText = new Intl.NumberFormat('vi-VN').format(totalExport);
+
+                // --- VẼ BIỂU ĐỒ 1: BAR/LINE (Diễn biến) ---
+                const ctx = document.getElementById('inventoryChart').getContext('2d');
+                if (inventoryChartInstance) inventoryChartInstance.destroy();
+
+                inventoryChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Nhập',
+                                data: importData,
+                                backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                                order: 2
+                            },
+                            {
+                                label: 'Xuất',
+                                data: exportData,
+                                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                                order: 3
+                            },
+                            {
+                                type: 'line',
+                                label: 'Tồn kho',
+                                data: stockData,
+                                borderColor: '#0d6efd',
+                                borderWidth: 2,
+                                tension: 0.3,
+                                pointRadius: 2,
+                                order: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+
+                // --- VẼ BIỂU ĐỒ 2: PIE CHART (Tổng quan) ---
+                const ctxPie = document.getElementById('summaryPieChart').getContext('2d');
+                if (summaryPieChartInstance) summaryPieChartInstance.destroy();
+
+                // Kiểm tra nếu cả 2 đều bằng 0 thì hiển thị màu xám (Chưa có dữ liệu)
+                let pieData = [totalImport, totalExport];
+                let pieColors = ['#198754', '#dc3545']; // Xanh, Đỏ
+                let pieLabels = ['Tổng Nhập', 'Tổng Xuất'];
+
+                if (totalImport === 0 && totalExport === 0) {
+                    pieData = [1]; // Fake dữ liệu để vẽ tròn
+                    pieColors = ['#e9ecef']; // Màu xám
+                    pieLabels = ['Chưa có giao dịch'];
+                }
+
+                summaryPieChartInstance = new Chart(ctxPie, {
+                    type: 'doughnut', // Dùng Doughnut (tròn rỗng ruột) nhìn hiện đại hơn Pie
+                    data: {
+                        labels: pieLabels,
+                        datasets: [{
+                            data: pieData,
+                            backgroundColor: pieColors,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        if (totalImport === 0 && totalExport === 0) return ' Chưa có dữ liệu';
+                                        let value = context.parsed;
+                                        let total = context.chart._metasets[context.datasetIndex].total;
+                                        let percentage = ((value / total) * 100).toFixed(1) + '%';
+                                        return ` ${context.label}: ${value} (${percentage})`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error(error);
+            }
+        }
     </script>
 }

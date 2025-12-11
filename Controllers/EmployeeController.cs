@@ -29,78 +29,50 @@ namespace BookstoreManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(string searchString, bool? isActive, string? roleName, int pageNumber = 1, int pageSize = 10)
         {
-            // Debug: Log parameters
-            Console.WriteLine($"Employee Index - searchString: {searchString}, isActive: {isActive}, roleName: {roleName}, pageNumber: {pageNumber}");
-            
             ViewData["CurrentFilter"] = searchString;
-            if (isActive.HasValue)
-            {
-                ViewData["IsActiveFilter"] = isActive.Value.ToString();
-            }
-            ViewData["RoleFilter"] = roleName;
+            ViewBag.IsActiveParam = isActive;
 
-            // Query để lấy danh sách nhân viên (không phải Admin)
-            var query = from u in _context.Users
-                        join ur in _context.UserRoles on u.Id equals ur.UserId
-                        join r in _context.Roles on ur.RoleId equals r.Id
-                        where r.Name != "Admin"
-                        select new { User = u, Role = r.Name };
+            // Truy vấn từ bảng Employees (không phải Users)
+            var query = _context.Employees.Include(e => e.AppUser).AsQueryable();
 
-            // Search filter
             if (!string.IsNullOrEmpty(searchString))
             {
-                query = query.Where(x => x.User.FullName.Contains(searchString)
-                                      || x.User.Email.Contains(searchString)
-                                      || x.User.PhoneNumber.Contains(searchString));
+                query = query.Where(e => e.FullName.Contains(searchString)
+                                      || e.PhoneNumber.Contains(searchString)
+                                      || (e.Email != null && e.Email.Contains(searchString)));
             }
 
-            // Status filter
             if (isActive.HasValue)
             {
-                query = query.Where(x => x.User.IsActive == isActive.Value);
+                query = query.Where(e => e.IsActive == isActive.Value);
             }
 
-            // Role filter
-            if (!string.IsNullOrEmpty(roleName))
-            {
-                query = query.Where(x => x.Role == roleName);
-            }
-
-            // Get distinct users
-            var distinctQuery = query.Select(x => x.User).Distinct();
-
-            // Calculate pagination
-            var totalItems = await distinctQuery.CountAsync();
+            var totalItems = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-            // Apply pagination
-            var employees = await distinctQuery
-                .OrderByDescending(u => u.CreatedAt)
+            var employees = await query
+                .OrderByDescending(e => e.HireDate)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
+                .Select(e => new EmployeeViewModel
+                {
+                    Id = e.EmployeeId,
+                    FullName = e.FullName,
+                    PhoneNumber = e.PhoneNumber,
+                    Email = e.Email,
+                    Address = e.Address,
+                    Salary = e.Salary,
+                    HireDate = e.HireDate,
+                    IsActive = e.IsActive,
+                    AccountId = e.AccountId, // Để hiển thị trạng thái tài khoản
+                    AccountUsername = e.AppUser != null ? e.AppUser.UserName : null
+                })
                 .ToListAsync();
 
             ViewBag.PageNumber = pageNumber;
             ViewBag.PageSize = pageSize;
             ViewBag.TotalPages = totalPages;
             ViewBag.TotalItems = totalItems;
-            ViewBag.IsActiveParam = isActive;
-            ViewBag.RoleParam = roleName;
-
-            // Load roles for filter dropdown
-            var availableRoles = await _roleManager.Roles
-                .Where(r => r.Name != "Admin")
-                .Select(r => r.Name)
-                .OrderBy(r => r)
-                .ToListAsync();
-            
-            // Debug: Log available roles and parameter
-            Console.WriteLine($"Available roles: {string.Join(", ", availableRoles)}");
-            Console.WriteLine($"Selected roleName parameter: '{roleName}'");
-            Console.WriteLine($"Request QueryString: {Request.QueryString}");
-            
-            // Create SelectList with explicit dataValueField and dataTextField
-            ViewBag.Roles = new SelectList(availableRoles.Select(r => new { Value = r, Text = r }), "Value", "Text", roleName);
 
             return View(employees);
         }
@@ -109,12 +81,6 @@ namespace BookstoreManagement.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            var roles = _roleManager.Roles
-                .Where(r => r.Name != "Admin")
-                .Select(r => new { r.Name })
-                .ToList();
-
-            ViewBag.Roles = new SelectList(_roleManager.Roles.Where(r => r.Name != "Admin"), "Name", "Name");
             return View();
         }
 
@@ -124,153 +90,296 @@ namespace BookstoreManagement.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = new AppUser
+                // Kiểm tra trùng SĐT (vì SĐT là unique trong cấu hình DB mới)
+                if (await _context.Employees.AnyAsync(e => e.PhoneNumber == model.PhoneNumber))
                 {
-                    UserName = model.Email,
-                    Email = model.Email,
+                    ModelState.AddModelError("PhoneNumber", "Số điện thoại này đã được sử dụng bởi nhân viên khác.");
+                    return View(model);
+                }
+
+                var employee = new Employee
+                {
                     FullName = model.FullName,
                     PhoneNumber = model.PhoneNumber,
+                    Email = model.Email,
                     Address = model.Address,
-                    IsActive = true,
-                    IsDefaultPassword = true,
-                    CreatedAt = DateTime.Now
+                    HireDate = model.HireDate,
+                    Salary = model.Salary,
+                    IsActive = true
                 };
 
-                var result = await _userManager.CreateAsync(user, "123");
+                _context.Employees.Add(employee);
+                await _context.SaveChangesAsync();
 
-                if (result.Succeeded)
-                {
-                    if (!string.IsNullOrEmpty(model.RoleName))
-                    {
-                        await _userManager.AddToRoleAsync(user, model.RoleName);
-                    }
-                    TempData["SuccessMessage"] = "Thêm nhân viên thành công!";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError("", error.Description);
-                }
+                TempData["SuccessMessage"] = "Thêm hồ sơ nhân viên thành công!";
+                return RedirectToAction(nameof(Index));
             }
-
-            var rolesList = _roleManager.Roles
-                .Where(r => r.Name != "Admin")
-                .ToList();
-            ViewBag.Roles = new SelectList(rolesList, "Name", "Name");
             return View(model);
         }
 
+        // 3. CHỈNH SỬA HỒ SƠ
         [HttpGet]
-        public async Task<IActionResult> Edit(string id)
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null) return NotFound();
-
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
-
-            var roles = await _userManager.GetRolesAsync(user);
+            var employee = await _context.Employees.FindAsync(id);
+            if (employee == null) return NotFound();
 
             var viewModel = new EmployeeViewModel
             {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                Address = user.Address,
-                RoleName = roles.FirstOrDefault(),
-                IsActive = user.IsActive
+                Id = employee.EmployeeId,
+                FullName = employee.FullName,
+                PhoneNumber = employee.PhoneNumber,
+                Email = employee.Email,
+                Address = employee.Address,
+                HireDate = employee.HireDate,
+                Salary = employee.Salary,
+                IsActive = employee.IsActive
             };
 
-            ViewBag.Roles = new SelectList(_roleManager.Roles.Where(r => r.Name != "Admin"), "Name", "Name");
             return View(viewModel);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, EmployeeViewModel model)
+        public async Task<IActionResult> Edit(int id, EmployeeViewModel model)
         {
             if (id != model.Id) return NotFound();
 
             if (ModelState.IsValid)
             {
-                var user = await _userManager.FindByIdAsync(id);
-                if (user == null) return NotFound();
-
-                user.FullName = model.FullName;
-                user.PhoneNumber = model.PhoneNumber;
-                user.Address = model.Address;
-                user.IsActive = model.IsActive;
-                user.UpdatedAt = DateTime.Now;
-
-                // Nếu cho sửa Email thì bỏ comment dòng dưới 
-                // user.Email = model.Email; 
-                // user.UserName = model.Email;
-
-                var result = await _userManager.UpdateAsync(user);
-
-                if (result.Succeeded)
+                try
                 {
-                    var currentRoles = await _userManager.GetRolesAsync(user);
-                    if (!currentRoles.Contains(model.RoleName))
+                    var employee = await _context.Employees.FindAsync(id);
+                    if (employee == null) return NotFound();
+
+                    // Kiểm tra trùng SĐT nếu có thay đổi
+                    if (employee.PhoneNumber != model.PhoneNumber &&
+                        await _context.Employees.AnyAsync(e => e.PhoneNumber == model.PhoneNumber))
                     {
-                        await _userManager.RemoveFromRolesAsync(user, currentRoles);
-                        await _userManager.AddToRoleAsync(user, model.RoleName);
+                        ModelState.AddModelError("PhoneNumber", "Số điện thoại này đã tồn tại.");
+                        return View(model);
                     }
 
-                    TempData["SuccessMessage"] = "Cập nhật nhân viên thành công!";
-                    return RedirectToAction(nameof(Index));
-                }
+                    employee.FullName = model.FullName;
+                    employee.PhoneNumber = model.PhoneNumber;
+                    employee.Email = model.Email;
+                    employee.Address = model.Address;
+                    employee.HireDate = model.HireDate;
+                    employee.Salary = model.Salary;
+                    employee.IsActive = model.IsActive;
 
-                foreach (var error in result.Errors)
+                    _context.Update(employee);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
                 {
-                    ModelState.AddModelError("", error.Description);
+                    if (!_context.Employees.Any(e => e.EmployeeId == id)) return NotFound();
+                    else throw;
                 }
-            }
 
-            ViewBag.Roles = new SelectList(_roleManager.Roles.Where(r => r.Name != "Admin"), "Name", "Name");
+                TempData["SuccessMessage"] = "Cập nhật hồ sơ thành công!";
+                return RedirectToAction(nameof(Index));
+            }
             return View(model);
         }
 
+        // 4. KHÓA/XÓA NHÂN VIÊN
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(string id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user != null)
+            var employee = await _context.Employees.FindAsync(id);
+            if (employee != null)
             {
-                user.IsActive = false;
-                user.UpdatedAt = DateTime.Now;
-                await _userManager.UpdateAsync(user);
+                // Soft delete: Chỉ set IsActive = false
+                employee.IsActive = false;
 
-                TempData["SuccessMessage"] = "Đã khóa tài khoản nhân viên.";
+                // Tùy chọn: Nếu muốn khóa luôn tài khoản đăng nhập (nếu có)
+                if (!string.IsNullOrEmpty(employee.AccountId))
+                {
+                    var user = await _userManager.FindByIdAsync(employee.AccountId);
+                    if (user != null)
+                    {
+                        user.IsActive = false;
+                        await _userManager.UpdateAsync(user);
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Đã khóa hồ sơ nhân viên.";
             }
             return RedirectToAction(nameof(Index));
         }
 
+        // 5. XEM CHI TIẾT
         [HttpGet]
-        public async Task<IActionResult> Details(string id)
+        public async Task<IActionResult> Details(int id)
         {
-            if (id == null) return NotFound();
+            var employee = await _context.Employees
+                .Include(e => e.AppUser) // Include để lấy thông tin tài khoản nếu có
+                .FirstOrDefaultAsync(m => m.EmployeeId == id);
 
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
-
-            var roles = await _userManager.GetRolesAsync(user);
+            if (employee == null) return NotFound();
 
             var viewModel = new EmployeeViewModel
             {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                Address = user.Address,
-                RoleName = roles.FirstOrDefault() ?? "Chưa có",
-                IsActive = user.IsActive
+                Id = employee.EmployeeId,
+                FullName = employee.FullName,
+                PhoneNumber = employee.PhoneNumber,
+                Email = employee.Email,
+                Address = employee.Address,
+                HireDate = employee.HireDate,
+                Salary = employee.Salary,
+                IsActive = employee.IsActive,
+                AccountId = employee.AccountId,
+                AccountUsername = employee.AppUser?.UserName
             };
 
             return View(viewModel);
         }
 
+
+        // EmployeeController.cs
+
+        // ... (Các code cũ giữ nguyên)
+
+        // ============================================================
+        // CẤP TÀI KHOẢN CHO NHÂN VIÊN
+        // ============================================================
+
+        [HttpGet]
+        public async Task<IActionResult> GrantAccount(int id)
+        {
+            var employee = await _context.Employees.FindAsync(id);
+            if (employee == null) return NotFound();
+
+            // Kiểm tra nếu đã có tài khoản rồi thì chặn lại
+            if (!string.IsNullOrEmpty(employee.AccountId))
+            {
+                TempData["ErrorMessage"] = "Nhân viên này đã có tài khoản rồi.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var model = new GrantAccountViewModel
+            {
+                EmployeeId = employee.EmployeeId,
+                EmployeeName = employee.FullName,
+                // Gợi ý email từ hồ sơ nhân viên (nếu có), nếu không thì để trống
+                Email = employee.Email ?? ""
+            };
+
+            // Lấy danh sách Role để admin chọn
+            ViewBag.Roles = new SelectList(_roleManager.Roles.Select(r => r.Name).ToList());
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GrantAccount(GrantAccountViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var employee = await _context.Employees.FindAsync(model.EmployeeId);
+                if (employee == null) return NotFound();
+
+                // 1. Kiểm tra Email đã tồn tại trong bảng Users chưa
+                var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                if (existingUser != null)
+                {
+                    ModelState.AddModelError("Email", "Email này đã được sử dụng bởi tài khoản khác.");
+                    ViewBag.Roles = new SelectList(_roleManager.Roles.Select(r => r.Name).ToList());
+                    return View(model);
+                }
+
+                // 2. Tạo AppUser
+                var user = new AppUser
+                {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    FullName = employee.FullName,
+                    PhoneNumber = employee.PhoneNumber,
+                    Address = employee.Address,
+                    IsActive = true,
+                    IsDefaultPassword = true, // Đánh dấu là mật khẩu do admin cấp (để sau này bắt đổi)
+                    CreatedAt = DateTime.Now
+                };
+
+                var result = await _userManager.CreateAsync(user, model.Password);
+
+                if (result.Succeeded)
+                {
+                    // 3. Gán Role
+                    if (!string.IsNullOrEmpty(model.RoleName))
+                    {
+                        await _userManager.AddToRoleAsync(user, model.RoleName);
+                    }
+
+                    // 4. Liên kết ngược lại bảng Employee
+                    employee.AccountId = user.Id;
+
+                    // Cập nhật lại email trong hồ sơ nhân viên cho khớp với tài khoản (nếu muốn đồng bộ)
+                    employee.Email = model.Email;
+
+                    _context.Update(employee);
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = $"Đã cấp tài khoản '{user.UserName}' thành công!";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+            }
+
+            ViewBag.Roles = new SelectList(_roleManager.Roles.Select(r => r.Name).ToList());
+            return View(model);
+        }
+
+        // ============================================================
+        // ADMIN RESET MẬT KHẨU (Force Reset)
+        // ============================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AdminResetPassword(int employeeId, string newPassword)
+        {
+            // 1. Tìm nhân viên
+            var employee = await _context.Employees.FindAsync(employeeId);
+            if (employee == null || string.IsNullOrEmpty(employee.AccountId))
+            {
+                TempData["ErrorMessage"] = "Nhân viên không tồn tại hoặc chưa có tài khoản.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // 2. Tìm tài khoản AppUser tương ứng
+            var user = await _userManager.FindByIdAsync(employee.AccountId);
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy tài khoản liên kết.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // 3. Thực hiện Reset mật khẩu
+            // Cách làm: Tạo token reset -> Gọi hàm ResetPassword
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+            if (result.Succeeded)
+            {
+                // (Tùy chọn) Đánh dấu là mật khẩu mặc định để bắt user đổi lần sau
+                user.IsDefaultPassword = true;
+                await _userManager.UpdateAsync(user);
+
+                TempData["SuccessMessage"] = $"Đã đặt lại mật khẩu cho {employee.FullName} thành công!";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Lỗi: " + string.Join(", ", result.Errors.Select(e => e.Description));
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

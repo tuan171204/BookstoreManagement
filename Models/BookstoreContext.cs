@@ -59,6 +59,8 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
 
     public virtual DbSet<BookPriceHistory> BookPriceHistories { get; set; }
 
+    public virtual DbSet<Employee> Employees { get; set; }
+
     // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     // #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
     //     => optionsBuilder.UseSqlServer("Server=DESKTOP-DCPVQ6B\\SQLEXPRESS01;Database=Bookstore;Trusted_Connection=True;TrustServerCertificate=True");
@@ -134,7 +136,8 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__BookCateg__BookI__06CD04F7");
 
-            entity.HasOne(d => d.Category).WithMany()
+            entity.HasOne(d => d.Category)
+                .WithMany(p => p.BookCategories) // Thêm tham số p => p.BookCategories
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__BookCateg__Categ__07C12930");
@@ -199,6 +202,19 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
                 .IsUnicode(false);
         });
 
+        modelBuilder.Entity<Employee>(entity =>
+        {
+            entity.HasKey(e => e.EmployeeId);
+            entity.HasIndex(e => e.PhoneNumber).IsUnique(); // SĐT nhân viên không được trùng
+
+            // Cấu hình quan hệ 1-1 (hoặc 1-0) với AppUser
+            // Một Employee có thể có 0 hoặc 1 AppUser
+            entity.HasOne(e => e.AppUser)
+                  .WithMany() // AppUser không cần list Employee
+                  .HasForeignKey(e => e.AccountId)
+                  .OnDelete(DeleteBehavior.SetNull); // Xóa User thì Employee không mất, chỉ set AccountId = null
+        });
+
         modelBuilder.Entity<Customer>(entity =>
         {
             entity.HasKey(e => e.CustomerId).HasName("PK__Customer__A4AE64B8FCCB6238");
@@ -233,6 +249,11 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
                   .HasForeignKey(d => d.RankId)
                   .OnDelete(DeleteBehavior.SetNull) // Xóa Rank thì Customer không bị xóa, chỉ set null
                   .HasConstraintName("FK_Customer_Rank");
+
+            entity.HasOne(c => c.AppUser)
+                  .WithMany()
+                  .HasForeignKey(c => c.AccountId)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<ExportDetail>(entity =>

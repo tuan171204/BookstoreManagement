@@ -1,4 +1,4 @@
-@model IEnumerable<BookstoreManagement.Models.Customer>
+@model IEnumerable<BookstoreManagement.ViewModels.Customer.CustomerViewModel>
 
 @{
     Layout = "_Layout";
@@ -9,18 +9,18 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="content-title m-0">@ViewData["Title"]</h2>
         <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Thêm khách hàng
+            <i class="bi bi-person-plus-fill"></i> Thêm khách hàng
         </a>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 shadow-sm">
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3">
                 <input type="hidden" name="pageNumber" value="1" />
                 <div class="col-md-6">
                     <label class="form-label">Tìm kiếm</label>
-                    <input type="text" name="searchString" class="form-control"
-                        placeholder="Tìm theo tên, email, sđt..." value="@ViewData["CurrentFilter"]" />
+                    <input type="text" name="searchString" class="form-control" placeholder="Tên, Email, SĐT..."
+                        value="@ViewData["CurrentFilter"]" />
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Trạng thái</label>
@@ -32,103 +32,107 @@
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-search"></i> Tìm
+                        <i class="bi bi-search"></i> Tìm kiếm
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-body">
-            @if (ViewBag.TotalItems > 0)
-            {
-                <div class="mb-3">
-                    <span class="text-muted">Hiển thị <strong>@((ViewBag.PageNumber - 1) * ViewBag.PageSize + 1)</strong> - <strong>@(Math.Min(ViewBag.PageNumber * ViewBag.PageSize, ViewBag.TotalItems))</strong> trong tổng số <strong>@ViewBag.TotalItems</strong> khách hàng</span>
-                </div>
-            }
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover table-bordered align-middle">
+                <table class="table table-hover table-striped align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Họ tên</th>
-                            <th>Số điện thoại</th>
-                            <th>Email</th>
-                            <th>Địa chỉ</th>
-                            <th>Tình trạng</th>
-                            <th class="text-center">Điểm tích lũy</th>
-                            <th class="text-center">Hạng</th>
-                            <th class="text-center" style="width: 150px;">Thao tác</th>
+                            <th>Khách hàng</th>
+                            <th>Liên hệ</th>
+                            <th>Hạng / Điểm</th>
+                            <th>Tài khoản Online</th>
+                            <th>Trạng thái</th>
+                            <th class="text-center">Thao tác</th>
                         </tr>
                     </thead>
-            <tbody>
-                @if (Model != null && Model.Any())
-                {
-                    foreach (var item in Model)
-                    {
-                        <tr>
-                            <td>@item.FullName</td>
-                            <td>@item.Phone</td>
-                            <td>@item.Email</td>
-                            <td>@(item.Address ?? "-")</td>
-                            <td>
-                                @if (item.IsActive)
-                                {
-                                    <span class="badge bg-success">Hoạt động</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">Đã khóa</span>
-                                }
-                            </td>
-                            <td class="text-center fw-bold text-primary">@item.Points.ToString("N0")</td>
-                            <td class="text-center">
-                                @if (item.Rank != null)
-                                {
-                                    var badgeClass = item.Rank.Value == "Kim Cương" ? "bg-info text-dark" :
-                                    (item.Rank.Value == "Vàng" ? "bg-warning text-dark" : "bg-secondary");
-                                    <span class="badge @badgeClass">@item.Rank.Value</span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted small">-</span>
-                                }
-                            </td>
-                            <td class="text-center">
-                                <div class="btn-group btn-group-sm">
-                                    <a asp-action="Details" asp-route-id="@item.CustomerId" class="btn btn-info text-white"
-                                        title="Chi tiết">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-
-                                    <a asp-action="Edit" asp-route-id="@item.CustomerId" class="btn btn-warning" title="Sửa">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
-
-                                    <button type="button" class="btn btn-danger" title="Xóa"
-                                        onclick="confirmDelete('@item.CustomerId', '@item.FullName')">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="8" class="text-center text-muted py-4">
-                            <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
-                            <p class="mt-2">Không tìm thấy khách hàng nào</p>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-        </div>
-
-        <!-- Pagination -->
-        @await Html.PartialAsync("_Pagination")
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">@item.FullName</div>
+                                        <small class="text-muted">@item.Address</small>
+                                    </td>
+                                    <td>
+                                        <div><i class="bi bi-telephone-fill text-muted me-1"></i> @item.Phone</div>
+                                        <div class="small text-muted">@item.Email</div>
+                                    </td>
+                                    <td>
+                                        @{
+                                            var statusClass = item.RankName switch
+                                            {
+                                                "Bạc" => "bg-secondary",
+                                                "Vàng" => "bg-warning text-dark",
+                                                "Kim Cương" => "bg-info",
+                                                _ => "bg-primary"
+                                            };
+                                        }
+                                        <span class="badge @statusClass border">@item.RankName</span>
+                                        <span class="ms-1 fw-bold text-primary">@item.Points điểm</span>
+                                    </td>
+                                    <td>
+                                        @if (item.HasAccount)
+                                        {
+                                            <span class="badge bg-success w-50 p-2"><i class="bi bi-check-circle"></i> Đã đăng
+                                                ký</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary opacity-50 w-50 p-2">Chưa có</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.IsActive)
+                                        {
+                                            <span class="badge bg-success bg-opacity-75 w-50 p-2">Hoạt động</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary w-50 p-2">Đã khóa</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-action="Details" asp-route-id="@item.CustomerId" class="btn btn-info"
+                                                title="Chi tiết">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@item.CustomerId" class="btn btn-warning"
+                                                title="Sửa">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-danger"
+                                                onclick="confirmDelete('@item.CustomerId', '@item.FullName')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="bi bi-people display-4 opacity-50"></i>
+                                    <p class="mt-2">Không tìm thấy dữ liệu.</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @await Html.PartialAsync("_Pagination")
         </div>
     </div>
 </div>
@@ -140,7 +144,7 @@
 @section Scripts {
     <script>
         function confirmDelete(id, name) {
-            if (confirm(`Bạn có chắc chắn muốn xóa/khóa khách hàng "${name}" không?`)) {
+            if (confirm(`Bạn có chắc chắn muốn khóa khách hàng "${name}"?`)) {
                 document.getElementById('deleteId').value = id;
                 document.getElementById('deleteForm').submit();
             }

@@ -1,0 +1,74 @@
+@model BookstoreManagement.ViewModels.Employee.GrantAccountViewModel
+
+@{
+    ViewData["Title"] = "Cấp tài khoản nhân viên";
+    Layout = "_Layout";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-lock"></i> Cấp tài khoản hệ thống</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-light border mb-3">
+                        Đang cấp tài khoản cho nhân viên: <strong>@Model.EmployeeName</strong>
+                    </div>
+
+                    <form asp-action="GrantAccount" method="post">
+                        <input type="hidden" asp-for="EmployeeId" />
+                        <input type="hidden" asp-for="EmployeeName" />
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label fw-bold">Email đăng nhập <span
+                                    class="text-danger">*</span></label>
+                            <input asp-for="Email" class="form-control" placeholder="nhanvien@example.com" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Password" class="form-label fw-bold">Mật khẩu <span
+                                        class="text-danger">*</span></label>
+                                <input asp-for="Password" class="form-control" placeholder="******" />
+                                <span asp-validation-for="Password" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ConfirmPassword" class="form-label fw-bold">Xác nhận <span
+                                        class="text-danger">*</span></label>
+                                <input asp-for="ConfirmPassword" class="form-control" placeholder="******" />
+                                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="RoleName" class="form-label fw-bold">Vai trò / Chức vụ <span
+                                    class="text-danger">*</span></label>
+                            <select asp-for="RoleName" class="form-select" asp-items="ViewBag.Roles">
+                                <option value="">-- Chọn quyền hạn --</option>
+                            </select>
+                            <span asp-validation-for="RoleName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Xác nhận cấp tài khoản
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Hủy bỏ</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

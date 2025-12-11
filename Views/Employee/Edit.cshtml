@@ -1,67 +1,78 @@
 @model BookstoreManagement.ViewModels.Employee.EmployeeViewModel
 
 @{
-    ViewData["Title"] = "Cập nhật nhân viên";
+    ViewData["Title"] = "Cập nhật hồ sơ";
     Layout = "_Layout";
 }
 
 <div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-warning">
-                    <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Cập nhật thông tin</h4>
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Cập nhật hồ sơ nhân viên</h5>
                 </div>
                 <div class="card-body">
                     <form asp-action="Edit" method="post">
                         <input type="hidden" asp-for="Id" />
+
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
                         <div class="row g-3">
-                            <div class="col-md-12">
-                                <label asp-for="FullName" class="form-label">Họ tên</label>
+                            <div class="col-md-6">
+                                <label asp-for="FullName" class="form-label">Họ và tên <span
+                                        class="text-danger">*</span></label>
                                 <input asp-for="FullName" class="form-control" />
                                 <span asp-validation-for="FullName" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6">
-                                <label asp-for="Email" class="form-label">Email</label>
-                                <input asp-for="Email" class="form-control" readonly
-                                    style="background-color: #e9ecef;" />
-                            </div>
-
-                            <div class="col-md-6">
-                                <label asp-for="PhoneNumber" class="form-label">Số điện thoại</label>
+                                <label asp-for="PhoneNumber" class="form-label">Số điện thoại <span
+                                        class="text-danger">*</span></label>
                                 <input asp-for="PhoneNumber" class="form-control" />
                                 <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6">
-                                <label asp-for="RoleName" class="form-label">Chức vụ</label>
-                                <select asp-for="RoleName" class="form-select" asp-items="ViewBag.Roles"></select>
-                                <span asp-validation-for="RoleName" class="text-danger"></span>
+                                <label asp-for="Email" class="form-label">Email liên hệ</label>
+                                <input asp-for="Email" class="form-control" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
                             </div>
 
-                            <div class="col-md-6 d-flex align-items-center mt-5">
-                                <div class="form-check form-switch">
+                            <div class="col-md-6">
+                                <label asp-for="HireDate" class="form-label">Ngày vào làm</label>
+                                <input asp-for="HireDate" class="form-control" type="date" />
+                                <span asp-validation-for="HireDate" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Salary" class="form-label">Lương cơ bản</label>
+                                <input asp-for="Salary" class="form-control" type="number" />
+                                <span asp-validation-for="Salary" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 d-flex align-items-end pb-1">
+                                <div class="form-check form-switch fs-5">
                                     <input class="form-check-input" type="checkbox" asp-for="IsActive">
-                                    <label class="form-check-label" asp-for="IsActive">Kích hoạt tài khoản</label>
+                                    <label class="form-check-label fs-6" asp-for="IsActive">Đang làm việc
+                                        (Active)</label>
                                 </div>
                             </div>
 
                             <div class="col-12">
                                 <label asp-for="Address" class="form-label">Địa chỉ</label>
                                 <textarea asp-for="Address" class="form-control" rows="2"></textarea>
+                                <span asp-validation-for="Address" class="text-danger"></span>
                             </div>
                         </div>
 
-                        <div class="mt-4 pt-2 border-top">
-                            <button type="submit" class="btn btn-warning">
-                                <i class="bi bi-save"></i> Cập nhật
-                            </button>
+                        <div class="mt-4 pt-3 border-top d-flex gap-2 justify-content-end">
                             <a asp-action="Index" class="btn btn-secondary">
-                                <i class="bi bi-x-circle"></i> Hủy
+                                <i class="bi bi-arrow-return-left"></i> Quay lại
                             </a>
+                            <button type="submit" class="btn btn-warning px-4">
+                                <i class="bi bi-check-lg"></i> Cập nhật
+                            </button>
                         </div>
                     </form>
                 </div>

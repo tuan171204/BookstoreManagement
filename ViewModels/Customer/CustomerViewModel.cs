@@ -24,5 +24,6 @@ namespace BookstoreManagement.ViewModels.Customer
 
         public int Points { get; set; }
         public string? RankName { get; set; }
+        public bool HasAccount { get; set; }
     }
 }

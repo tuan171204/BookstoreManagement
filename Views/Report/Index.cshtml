@@ -177,6 +177,50 @@
             </div>
         </div>
     </div>
+
+    <div class="row mb-4 mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 bg-success text-white d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="bi bi-pie-chart-fill"></i> THỐNG KÊ THEO DANH MỤC SẢN PHẨM
+                    </h6>
+
+                    <div class="d-flex gap-2">
+                        <input type="date" id="catFromDate" class="form-control form-control-sm"
+                            value="@DateTime.Today.AddDays(-29).ToString("yyyy-MM-dd")">
+                        <input type="date" id="catToDate" class="form-control form-control-sm"
+                            value="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")">
+                        <button class="btn btn-sm btn-light text-success fw-bold" onclick="loadCategoryChart()">
+                            <i class="bi bi-filter"></i> Lọc
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-8 border-end">
+                            <h6 class="text-center text-muted mb-3 small fw-bold">SO SÁNH NHẬP - XUẤT - TỒN KHO</h6>
+                            <div style="height: 350px;">
+                                <canvas id="categoryBarChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4">
+                            <h6 class="text-center text-muted mb-3 small fw-bold">TỶ TRỌNG XUẤT KHO (BÁN HÀNG)</h6>
+                            <div style="height: 300px; position: relative;">
+                                <canvas id="categoryPieChart"></canvas>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <small class="text-muted">Biểu đồ thể hiện danh mục nào được xuất kho (bán) nhiều nhất
+                                    trong kỳ.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -250,9 +294,123 @@
             }
         }
 
+
+        // --- LOGIC MỚI: BIỂU ĐỒ DANH MỤC ---
+        let catBarChart = null;
+        let catPieChart = null;
+
+        async function loadCategoryChart() {
+            const fromDate = document.getElementById('catFromDate').value;
+            const toDate = document.getElementById('catToDate').value;
+
+            try {
+                const response = await fetch(`/Report/GetCategoryReport?fromDate=${fromDate}&toDate=${toDate}`);
+                if (!response.ok) throw new Error("Lỗi tải dữ liệu danh mục");
+
+                const data = await response.json();
+
+                // Chuẩn bị dữ liệu
+                const labels = data.map(x => x.name);
+                const importData = data.map(x => x.importQty);
+                const exportData = data.map(x => x.exportQty);
+                const stockData = data.map(x => x.stockQty);
+
+                // 1. Vẽ Bar Chart (So sánh 3 chỉ số)
+                const ctxBar = document.getElementById('categoryBarChart').getContext('2d');
+                if (catBarChart) catBarChart.destroy();
+
+                catBarChart = new Chart(ctxBar, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Nhập trong kỳ',
+                                data: importData,
+                                backgroundColor: 'rgba(25, 135, 84, 0.7)', // Xanh lá
+                                borderColor: '#198754',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Xuất trong kỳ',
+                                data: exportData,
+                                backgroundColor: 'rgba(220, 53, 69, 0.7)', // Đỏ
+                                borderColor: '#dc3545',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Tồn kho hiện tại',
+                                data: stockData,
+                                backgroundColor: 'rgba(13, 110, 253, 0.7)', // Xanh dương
+                                borderColor: '#0d6efd',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true }
+                        },
+                        plugins: {
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        }
+                    }
+                });
+
+                // 2. Vẽ Pie Chart (Tỷ trọng xuất kho)
+                const ctxPie = document.getElementById('categoryPieChart').getContext('2d');
+                if (catPieChart) catPieChart.destroy();
+
+                catPieChart = new Chart(ctxPie, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: exportData,
+                            backgroundColor: [
+                                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                                '#858796', '#5a5c69', '#00aba9', '#2d89ef', '#ffc107'
+                            ],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { boxWidth: 12, font: { size: 10 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        let value = context.parsed;
+                                        let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        let percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                                        return ` ${context.label}: ${value} (${percentage})`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error("Lỗi chart category:", error);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             loadRevenueChart('month');
             document.getElementById('groupBy')?.addEventListener('change', e => loadRevenueChart(e.target.value));
+
+            loadCategoryChart();
         });
     </script>
 

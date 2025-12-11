@@ -24,12 +24,15 @@ namespace BookstoreManagement.Controllers
             {
                 ViewData["IsActiveFilter"] = isActive.Value.ToString();
             }
-            TempData["CurrentFeature"] = "Customer"; 
-            
-            var query = _context.Customers.AsQueryable();
+            TempData["CurrentFeature"] = "Customer";
+
+            var query = _context.Customers
+                .Include(c => c.Rank)
+                .Include(c => c.AppUser)
+                .AsQueryable();
 
             // Loại bỏ khách hàng đặc biệt
-            query = query.Where(c => c.Phone != "0000000000");
+            query = query.Where(c => c.Phone != "0000000000" && c.Phone != "00000000");
 
             // Search filter
             if (!string.IsNullOrEmpty(searchString))
@@ -51,10 +54,22 @@ namespace BookstoreManagement.Controllers
 
             // Apply pagination
             var customers = await query
-                .Include(c => c.Rank)
                 .OrderByDescending(c => c.CreatedAt)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
+                .Select(c => new CustomerViewModel
+                {
+                    CustomerId = c.CustomerId,
+                    FullName = c.FullName,
+                    Phone = c.Phone,
+                    Email = c.Email,
+                    Address = c.Address,
+                    IsActive = c.IsActive,
+                    Points = c.Points,
+                    RankName = c.Rank != null ? c.Rank.Value : "Thành viên",
+                    // Kiểm tra xem đã liên kết tài khoản chưa
+                    HasAccount = c.AccountId != null
+                })
                 .ToListAsync();
 
             ViewBag.PageNumber = pageNumber;
@@ -75,6 +90,7 @@ namespace BookstoreManagement.Controllers
                 .Include(c => c.Orders)
                     .ThenInclude(o => o.OrderDetails)
                 .Include(c => c.Rank)
+                .Include(c => c.AppUser)
                 .FirstOrDefaultAsync(m => m.CustomerId == id);
 
             if (customer == null) return NotFound();
@@ -90,6 +106,8 @@ namespace BookstoreManagement.Controllers
 
                 Points = customer.Points,
                 RankName = customer.Rank?.Value ?? "Thành viên mới",
+
+                HasAccount = customer.AccountId != null,
 
                 Orders = customer.Orders.OrderByDescending(o => o.OrderDate).ToList()
             };
@@ -111,6 +129,12 @@ namespace BookstoreManagement.Controllers
             Console.WriteLine("Gọi đến action Create trong CustomerController ... ");
             if (ModelState.IsValid)
             {
+                if (await _context.Customers.AnyAsync(c => c.Phone == model.Phone))
+                {
+                    ModelState.AddModelError("Phone", "Số điện thoại này đã tồn tại trong hệ thống.");
+                    return View(model);
+                }
+
                 var customer = new Customer
                 {
                     CustomerId = Guid.NewGuid().ToString(),
@@ -128,7 +152,7 @@ namespace BookstoreManagement.Controllers
                 _context.Add(customer);
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = "Thêm khách hàng thành công!";
+                TempData["SuccessMessage"] = "Thêm hồ sơ khách hàng thành công!";
                 return RedirectToAction(nameof(Index));
             }
             else
@@ -175,6 +199,13 @@ namespace BookstoreManagement.Controllers
                     var customer = await _context.Customers.FindAsync(id);
                     if (customer == null) return NotFound();
 
+                    // Kiểm tra trùng SĐT nếu thay đổi
+                    if (customer.Phone != model.Phone && await _context.Customers.AnyAsync(c => c.Phone == model.Phone))
+                    {
+                        ModelState.AddModelError("Phone", "Số điện thoại này đã được sử dụng.");
+                        return View(model);
+                    }
+
                     customer.FullName = model.FullName;
                     customer.Phone = model.Phone;
                     customer.Email = model.Email;
@@ -191,7 +222,7 @@ namespace BookstoreManagement.Controllers
                     else throw;
                 }
 
-                TempData["SuccessMessage"] = "Cập nhật khách hàng thành công!";
+                TempData["SuccessMessage"] = "Cập nhật thông tin thành công!";
                 return RedirectToAction(nameof(Index));
             }
             return View(model);
