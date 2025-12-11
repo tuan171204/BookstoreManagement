@@ -26,6 +26,12 @@
         queryParams.Add($"categoryId={ViewData["CategoryId"]}");
     }
     
+    // IsActive filter (for Customer)
+    if (ViewData["IsActiveFilter"] != null && !string.IsNullOrEmpty(ViewData["IsActiveFilter"].ToString()))
+    {
+        queryParams.Add($"isActive={ViewData["IsActiveFilter"]}");
+    }
+    
     // Helper function để tạo URL với pageNumber
     Func<int, string> GetPageUrl = (pageNum) =>
     {
