@@ -11,6 +11,21 @@
         </div>
     </div>
 
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <form asp-action="Create" method="post" id="importForm">
         @Html.AntiForgeryToken()
 
@@ -44,6 +59,10 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5>Chi tiết sách nhập</h5>
+                <button type="button" id="importExcelBtn" class="btn btn-sm btn-info" data-bs-toggle="modal"
+                    data-bs-target="#importModal" disabled>
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Import Excel
+                </button>
                 <button type="button" id="addBookRow" class="btn btn-sm btn-success" disabled>
                     <i class="bi bi-plus-circle"></i> Thêm Sách
                 </button>
@@ -111,6 +130,30 @@
     </tr>
 </table>
 
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">Import Chi tiết sách nhập từ Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="importExcelForm" asp-action="UploadImportData" asp-controller="Warehouse" method="post"
+                enctype="multipart/form-data">
+                <div class="modal-body">
+                    <p>Chọn file Excel (.xlsx) chứa chi tiết sách (BookId, Quantity, CostPrice) để thêm nhanh vào phiếu
+                        nhập này. <a href="javascript:void(0);">Tải mẫu file</a></p>
+                    <input type="file" name="ExcelFile" class="form-control" required accept=".xlsx" />
+                    @Html.AntiForgeryToken()
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Tải lên</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 
 @section Scripts {
     @{
@@ -122,8 +165,85 @@
             let rowIndex = 0;
             window.supplierBooksData = [];
 
+            // Hàm chèn chi tiết sách từ Import Excel vào bảng
+            function processImportDetails(details) {
+                // Xóa các dòng thủ công cũ, giữ lại các dòng từ Import
+                $("#bookDetailsBody").empty();
+                rowIndex = 0; // Reset index
+
+                details.forEach(function (item) {
+                    let template = $("#bookRowTemplate").html();
+                    template = template.replace(/__INDEX__/g, rowIndex);
+                    let newRow = $("<tr>" + template + "</tr>");
+
+                    // 1. Render Dropdown và chọn sách
+                    let bookDropdown = newRow.find(".book-dropdown");
+                    renderBookDropdown(bookDropdown);
+                    bookDropdown.val(item.bookId).trigger('change'); // Chọn sách và kích hoạt change để set giá
+
+                    // 2. Set Quantity và CostPrice
+                    newRow.find(".quantity-input").val(item.quantity);
+                    newRow.find(".cost-input").val(item.costPrice);
+
+                    // 3. Kích hoạt tính toán
+                    newRow.find(".cost-input").trigger('input'); // Kích hoạt tính thành tiền
+
+                    // Mở khóa các field để submit
+                    bookDropdown.prop('disabled', false);
+                    newRow.find(".quantity-input").prop('readonly', false).removeClass('form-control-plaintext');
+                    newRow.find(".remove-row").prop('disabled', false);
+
+                    $("#bookDetailsBody").append(newRow);
+                    rowIndex++;
+                });
+
+                updateTotalCost();
+                $('#importModal').modal('hide'); // Đóng modal sau khi hoàn tất
+            }
+
+            // Xử lý sự kiện submit form Import Excel (sử dụng AJAX)
+            $('#importExcelForm').submit(function (e) {
+                e.preventDefault(); // Ngăn chặn form submit mặc định
+
+                // Vô hiệu hóa nút để tránh double click
+                $('#importExcelForm button[type="submit"]').prop('disabled', true).text('Đang tải...');
+
+                var formData = new FormData(this);
+
+                $.ajax({
+                    url: '@Url.Action("UploadImportData", "Warehouse")',
+                    type: 'POST',
+                    data: formData,
+                    processData: false, // Bắt buộc khi upload file
+                    contentType: false, // Bắt buộc khi upload file
+                    success: function (response) {
+                        $('#importExcelForm button[type="submit"]').prop('disabled', false).text('Tải lên');
+
+                        if (response.success) {
+                            processImportDetails(response.details);
+                            alert("Import chi tiết sách thành công!");
+                        } else {
+                            // Xử lý lỗi từ Server (nếu Server trả về lỗi JSON thay vì Redirect)
+                            alert("Import thất bại: " + response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        $('#importExcelForm button[type="submit"]').prop('disabled', false).text('Tải lên');
+                        // Xử lý lỗi HTTP (ví dụ: 500 Internal Server Error)
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            alert("Lỗi Server: " + xhr.responseJSON.message);
+                        } else {
+                            alert("Lỗi không xác định khi tải file. Vui lòng kiểm tra file Excel.");
+                        }
+                    }
+                });
+            });
+
             $('#SupplierId').on('change', function () {
                 var supplierId = $(this).val();
+
+                // Bật/Tắt nút Import dựa trên việc chọn NCC
+                $("#importExcelBtn").prop('disabled', !supplierId);
 
                 $("#detailsValidation").text("");
                 $("#addBookRow").prop('disabled', true);

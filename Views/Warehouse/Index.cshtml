@@ -8,13 +8,16 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
-                <h2><i class="bi bi-person-bounding-box"></i> Quản lý Kho (Nhập/Xuất)</h2>
+                <h2><i class="bi bi-person-bounding-box"></i> Quản lý phiếu Nhập/xuất)</h2>
                 <div>
                     <a asp-action="Create" class="btn btn-primary">
                         <i class="bi bi-plus-circle"></i> Tạo Phiếu Nhập
                     </a>
                     <a asp-action="CreateExport" class="btn btn-primary">
                         <i class="bi bi-plus-circle"></i> Tạo Phiếu Xuất
+                    </a>
+                    <a asp-action="ExportWarehouseData" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Xuất Excel
                     </a>
                 </div>
             </div>
@@ -42,17 +45,21 @@
                     <label class="form-label">Loại phiếu</label>
                     <select name="typeFilter" class="form-select">
                         <option value="">-- Tất cả --</option>
-                        <option value="Phiếu Nhập" selected="@(ViewBag.TypeFilterParam == "Phiếu Nhập")">Phiếu Nhập</option>
-                        <option value="Phiếu Xuất" selected="@(ViewBag.TypeFilterParam == "Phiếu Xuất")">Phiếu Xuất</option>
+                        <option value="Phiếu Nhập" selected="@(ViewBag.TypeFilterParam == "Phiếu Nhập")">Phiếu Nhập
+                        </option>
+                        <option value="Phiếu Xuất" selected="@(ViewBag.TypeFilterParam == "Phiếu Xuất")">Phiếu Xuất
+                        </option>
                     </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Trạng thái</label>
                     <select name="statusFilter" class="form-select">
                         <option value="">-- Tất cả --</option>
-                        <option value="Completed" selected="@(ViewBag.StatusFilterParam == "Completed")">Completed</option>
+                        <option value="Completed" selected="@(ViewBag.StatusFilterParam == "Completed")">Completed
+                        </option>
                         <option value="Pending" selected="@(ViewBag.StatusFilterParam == "Pending")">Pending</option>
-                        <option value="Cancelled" selected="@(ViewBag.StatusFilterParam == "Cancelled")">Cancelled</option>
+                        <option value="Cancelled" selected="@(ViewBag.StatusFilterParam == "Cancelled")">Cancelled
+                        </option>
                     </select>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
@@ -69,7 +76,9 @@
             @if (ViewBag.TotalItems > 0)
             {
                 <div class="mb-3">
-                    <span class="text-muted">Hiển thị <strong>@((ViewBag.PageNumber - 1) * ViewBag.PageSize + 1)</strong> - <strong>@(Math.Min(ViewBag.PageNumber * ViewBag.PageSize, ViewBag.TotalItems))</strong> trong tổng số <strong>@ViewBag.TotalItems</strong> phiếu</span>
+                    <span class="text-muted">Hiển thị <strong>@((ViewBag.PageNumber - 1) * ViewBag.PageSize + 1)</strong> -
+                        <strong>@(Math.Min(ViewBag.PageNumber * ViewBag.PageSize, ViewBag.TotalItems))</strong> trong tổng
+                        số <strong>@ViewBag.TotalItems</strong> phiếu</span>
                 </div>
             }
             <div class="table-responsive">
