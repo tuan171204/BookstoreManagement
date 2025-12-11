@@ -39,6 +39,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3">
+                <input type="hidden" name="pageNumber" value="1" />
                 <div class="col-md-4">
                     <label class="form-label">Tìm kiếm</label>
                     <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control"
@@ -96,6 +97,12 @@
     <!-- Books Table -->
     <div class="card">
         <div class="card-body">
+            @if (ViewBag.TotalItems > 0)
+            {
+                <div class="mb-3">
+                    <span class="text-muted">Hiển thị <strong>@((ViewBag.PageNumber - 1) * ViewBag.PageSize + 1)</strong> - <strong>@(Math.Min(ViewBag.PageNumber * ViewBag.PageSize, ViewBag.TotalItems))</strong> trong tổng số <strong>@ViewBag.TotalItems</strong> sách</span>
+                </div>
+            }
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead class="table-light">

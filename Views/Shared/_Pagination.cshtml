@@ -1,10 +1,47 @@
+@{
+    // Tạo query string cho tất cả các filter parameters
+    var queryParams = new List<string>();
+    
+    // Search string
+    if (ViewData["CurrentFilter"] != null && !string.IsNullOrEmpty(ViewData["CurrentFilter"].ToString()))
+    {
+        queryParams.Add($"searchString={Uri.EscapeDataString(ViewData["CurrentFilter"].ToString())}");
+    }
+    
+    // Author filter
+    if (ViewData["AuthorId"] != null && !string.IsNullOrEmpty(ViewData["AuthorId"].ToString()))
+    {
+        queryParams.Add($"authorId={ViewData["AuthorId"]}");
+    }
+    
+    // Publisher filter
+    if (ViewData["PublisherId"] != null && !string.IsNullOrEmpty(ViewData["PublisherId"].ToString()))
+    {
+        queryParams.Add($"publisherId={ViewData["PublisherId"]}");
+    }
+    
+    // Category filter
+    if (ViewData["CategoryId"] != null && !string.IsNullOrEmpty(ViewData["CategoryId"].ToString()))
+    {
+        queryParams.Add($"categoryId={ViewData["CategoryId"]}");
+    }
+    
+    // Helper function để tạo URL với pageNumber
+    Func<int, string> GetPageUrl = (pageNum) =>
+    {
+        var allParams = new List<string> { $"pageNumber={pageNum}" };
+        allParams.AddRange(queryParams);
+        return "?" + string.Join("&", allParams);
+    };
+}
+
 @if (ViewBag.TotalPages > 1)
 {
-    <nav aria-label="Page navigation">
+    <nav aria-label="Page navigation" class="mt-4">
         <ul class="pagination justify-content-center">
             <!-- Previous Button -->
             <li class="page-item @(ViewBag.PageNumber == 1 ? "disabled" : "")">
-                <a class="page-link" href="?pageNumber=@(ViewBag.PageNumber - 1)@(ViewData["CurrentFilter"] != null ? "&searchString=" + ViewData["CurrentFilter"] : "")" aria-label="Previous">
+                <a class="page-link" href="@GetPageUrl(ViewBag.PageNumber - 1)" aria-label="Previous">
                     <span aria-hidden="true">&laquo;</span>
                 </a>
             </li>
@@ -20,7 +57,7 @@
             @if (startPage > 1)
             {
                 <li class="page-item">
-                    <a class="page-link" href="?pageNumber=1@(ViewData["CurrentFilter"] != null ? "&searchString=" + ViewData["CurrentFilter"] : "")">1</a>
+                    <a class="page-link" href="@GetPageUrl(1)">1</a>
                 </li>
                 @if (startPage > 2)
                 {
@@ -32,7 +69,7 @@
             @for (int i = startPage; i <= endPage; i++)
             {
                 <li class="page-item @(i == currentPage ? "active" : "")">
-                    <a class="page-link" href="?pageNumber=@i@(ViewData["CurrentFilter"] != null ? "&searchString=" + ViewData["CurrentFilter"] : "")">@i</a>
+                    <a class="page-link" href="@GetPageUrl(i)">@i</a>
                 </li>
             }
 
@@ -44,19 +81,19 @@
                     <li class="page-item disabled"><span class="page-link">...</span></li>
                 }
                 <li class="page-item">
-                    <a class="page-link" href="?pageNumber=@totalPages@(ViewData["CurrentFilter"] != null ? "&searchString=" + ViewData["CurrentFilter"] : "")">@totalPages</a>
+                    <a class="page-link" href="@GetPageUrl(totalPages)">@totalPages</a>
                 </li>
             }
 
             <!-- Next Button -->
             <li class="page-item @(ViewBag.PageNumber == ViewBag.TotalPages ? "disabled" : "")">
-                <a class="page-link" href="?pageNumber=@(ViewBag.PageNumber + 1)@(ViewData["CurrentFilter"] != null ? "&searchString=" + ViewData["CurrentFilter"] : "")" aria-label="Next">
+                <a class="page-link" href="@GetPageUrl(ViewBag.PageNumber + 1)" aria-label="Next">
                     <span aria-hidden="true">&raquo;</span>
                 </a>
             </li>
         </ul>
     </nav>
-    <p class="text-center text-muted">
+    <p class="text-center text-muted mt-2">
         Trang @ViewBag.PageNumber / @ViewBag.TotalPages (Tổng @ViewBag.TotalItems mục)
     </p>
 }
