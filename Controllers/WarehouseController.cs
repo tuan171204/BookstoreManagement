@@ -20,12 +20,13 @@ public class WarehouseController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(string searchString, string typeFilter, string statusFilter)
+    public async Task<IActionResult> Index(string searchString, string typeFilter, string statusFilter, int pageNumber = 1, int pageSize = 10)
     {
-
-        ViewBag.TypeFilter = new SelectList(new[] { "Phiếu Nhập", "Phiếu Xuất" });
-        ViewBag.StatusFilter = new SelectList(new[] { "Completed", "Pending", "Cancelled" });
+        ViewBag.TypeFilter = new SelectList(new[] { "Phiếu Nhập", "Phiếu Xuất" }, typeFilter);
+        ViewBag.StatusFilter = new SelectList(new[] { "Completed", "Pending", "Cancelled" }, statusFilter);
         ViewData["CurrentFilter"] = searchString;
+        ViewData["TypeFilter"] = typeFilter;
+        ViewData["StatusFilter"] = statusFilter;
 
 
         var importQuery = _context.ImportTickets
@@ -76,23 +77,35 @@ public class WarehouseController : Controller
         var importList = new List<WarehouseTicketViewModel>();
         var exportList = new List<WarehouseTicketViewModel>();
 
-
-        if (string.IsNullOrEmpty(typeFilter) || typeFilter == "Import")
+        // Get all tickets first to calculate total
+        if (string.IsNullOrEmpty(typeFilter) || typeFilter == "Phiếu Nhập")
         {
-            importList = await importQuery.ToListAsync();
+            importList = await importQuery.OrderByDescending(t => t.Date).ToListAsync();
         }
 
-        if (string.IsNullOrEmpty(typeFilter) || typeFilter == "Export")
+        if (string.IsNullOrEmpty(typeFilter) || typeFilter == "Phiếu Xuất")
         {
-            exportList = await exportQuery.ToListAsync();
+            exportList = await exportQuery.OrderByDescending(t => t.Date).ToListAsync();
         }
 
-        var allTickets = importList.Concat(exportList);
+        var allTickets = importList.Concat(exportList).OrderByDescending(t => t.Date).ToList();
 
+        // Calculate pagination
+        var totalItems = allTickets.Count;
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
+        // Apply pagination
         var finalTickets = allTickets
-            .OrderByDescending(t => t.Date)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .ToList();
+
+        ViewBag.PageNumber = pageNumber;
+        ViewBag.PageSize = pageSize;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalItems = totalItems;
+        ViewBag.TypeFilterParam = typeFilter;
+        ViewBag.StatusFilterParam = statusFilter;
 
         return View(finalTickets);
     }
