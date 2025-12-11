@@ -17,75 +17,133 @@
 
     <div class="card mb-4">
         <div class="card-body">
-            <form asp-action="Index" method="get" class="row g-3 align-items-end">
-                <div class="col-md-10">
-                    <input type="text" name="searchString" class="form-control" placeholder="Tìm theo tên, email..."
-                        value="@ViewData["CurrentFilter"]" />
+            <form asp-action="Index" method="get" class="row g-3">
+                <input type="hidden" name="pageNumber" value="1" />
+                <div class="col-md-5">
+                    <label class="form-label">Tìm kiếm</label>
+                    <input type="text" name="searchString" class="form-control" 
+                        placeholder="Tìm theo tên, email, SĐT..." value="@ViewData["CurrentFilter"]" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Trạng thái</label>
+                    <select name="isActive" class="form-select">
+                        <option value="">-- Tất cả --</option>
+                        <option value="true" selected="@(ViewBag.IsActiveParam == true)">Hoạt động</option>
+                        <option value="false" selected="@(ViewBag.IsActiveParam == false)">Đã khóa</option>
+                    </select>
                 </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Tìm</button>
+                    <label class="form-label">Chức vụ</label>
+                    <select name="roleName" class="form-select" id="roleNameSelect">
+                        <option value="">-- Tất cả --</option>
+                        @if (ViewBag.Roles != null)
+                        {
+                            var rolesList = ViewBag.Roles as SelectList;
+                            if (rolesList != null)
+                            {
+                                foreach (SelectListItem role in rolesList)
+                                {
+                                    var isSelected = !string.IsNullOrEmpty(ViewBag.RoleParam?.ToString()) && role.Value == ViewBag.RoleParam.ToString();
+                                    <option value="@(role.Value ?? "")" selected="@isSelected">
+                                        @(role.Text ?? role.Value ?? "")
+                                    </option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Tìm
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-hover table-bordered align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>Họ tên</th>
-                    <th>Email</th>
-                    <th>Chức vụ</th>
-                    <th>Trạng thái</th>
-                    <th class="text-center">Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>
-                            <div class="fw-bold">@item.FullName</div>
-                            <small class="text-muted">@item.PhoneNumber</small>
-                        </td>
-                        <td>@item.Email</td>
-                        <td>
-                            @{
-                                var roles = await UserManager.GetRolesAsync(item);
-                                var roleName = roles.FirstOrDefault() ?? "N/A";
-                                var badgeClass = roleName == "Manager" ? "bg-info" : "bg-secondary";
-                            }
-                            <span class="badge @badgeClass">@roleName</span>
-                        </td>
-                        <td>
-                            @if (item.IsActive)
+    <div class="card">
+        <div class="card-body">
+            @if (ViewBag.TotalItems > 0)
+            {
+                <div class="mb-3">
+                    <span class="text-muted">Hiển thị <strong>@((ViewBag.PageNumber - 1) * ViewBag.PageSize + 1)</strong> - <strong>@(Math.Min(ViewBag.PageNumber * ViewBag.PageSize, ViewBag.TotalItems))</strong> trong tổng số <strong>@ViewBag.TotalItems</strong> nhân viên</span>
+                </div>
+            }
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Họ tên</th>
+                            <th>Email</th>
+                            <th>Số điện thoại</th>
+                            <th>Chức vụ</th>
+                            <th>Trạng thái</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var item in Model)
                             {
-                                <span class="badge bg-success">Hoạt động</span>
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">@item.FullName</div>
+                                    </td>
+                                    <td>@item.Email</td>
+                                    <td>@(item.PhoneNumber ?? "-")</td>
+                                    <td>
+                                        @{
+                                            var roles = await UserManager.GetRolesAsync(item);
+                                            var roleName = roles.FirstOrDefault() ?? "N/A";
+                                            var badgeClass = roleName == "Manager" ? "bg-info" : "bg-secondary";
+                                        }
+                                        <span class="badge @badgeClass">@roleName</span>
+                                    </td>
+                                    <td>
+                                        @if (item.IsActive)
+                                        {
+                                            <span class="badge bg-success">Hoạt động</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Đã khóa</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info text-white"
+                                                title="Chi tiết">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning" title="Sửa">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-danger"
+                                                onclick="confirmDelete('@item.Id', '@item.FullName')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
                             }
-                            else
-                            {
-                                <span class="badge bg-danger">Đã khóa</span>
-                            }
-                        </td>
-                        <td class="text-center">
-                            <div class="btn-group btn-group-sm">
-                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info text-white"
-                                    title="Chi tiết">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning" title="Sửa">
-                                    <i class="bi bi-pencil-square"></i>
-                                </a>
-                                <button type="button" class="btn btn-danger"
-                                    onclick="confirmDelete('@item.Id', '@item.FullName')">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                                    <p class="mt-2">Không tìm thấy nhân viên nào</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @await Html.PartialAsync("_Pagination")
+        </div>
     </div>
 </div>
 

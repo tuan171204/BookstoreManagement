@@ -27,23 +27,81 @@ namespace BookstoreManagement.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> Index(string searchString)
+        public async Task<IActionResult> Index(string searchString, bool? isActive, string? roleName, int pageNumber = 1, int pageSize = 10)
         {
+            // Debug: Log parameters
+            Console.WriteLine($"Employee Index - searchString: {searchString}, isActive: {isActive}, roleName: {roleName}, pageNumber: {pageNumber}");
+            
             ViewData["CurrentFilter"] = searchString;
+            if (isActive.HasValue)
+            {
+                ViewData["IsActiveFilter"] = isActive.Value.ToString();
+            }
+            ViewData["RoleFilter"] = roleName;
 
+            // Query để lấy danh sách nhân viên (không phải Admin)
             var query = from u in _context.Users
                         join ur in _context.UserRoles on u.Id equals ur.UserId
                         join r in _context.Roles on ur.RoleId equals r.Id
                         where r.Name != "Admin"
-                        select u;
+                        select new { User = u, Role = r.Name };
 
+            // Search filter
             if (!string.IsNullOrEmpty(searchString))
             {
-                query = query.Where(u => u.FullName.Contains(searchString)
-                                      || u.Email.Contains(searchString));
+                query = query.Where(x => x.User.FullName.Contains(searchString)
+                                      || x.User.Email.Contains(searchString)
+                                      || x.User.PhoneNumber.Contains(searchString));
             }
 
-            var employees = await query.Distinct().ToListAsync();
+            // Status filter
+            if (isActive.HasValue)
+            {
+                query = query.Where(x => x.User.IsActive == isActive.Value);
+            }
+
+            // Role filter
+            if (!string.IsNullOrEmpty(roleName))
+            {
+                query = query.Where(x => x.Role == roleName);
+            }
+
+            // Get distinct users
+            var distinctQuery = query.Select(x => x.User).Distinct();
+
+            // Calculate pagination
+            var totalItems = await distinctQuery.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            // Apply pagination
+            var employees = await distinctQuery
+                .OrderByDescending(u => u.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalItems;
+            ViewBag.IsActiveParam = isActive;
+            ViewBag.RoleParam = roleName;
+
+            // Load roles for filter dropdown
+            var availableRoles = await _roleManager.Roles
+                .Where(r => r.Name != "Admin")
+                .Select(r => r.Name)
+                .OrderBy(r => r)
+                .ToListAsync();
+            
+            // Debug: Log available roles and parameter
+            Console.WriteLine($"Available roles: {string.Join(", ", availableRoles)}");
+            Console.WriteLine($"Selected roleName parameter: '{roleName}'");
+            Console.WriteLine($"Request QueryString: {Request.QueryString}");
+            
+            // Create SelectList with explicit dataValueField and dataTextField
+            ViewBag.Roles = new SelectList(availableRoles.Select(r => new { Value = r, Text = r }), "Value", "Text", roleName);
+
             return View(employees);
         }
 
