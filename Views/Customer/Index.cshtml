@@ -16,11 +16,21 @@
     <div class="card mb-4">
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3">
-                <div class="col-md-10">
+                <input type="hidden" name="pageNumber" value="1" />
+                <div class="col-md-6">
+                    <label class="form-label">Tìm kiếm</label>
                     <input type="text" name="searchString" class="form-control"
                         placeholder="Tìm theo tên, email, sđt..." value="@ViewData["CurrentFilter"]" />
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
+                    <label class="form-label">Trạng thái</label>
+                    <select name="isActive" class="form-select">
+                        <option value="">-- Tất cả --</option>
+                        <option value="true" selected="@(ViewBag.IsActiveParam == true)">Hoạt động</option>
+                        <option value="false" selected="@(ViewBag.IsActiveParam == false)">Đã khóa</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-search"></i> Tìm
                     </button>
@@ -29,19 +39,28 @@
         </div>
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-hover table-bordered align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>Họ tên</th>
-                    <th>Số điện thoại</th>
-                    <th>Email</th>
-                    <th>Tình trạng</th>
-                    <th class="text-center">Điểm tích lũy</th>
-                    <th class="text-center">Hạng</th>
-                    <th class="text-center" style="width: 150px;">Thao tác</th>
-                </tr>
-            </thead>
+    <div class="card">
+        <div class="card-body">
+            @if (ViewBag.TotalItems > 0)
+            {
+                <div class="mb-3">
+                    <span class="text-muted">Hiển thị <strong>@((ViewBag.PageNumber - 1) * ViewBag.PageSize + 1)</strong> - <strong>@(Math.Min(ViewBag.PageNumber * ViewBag.PageSize, ViewBag.TotalItems))</strong> trong tổng số <strong>@ViewBag.TotalItems</strong> khách hàng</span>
+                </div>
+            }
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Họ tên</th>
+                            <th>Số điện thoại</th>
+                            <th>Email</th>
+                            <th>Địa chỉ</th>
+                            <th>Tình trạng</th>
+                            <th class="text-center">Điểm tích lũy</th>
+                            <th class="text-center">Hạng</th>
+                            <th class="text-center" style="width: 150px;">Thao tác</th>
+                        </tr>
+                    </thead>
             <tbody>
                 @if (Model != null && Model.Any())
                 {
@@ -51,6 +70,7 @@
                             <td>@item.FullName</td>
                             <td>@item.Phone</td>
                             <td>@item.Email</td>
+                            <td>@(item.Address ?? "-")</td>
                             <td>
                                 @if (item.IsActive)
                                 {
@@ -61,9 +81,7 @@
                                     <span class="badge bg-secondary">Đã khóa</span>
                                 }
                             </td>
-
                             <td class="text-center fw-bold text-primary">@item.Points.ToString("N0")</td>
-
                             <td class="text-center">
                                 @if (item.Rank != null)
                                 {
@@ -76,7 +94,6 @@
                                     <span class="text-muted small">-</span>
                                 }
                             </td>
-
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm">
                                     <a asp-action="Details" asp-route-id="@item.CustomerId" class="btn btn-info text-white"
@@ -100,11 +117,19 @@
                 else
                 {
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">Không tìm thấy dữ liệu</td>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                            <p class="mt-2">Không tìm thấy khách hàng nào</p>
+                        </td>
                     </tr>
                 }
             </tbody>
         </table>
+        </div>
+
+        <!-- Pagination -->
+        @await Html.PartialAsync("_Pagination")
+        </div>
     </div>
 </div>
 

@@ -32,6 +32,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3">
+                <input type="hidden" name="pageNumber" value="1" />
                 <div class="col-md-5">
                     <label class="form-label">Tìm kiếm</label>
                     <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control"
@@ -39,14 +40,19 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Loại phiếu</label>
-                    <select name="typeFilter" class="form-select" asp-items="@ViewBag.TypeFilter">
+                    <select name="typeFilter" class="form-select">
                         <option value="">-- Tất cả --</option>
+                        <option value="Phiếu Nhập" selected="@(ViewBag.TypeFilterParam == "Phiếu Nhập")">Phiếu Nhập</option>
+                        <option value="Phiếu Xuất" selected="@(ViewBag.TypeFilterParam == "Phiếu Xuất")">Phiếu Xuất</option>
                     </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Trạng thái</label>
-                    <select name="statusFilter" class="form-select" asp-items="@ViewBag.StatusFilter">
+                    <select name="statusFilter" class="form-select">
                         <option value="">-- Tất cả --</option>
+                        <option value="Completed" selected="@(ViewBag.StatusFilterParam == "Completed")">Completed</option>
+                        <option value="Pending" selected="@(ViewBag.StatusFilterParam == "Pending")">Pending</option>
+                        <option value="Cancelled" selected="@(ViewBag.StatusFilterParam == "Cancelled")">Cancelled</option>
                     </select>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
@@ -60,6 +66,12 @@
 
     <div class="card">
         <div class="card-body">
+            @if (ViewBag.TotalItems > 0)
+            {
+                <div class="mb-3">
+                    <span class="text-muted">Hiển thị <strong>@((ViewBag.PageNumber - 1) * ViewBag.PageSize + 1)</strong> - <strong>@(Math.Min(ViewBag.PageNumber * ViewBag.PageSize, ViewBag.TotalItems))</strong> trong tổng số <strong>@ViewBag.TotalItems</strong> phiếu</span>
+                </div>
+            }
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead class="table-light">

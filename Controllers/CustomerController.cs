@@ -17,16 +17,21 @@ namespace BookstoreManagement.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(string searchString)
+        public async Task<IActionResult> Index(string searchString, bool? isActive, int pageNumber = 1, int pageSize = 10)
         {
             ViewData["CurrentFilter"] = searchString;
-            TempData["CurrentFeature"] = "Customer";
+            if (isActive.HasValue)
+            {
+                ViewData["IsActiveFilter"] = isActive.Value.ToString();
+            }
+            TempData["CurrentFeature"] = "Customer"; 
+            
             var query = _context.Customers.AsQueryable();
 
-            query = query.Include(c => c.Rank);
+            // Loại bỏ khách hàng đặc biệt
+            query = query.Where(c => c.Phone != "0000000000");
 
-            query = query.Where(c => c.Phone != "00000000" && c.Phone != "0000000000");
-
+            // Search filter
             if (!string.IsNullOrEmpty(searchString))
             {
                 query = query.Where(u => u.FullName.Contains(searchString)
@@ -34,7 +39,30 @@ namespace BookstoreManagement.Controllers
                                       || u.Phone.Contains(searchString));
             }
 
-            var customers = await query.OrderByDescending(c => c.CreatedAt).ToListAsync();
+            // Status filter
+            if (isActive.HasValue)
+            {
+                query = query.Where(c => c.IsActive == isActive.Value);
+            }
+
+            // Calculate pagination
+            var totalItems = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            // Apply pagination
+            var customers = await query
+                .Include(c => c.Rank)
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalItems;
+            ViewBag.IsActiveParam = isActive;
+
             return View(customers);
         }
 

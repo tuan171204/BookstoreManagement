@@ -26,6 +26,50 @@
         queryParams.Add($"categoryId={ViewData["CategoryId"]}");
     }
     
+    // IsActive filter (for Customer, Employee, Supplier, Promotion)
+    if (ViewData["IsActiveFilter"] != null && !string.IsNullOrEmpty(ViewData["IsActiveFilter"].ToString()))
+    {
+        queryParams.Add($"isActive={ViewData["IsActiveFilter"]}");
+    }
+    
+    // Role filter (for Employee)
+    if (ViewData["RoleFilter"] != null && !string.IsNullOrEmpty(ViewData["RoleFilter"].ToString()))
+    {
+        queryParams.Add($"roleName={Uri.EscapeDataString(ViewData["RoleFilter"].ToString())}");
+    }
+    
+    // Type filter (for Warehouse)
+    if (ViewData["TypeFilter"] != null && !string.IsNullOrEmpty(ViewData["TypeFilter"].ToString()))
+    {
+        queryParams.Add($"typeFilter={Uri.EscapeDataString(ViewData["TypeFilter"].ToString())}");
+    }
+    
+    // Employee filter (for Sales)
+    if (ViewData["EmployeeFilter"] != null && !string.IsNullOrEmpty(ViewData["EmployeeFilter"].ToString()))
+    {
+        queryParams.Add($"employeeId={Uri.EscapeDataString(ViewData["EmployeeFilter"].ToString())}");
+    }
+    
+    // Date filters (for Sales)
+    if (ViewData["FromDateFilter"] != null && !string.IsNullOrEmpty(ViewData["FromDateFilter"].ToString()))
+    {
+        queryParams.Add($"fromDate={Uri.EscapeDataString(ViewData["FromDateFilter"].ToString())}");
+    }
+    
+    if (ViewData["ToDateFilter"] != null && !string.IsNullOrEmpty(ViewData["ToDateFilter"].ToString()))
+    {
+        queryParams.Add($"toDate={Uri.EscapeDataString(ViewData["ToDateFilter"].ToString())}");
+    }
+    
+    // Status filter - check if this is Sales page or Warehouse page
+    if (ViewData["StatusFilter"] != null && !string.IsNullOrEmpty(ViewData["StatusFilter"].ToString()))
+    {
+        // Sales page uses "status" parameter, Warehouse uses "statusFilter"
+        bool isSalesPage = ViewData["IsSalesPage"] != null && ViewData["IsSalesPage"].ToString() == "true";
+        string statusParam = isSalesPage ? "status" : "statusFilter";
+        queryParams.Add($"{statusParam}={Uri.EscapeDataString(ViewData["StatusFilter"].ToString())}");
+    }
+    
     // Helper function để tạo URL với pageNumber
     Func<int, string> GetPageUrl = (pageNum) =>
     {
