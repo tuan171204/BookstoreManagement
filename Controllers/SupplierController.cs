@@ -17,19 +17,48 @@ namespace BookstoreManagement.Controllers
 
         // TRANG DANH SÁCH (INDEX)
         [HttpGet]
-        public async Task<IActionResult> Index(string searchString)
+        public async Task<IActionResult> Index(string searchString, bool? isActive, int pageNumber = 1, int pageSize = 10)
         {
             ViewData["CurrentFilter"] = searchString;
+            if (isActive.HasValue)
+            {
+                ViewData["IsActiveFilter"] = isActive.Value.ToString();
+            }
 
             var query = _context.Suppliers.AsQueryable();
 
+            // Search filter
             if (!string.IsNullOrEmpty(searchString))
             {
                 query = query.Where(s => s.Name.Contains(searchString)
-                                      || (s.ContactInfo != null && s.ContactInfo.Contains(searchString)));
+                                      || (s.ContactInfo != null && s.ContactInfo.Contains(searchString))
+                                      || (s.Address != null && s.Address.Contains(searchString)));
             }
 
-            return View(await query.ToListAsync());
+            // Status filter
+            if (isActive.HasValue)
+            {
+                query = query.Where(s => s.IsActive == isActive.Value);
+            }
+
+            // Calculate pagination
+            var totalItems = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            // Apply pagination
+            var suppliers = await query
+                .OrderByDescending(s => s.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalItems;
+            ViewBag.IsActiveParam = isActive;
+
+            return View(suppliers);
         }
 
         // TRANG THÊM MỚI (CREATE)
