@@ -21,5 +21,8 @@ namespace BookstoreManagement.ViewModels.Customer
         public List<BookstoreManagement.Models.Order>? Orders { get; set; }
 
         public bool IsActive { get; set; } = true;
+
+        public int Points { get; set; }
+        public string? RankName { get; set; }
     }
 }

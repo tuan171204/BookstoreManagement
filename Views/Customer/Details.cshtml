@@ -25,7 +25,17 @@
                     </div>
 
                     <h4 class="fw-bold">@Model.FullName</h4>
-                    <span class="badge bg-secondary mb-3">@Model.CustomerId</span>
+                    @if (!string.IsNullOrEmpty(Model.RankName))
+                    {
+                        <span
+                            class="badge rounded-pill bg-gradient border border-light shadow-sm 
+                  @(Model.RankName == "Kim Cương" ? "bg-info text-dark" : (Model.RankName == "Vàng" ? "bg-warning text-dark" : "bg-secondary"))">
+                            <i class="bi bi-trophy-fill me-1"></i> @Model.RankName
+                        </span>
+                    }
+                    <span class="d-block mt-2 fw-bold text-primary">
+                        @Model.Points.ToString("N0") điểm
+                    </span>
 
                     <hr>
 
@@ -36,7 +46,7 @@
                             @(string.IsNullOrEmpty(Model.Email) ? "Chưa cập nhật" : Model.Email)</p>
                         <p class="mb-2">
                             <i class="bi bi-geo-alt-fill text-muted me-2"></i> <strong>Địa chỉ:</strong>
-                            <span class="d-block ms-4 text-muted small">@(string.IsNullOrEmpty(Model.Address) ? "Chưa   cập nhật" : Model.Address)</span>
+                            <span class="d-block ms-4 text-muted small">@(string.IsNullOrEmpty(Model.Address) ? "Chưa                cập nhật" : Model.Address)</span>
                         </p>
                         <p class="mb-2">
                             <i class="bi bi-toggle-on text-muted me-2"></i> <strong>Trạng thái:</strong>

@@ -38,7 +38,7 @@
 
                         <li class="nav-item">
                             <a class="nav-link text-white @(ViewContext.RouteData.Values["controller"]?.ToString() == "Warehouse" ? "active" : "")"
-                                asp-area="" asp-controller="Warehouse" asp-action="Index">Kho</a>
+                                asp-area="" asp-controller="Warehouse" asp-action="Index">Phiếu nhập/xuất</a>
                         </li>
 
                         <li class="nav-item">
@@ -47,7 +47,7 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white @(ViewContext.RouteData.Values["controller"]?.ToString() == "Role" ? "active" : "")"
-                                asp-area="" asp-controller="Role" asp-action="Index">Phân quyền</a>
+                                asp-area="" asp-controller="Role" asp-action="Index">Chức vụ</a>
                         </li>
                     }
 
@@ -68,14 +68,14 @@
         @* Nếu người dùng chưa đăng nhập *@
         else
         {
-            <a class="navbar-brand text-light" style="font-size: 26px;" asp-controller="Home"
+            <a class="navbar-brand text-light p-5" style="font-size: 26px;" asp-controller="Home"
                 asp-action="Index">BookstoreManagement</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between p-5">
                 <ul class="navbar-nav flex-grow-1 justify-content-end">
                     <li class="nav-item d-flex flex-row align-items-center">
                         <i class="fa-solid fa-user text-light"></i>

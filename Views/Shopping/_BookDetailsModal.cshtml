@@ -126,7 +126,7 @@
                 {
                     foreach (var cat in Model.BookCategories)
                     {
-                        <span class="badge bg-light text-secondary border">@cat.Category.Name</span>
+                        <span class="badge bg-light text-secondary border p-2">@cat.Category.Name</span>
                     }
                 }
             </div>
@@ -195,90 +195,3 @@
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        let currentRating = parseInt(document.getElementById('selectedRating')?.value || 0);
-
-        // 1. Hiệu ứng Hover: Sáng sao khi rê chuột qua
-        function highlightStars(starValue) {
-            const stars = document.querySelectorAll('.star-item');
-            stars.forEach(star => {
-                const val = parseInt(star.getAttribute('data-value'));
-                if (val <= starValue) {
-                    star.classList.remove('text-secondary');
-                    star.classList.add('text-warning');
-                } else {
-                    star.classList.remove('text-warning');
-                    star.classList.add('text-secondary');
-                }
-            });
-        }
-
-        // 2. Reset Hover: Trả về trạng thái đã chọn khi chuột rời đi
-        function resetStars() {
-            highlightStars(currentRating);
-        }
-
-        // 3. Click chọn sao
-        function selectRating(val) {
-            currentRating = val;
-            document.getElementById('selectedRating').value = val;
-            highlightStars(val); // Cập nhật màu luôn
-        }
-
-        // 4. Gửi đánh giá (AJAX)
-        function submitRating(bookId) {
-            if (currentRating === 0) {
-                alert("Vui lòng chọn số sao để đánh giá!");
-                return;
-            }
-
-            const comment = document.getElementById('ratingComment').value;
-
-            // Button loading state
-            const btn = event.target;
-            const originalText = btn.innerText;
-            btn.disabled = true;
-            btn.innerText = "Đang gửi...";
-
-            $.ajax({
-                url: '/Shopping/RateBook',
-                type: 'POST',
-                data: {
-                    bookId: bookId,
-                    ratingValue: currentRating,
-                    comment: comment
-                },
-                success: function (res) {
-                    btn.disabled = false;
-                    btn.innerText = originalText;
-
-                    if (res.success) {
-                        alert(res.message);
-
-                        // Cập nhật lại UI phần tổng quan rating ngay lập tức
-                        $('#totalRatingsDisplay').text(res.newTotal);
-
-                        // Vẽ lại sao trung bình mới (logic đơn giản)
-                        let starsHtml = '';
-                        for (let i = 1; i <= 5; i++) {
-                            if (res.newAverage >= i) starsHtml += '<i class="fas fa-star"></i> ';
-                            else if (res.newAverage >= i - 0.5) starsHtml += '<i class="fas fa-star-half-alt"></i> ';
-                            else starsHtml += '<i class="far fa-star"></i> ';
-                        }
-                        $('#avgRatingDisplay').html(starsHtml);
-
-                    } else {
-                        alert(res.message);
-                    }
-                },
-                error: function () {
-                    btn.disabled = false;
-                    btn.innerText = originalText;
-                    alert("Có lỗi xảy ra khi gửi đánh giá.");
-                }
-            });
-        }
-    </script>
-}

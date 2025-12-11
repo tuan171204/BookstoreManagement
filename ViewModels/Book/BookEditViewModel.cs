@@ -53,6 +53,16 @@ namespace BookstoreManagement.ViewModels.Book
         [Range(0, double.MaxValue, ErrorMessage = "Giá nhập phải lớn hơn 0")]
         public decimal DefaultCostPrice { get; set; }
 
+        [Display(Name = "Giá nhập (Giá vốn)")]
+        [Required(ErrorMessage = "Vui lòng nhập giá vốn")]
+        [Range(0, double.MaxValue, ErrorMessage = "Giá vốn phải lớn hơn 0")]
+        public decimal CostPrice { get; set; }
+
+        [Display(Name = "% Lợi nhuận")]
+        [Required(ErrorMessage = "Vui lòng nhập % lợi nhuận")]
+        [Range(0, 500, ErrorMessage = "% Lợi nhuận không hợp lệ")]
+        public double ProfitMargin { get; set; }
+
         [Range(0, int.MaxValue, ErrorMessage = "Ngưỡng cảnh báo phải lớn hơn hoặc bằng 0")]
         [Display(Name = "Ngưỡng cảnh báo tồn kho thấp")]
         public int? LowStockThreshold { get; set; }

@@ -187,11 +187,11 @@
 
                 // 2. Hiển thị Loading
                 container.html(`
-                                        <div class="text-center py-5">
-                                            <div class="spinner-border text-primary" role="status"></div>
-                                            <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
-                                        </div>
-                                    `);
+                                                        <div class="text-center py-5">
+                                                            <div class="spinner-border text-primary" role="status"></div>
+                                                            <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+                                                        </div>
+                                                    `);
 
                 // 3. Gọi AJAX về Server
                 $.ajax({
@@ -231,11 +231,11 @@
                 }, 500);
 
                 container.html(`
-                                    <div class="text-center py-5">
-                                        <div class="spinner-border text-primary" role="status"></div>
-                                        <p class="mt-2 text-muted">Đang lọc dữ liệu...</p>
-                                    </div>
-                                `);
+                                                    <div class="text-center py-5">
+                                                        <div class="spinner-border text-primary" role="status"></div>
+                                                        <p class="mt-2 text-muted">Đang lọc dữ liệu...</p>
+                                                    </div>
+                                                `);
 
                 // 4. Reset style menu active (vì đang dùng filter riêng)
                 $('.ajax-filter').removeClass('text-primary fw-bold').addClass('text-dark');
@@ -265,45 +265,118 @@
 
 
         // Hàm gọi AJAX để mở Modal
+        // --- KHAI BÁO BIẾN TOÀN CỤC ---
+        let currentRating = 0;
+
+        // --- CẬP NHẬT HÀM showBookDetails ---
         function showBookDetails(bookId) {
-            // 1. Hiển thị modal và icon loading trước
             var myModal = new bootstrap.Modal(document.getElementById('bookDetailModal'));
 
-            // Reset nội dung về trạng thái loading (để tránh hiện nội dung cũ)
-            document.getElementById('bookDetailContent').innerHTML = `
-                            <div class="text-center p-5">
-                                <div class="spinner-border text-primary" role="status"></div>
-                                <p class="mt-2 text-muted">Đang tải thông tin sách...</p>
-                            </div>`;
-
+            // Reset modal loading
+            $('#bookDetailContent').html('<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>');
             myModal.show();
 
-            // 2. Gọi AJAX lấy dữ liệu
             $.ajax({
                 url: '/Shopping/GetBookDetails',
                 type: 'GET',
                 data: { id: bookId },
                 success: function (response) {
-                    // 3. Đổ HTML nhận được vào modal
                     $('#bookDetailContent').html(response);
+
+                    // QUAN TRỌNG: Cập nhật lại điểm đánh giá từ dữ liệu vừa tải về
+                    currentRating = parseInt($('#selectedRating').val() || 0);
                 },
                 error: function () {
-                    $('#bookDetailContent').html(`
-                            <div class="text-center p-5 text-danger">
-                                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i><br>
-                                Không thể tải thông tin sách. Vui lòng thử lại.
-                            </div>
-                        `);
+                    $('#bookDetailContent').html('<div class="text-center p-5 text-danger">Lỗi tải dữ liệu.</div>');
                 }
             });
         }
 
-        // Hàm tăng giảm số lượng trong modal
+        // --- CÁC HÀM XỬ LÝ ĐÁNH GIÁ (Chuyển từ Modal sang đây) ---
+
+        // 1. Hiệu ứng Hover
+        function highlightStars(starValue) {
+            const stars = document.querySelectorAll('.star-item');
+            stars.forEach(star => {
+                const val = parseInt(star.getAttribute('data-value'));
+                if (val <= starValue) {
+                    star.classList.remove('text-secondary');
+                    star.classList.add('text-warning');
+                } else {
+                    star.classList.remove('text-warning');
+                    star.classList.add('text-secondary');
+                }
+            });
+        }
+
+        // 2. Reset Hover
+        function resetStars() {
+            highlightStars(currentRating);
+        }
+
+        // 3. Click chọn sao
+        function selectRating(val) {
+            currentRating = val;
+            // Cập nhật giá trị vào input ẩn trong modal (nếu cần dùng sau này)
+            const input = document.getElementById('selectedRating');
+            if (input) input.value = val;
+
+            highlightStars(val);
+        }
+
+        // 4. Gửi đánh giá
+        function submitRating(bookId) {
+            if (currentRating === 0) {
+                alert("Vui lòng chọn số sao để đánh giá!");
+                return;
+            }
+
+            const comment = document.getElementById('ratingComment').value;
+            const btn = event.target;
+            const originalText = btn.innerText;
+
+            btn.disabled = true;
+            btn.innerText = "Đang gửi...";
+
+            $.ajax({
+                url: '/Shopping/RateBook',
+                type: 'POST',
+                data: {
+                    bookId: bookId,
+                    ratingValue: currentRating,
+                    comment: comment
+                },
+                success: function (res) {
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+
+                    if (res.success) {
+                        alert(res.message);
+                        // Cập nhật UI
+                        $('#totalRatingsDisplay').text(res.newTotal);
+                        let starsHtml = '';
+                        for (let i = 1; i <= 5; i++) {
+                            if (res.newAverage >= i) starsHtml += '<i class="fas fa-star"></i> ';
+                            else if (res.newAverage >= i - 0.5) starsHtml += '<i class="fas fa-star-half-alt"></i> ';
+                            else starsHtml += '<i class="far fa-star"></i> ';
+                        }
+                        $('#avgRatingDisplay').html(starsHtml);
+                    } else {
+                        alert(res.message);
+                    }
+                },
+                error: function () {
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                    alert("Có lỗi xảy ra khi gửi đánh giá.");
+                }
+            });
+        }
+
         function adjustQty(amount) {
             var input = document.getElementById('modalQuantity');
             var currentVal = parseInt(input.value);
             var maxVal = parseInt(input.max);
-
             var newVal = currentVal + amount;
             if (newVal >= 1 && newVal <= maxVal) {
                 input.value = newVal;

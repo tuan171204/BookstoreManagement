@@ -4,7 +4,10 @@
 *.user
 
 # Build results
-[Bb]in/
-[Oo]bj/
-bin/
-obj/
+/bin/
+/obj/
+
+*.pdb
+*.suo
+*.user
+*.bak

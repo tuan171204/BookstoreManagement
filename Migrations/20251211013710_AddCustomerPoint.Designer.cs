@@ -4,6 +4,7 @@ using BookstoreManagement.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookstoreManagement.Migrations
 {
     [DbContext(typeof(BookstoreContext))]
-    partial class BookstoreContextModelSnapshot : ModelSnapshot
+    [Migration("20251211013710_AddCustomerPoint")]
+    partial class AddCustomerPoint
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -190,11 +193,6 @@ namespace BookstoreManagement.Migrations
                         .HasColumnType("float")
                         .HasDefaultValue(0.0);
 
-                    b.Property<decimal>("CostPrice")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("decimal(18, 2)")
-                        .HasDefaultValue(0m);
-
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
@@ -218,11 +216,6 @@ namespace BookstoreManagement.Migrations
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18, 2)");
-
-                    b.Property<double>("ProfitMargin")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("float")
-                        .HasDefaultValue(0.0);
 
                     b.Property<int?>("PublicationYear")
                         .HasColumnType("int");
@@ -275,41 +268,6 @@ namespace BookstoreManagement.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("BookCategories");
-                });
-
-            modelBuilder.Entity("BookstoreManagement.Models.BookPriceHistory", b =>
-                {
-                    b.Property<int>("HistoryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("HistoryId"));
-
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("CostPrice")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<DateTime>("EffectiveDate")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("(getdate())");
-
-                    b.Property<double>("ProfitMargin")
-                        .HasColumnType("float");
-
-                    b.Property<decimal>("SellingPrice")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("HistoryId");
-
-                    b.HasIndex("BookId");
-
-                    b.ToTable("BookPriceHistories");
                 });
 
             modelBuilder.Entity("BookstoreManagement.Models.BookPromotion", b =>
@@ -1228,17 +1186,6 @@ namespace BookstoreManagement.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("BookstoreManagement.Models.BookPriceHistory", b =>
-                {
-                    b.HasOne("BookstoreManagement.Models.Book", "Book")
-                        .WithMany("PriceHistories")
-                        .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Book");
-                });
-
             modelBuilder.Entity("BookstoreManagement.Models.BookPromotion", b =>
                 {
                     b.HasOne("BookstoreManagement.Models.Book", "Book")
@@ -1518,8 +1465,6 @@ namespace BookstoreManagement.Migrations
                     b.Navigation("ImportDetails");
 
                     b.Navigation("OrderDetails");
-
-                    b.Navigation("PriceHistories");
 
                     b.Navigation("Promotions");
 
