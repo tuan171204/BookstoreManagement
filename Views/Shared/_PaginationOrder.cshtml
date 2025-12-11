@@ -1,29 +1,20 @@
 @{
-    // Tạo query string cho tất cả các filter parameters
+    // Tạo query string cho các filter parameters
     var queryParams = new List<string>();
     
-    // Search string
-    if (ViewData["CurrentFilter"] != null && !string.IsNullOrEmpty(ViewData["CurrentFilter"].ToString()))
+    if (ViewBag.FromDateParam != null)
     {
-        queryParams.Add($"searchString={Uri.EscapeDataString(ViewData["CurrentFilter"].ToString())}");
+        queryParams.Add($"fromDate={((DateTime)ViewBag.FromDateParam).ToString("yyyy-MM-dd")}");
     }
     
-    // Author filter
-    if (ViewData["AuthorId"] != null && !string.IsNullOrEmpty(ViewData["AuthorId"].ToString()))
+    if (ViewBag.ToDateParam != null)
     {
-        queryParams.Add($"authorId={ViewData["AuthorId"]}");
+        queryParams.Add($"toDate={((DateTime)ViewBag.ToDateParam).ToString("yyyy-MM-dd")}");
     }
     
-    // Publisher filter
-    if (ViewData["PublisherId"] != null && !string.IsNullOrEmpty(ViewData["PublisherId"].ToString()))
+    if (!string.IsNullOrEmpty(ViewBag.StatusParam))
     {
-        queryParams.Add($"publisherId={ViewData["PublisherId"]}");
-    }
-    
-    // Category filter
-    if (ViewData["CategoryId"] != null && !string.IsNullOrEmpty(ViewData["CategoryId"].ToString()))
-    {
-        queryParams.Add($"categoryId={ViewData["CategoryId"]}");
+        queryParams.Add($"status={ViewBag.StatusParam}");
     }
     
     // Helper function để tạo URL với pageNumber
@@ -94,6 +85,7 @@
         </ul>
     </nav>
     <p class="text-center text-muted mt-2">
-        Trang @ViewBag.PageNumber / @ViewBag.TotalPages (Tổng @ViewBag.TotalItems mục)
+        Trang @ViewBag.PageNumber / @ViewBag.TotalPages (Tổng @ViewBag.TotalItems đơn hàng)
     </p>
 }
+

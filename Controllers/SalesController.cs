@@ -177,11 +177,27 @@ namespace BookstoreManagement.Controllers
                 {
                     if (phone == "00000000")
                     {
-                        customer = new Customer { FullName = "Khách lẻ", Phone = "00000000", Email = "customer@gmail.com", Address = "tại quầy", IsActive = true, CreatedAt = DateTime.Now };
+                        customer = new Customer 
+                        { 
+                            CustomerId = Guid.NewGuid().ToString(),
+                            FullName = "Khách lẻ", 
+                            Phone = "00000000", 
+                            Email = "customer@gmail.com", 
+                            Address = "tại quầy", 
+                            IsActive = true, 
+                            CreatedAt = DateTime.Now 
+                        };
                     }
                     else
                     {
-                        customer = new Customer { FullName = name, Phone = phone, CreatedAt = DateTime.Now, IsActive = true };
+                        customer = new Customer 
+                        { 
+                            CustomerId = Guid.NewGuid().ToString(),
+                            FullName = name, 
+                            Phone = phone, 
+                            CreatedAt = DateTime.Now, 
+                            IsActive = true 
+                        };
                     }
                     _context.Customers.Add(customer);
                     await _context.SaveChangesAsync();
