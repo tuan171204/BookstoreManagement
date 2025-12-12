@@ -1,6 +1,7 @@
 using BookstoreManagement.Models;
 using BookstoreManagement.ViewModels.Customer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,16 +11,20 @@ namespace BookstoreManagement.Controllers
     public class CustomerController : Controller
     {
         private readonly BookstoreContext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public CustomerController(BookstoreContext context)
+        public CustomerController(BookstoreContext context, UserManager<AppUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(string searchString, bool? isActive, int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string searchString, bool? isActive, string sortBy = "CreatedAt", string sortOrder = "desc", int pageNumber = 1, int pageSize = 10)
         {
             ViewData["CurrentFilter"] = searchString;
+            ViewData["SortBy"] = sortBy;
+            ViewData["SortOrder"] = sortOrder;
             if (isActive.HasValue)
             {
                 ViewData["IsActiveFilter"] = isActive.Value.ToString();
@@ -48,13 +53,36 @@ namespace BookstoreManagement.Controllers
                 query = query.Where(c => c.IsActive == isActive.Value);
             }
 
+            // Apply sorting
+            query = sortBy?.ToLower() switch
+            {
+                "fullname" => sortOrder == "asc" 
+                    ? query.OrderBy(c => c.FullName) 
+                    : query.OrderByDescending(c => c.FullName),
+                "phone" => sortOrder == "asc" 
+                    ? query.OrderBy(c => c.Phone) 
+                    : query.OrderByDescending(c => c.Phone),
+                "email" => sortOrder == "asc" 
+                    ? query.OrderBy(c => c.Email ?? "") 
+                    : query.OrderByDescending(c => c.Email ?? ""),
+                "points" => sortOrder == "asc" 
+                    ? query.OrderBy(c => c.Points) 
+                    : query.OrderByDescending(c => c.Points),
+                "rank" => sortOrder == "asc" 
+                    ? query.OrderBy(c => c.Rank != null ? c.Rank.Value : "") 
+                    : query.OrderByDescending(c => c.Rank != null ? c.Rank.Value : ""),
+                "createdat" => sortOrder == "asc" 
+                    ? query.OrderBy(c => c.CreatedAt) 
+                    : query.OrderByDescending(c => c.CreatedAt),
+                _ => query.OrderByDescending(c => c.CreatedAt)
+            };
+
             // Calculate pagination
             var totalItems = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
             // Apply pagination
             var customers = await query
-                .OrderByDescending(c => c.CreatedAt)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(c => new CustomerViewModel
@@ -243,6 +271,101 @@ namespace BookstoreManagement.Controllers
                 TempData["SuccessMessage"] = "Đã xóa (khóa) khách hàng thành công.";
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        // Reset mật khẩu cho khách hàng (Admin)
+        [HttpGet]
+        [Authorize(Roles = "Admin,Manager")]
+        public async Task<IActionResult> ResetPassword(string id)
+        {
+            if (id == null) return NotFound();
+
+            var customer = await _context.Customers
+                .Include(c => c.AppUser)
+                .FirstOrDefaultAsync(c => c.CustomerId == id);
+
+            if (customer == null) return NotFound();
+
+            if (customer.AccountId == null)
+            {
+                TempData["ErrorMessage"] = "Khách hàng này chưa có tài khoản đăng nhập.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            ViewBag.CustomerName = customer.FullName;
+            ViewBag.CustomerId = customer.CustomerId;
+            ViewBag.Email = customer.AppUser?.Email ?? customer.Email;
+
+            return View();
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(string id, string newPassword, string confirmPassword)
+        {
+            if (id == null) return NotFound();
+
+            var customer = await _context.Customers
+                .Include(c => c.AppUser)
+                .FirstOrDefaultAsync(c => c.CustomerId == id);
+
+            if (customer == null) return NotFound();
+
+            if (customer.AccountId == null)
+            {
+                TempData["ErrorMessage"] = "Khách hàng này chưa có tài khoản đăng nhập.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            if (string.IsNullOrEmpty(newPassword) || newPassword.Length < 6)
+            {
+                ModelState.AddModelError("", "Mật khẩu phải có ít nhất 6 ký tự.");
+                ViewBag.CustomerName = customer.FullName;
+                ViewBag.CustomerId = customer.CustomerId;
+                ViewBag.Email = customer.AppUser?.Email ?? customer.Email;
+                return View();
+            }
+
+            if (newPassword != confirmPassword)
+            {
+                ModelState.AddModelError("", "Mật khẩu xác nhận không khớp.");
+                ViewBag.CustomerName = customer.FullName;
+                ViewBag.CustomerId = customer.CustomerId;
+                ViewBag.Email = customer.AppUser?.Email ?? customer.Email;
+                return View();
+            }
+
+            var user = await _userManager.FindByIdAsync(customer.AccountId);
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy tài khoản người dùng.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            // Reset password
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+            if (result.Succeeded)
+            {
+                user.IsDefaultPassword = false;
+                user.UpdatedAt = DateTime.Now;
+                await _userManager.UpdateAsync(user);
+
+                TempData["SuccessMessage"] = $"Đã reset mật khẩu thành công cho khách hàng {customer.FullName}.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError("", error.Description);
+            }
+
+            ViewBag.CustomerName = customer.FullName;
+            ViewBag.CustomerId = customer.CustomerId;
+            ViewBag.Email = customer.AppUser?.Email ?? customer.Email;
+            return View();
         }
 
         private bool CustomerExists(string id)

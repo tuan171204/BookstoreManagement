@@ -15,9 +15,29 @@ namespace BookstoreManagement.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string sortBy = "CreatedAt", string sortOrder = "desc")
         {
-            return View(await _context.Categories.OrderByDescending(c => c.CreatedAt).ToListAsync());
+            ViewData["SortBy"] = sortBy;
+            ViewData["SortOrder"] = sortOrder;
+
+            var categoriesQuery = _context.Categories.AsQueryable();
+
+            // Apply sorting
+            categoriesQuery = sortBy?.ToLower() switch
+            {
+                "name" => sortOrder == "asc" 
+                    ? categoriesQuery.OrderBy(c => c.Name) 
+                    : categoriesQuery.OrderByDescending(c => c.Name),
+                "createdat" => sortOrder == "asc" 
+                    ? categoriesQuery.OrderBy(c => c.CreatedAt) 
+                    : categoriesQuery.OrderByDescending(c => c.CreatedAt),
+                "updatedat" => sortOrder == "asc" 
+                    ? categoriesQuery.OrderBy(c => c.UpdatedAt ?? DateTime.MinValue) 
+                    : categoriesQuery.OrderByDescending(c => c.UpdatedAt ?? DateTime.MinValue),
+                _ => categoriesQuery.OrderByDescending(c => c.CreatedAt)
+            };
+
+            return View(await categoriesQuery.ToListAsync());
         }
 
         public IActionResult Create() => View();

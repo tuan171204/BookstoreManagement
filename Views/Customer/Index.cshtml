@@ -3,6 +3,26 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Quản lý khách hàng";
+    
+    Func<string, string, string, string> GetSortUrl = (column, currentSortBy, currentSortOrder) =>
+    {
+        var queryParams = new List<string>();
+        if (ViewData["CurrentFilter"] != null && !string.IsNullOrEmpty(ViewData["CurrentFilter"].ToString()))
+        {
+            queryParams.Add($"searchString={Uri.EscapeDataString(ViewData["CurrentFilter"].ToString())}");
+        }
+        if (ViewData["IsActiveFilter"] != null && !string.IsNullOrEmpty(ViewData["IsActiveFilter"].ToString()))
+        {
+            queryParams.Add($"isActive={ViewData["IsActiveFilter"]}");
+        }
+        string newSortOrder = currentSortBy == column && currentSortOrder == "asc" ? "desc" : "asc";
+        queryParams.Add($"sortBy={column}");
+        queryParams.Add($"sortOrder={newSortOrder}");
+        queryParams.Add($"pageNumber=1");
+        return "?" + string.Join("&", queryParams);
+    };
+    string currentSortBy = ViewData["SortBy"]?.ToString() ?? "CreatedAt";
+    string currentSortOrder = ViewData["SortOrder"]?.ToString() ?? "desc";
 }
 
 <div class="container-fluid py-4">
@@ -17,6 +37,8 @@
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3">
                 <input type="hidden" name="pageNumber" value="1" />
+                <input type="hidden" name="sortBy" value="@currentSortBy" />
+                <input type="hidden" name="sortOrder" value="@currentSortOrder" />
                 <div class="col-md-6">
                     <label class="form-label">Tìm kiếm</label>
                     <input type="text" name="searchString" class="form-control" placeholder="Tên, Email, SĐT..."
@@ -45,9 +67,45 @@
                 <table class="table table-hover table-striped align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Khách hàng</th>
-                            <th>Liên hệ</th>
-                            <th>Hạng / Điểm</th>
+                            <th>
+                                <a href="@GetSortUrl("fullname", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Khách hàng
+                                    @if (currentSortBy == "fullname")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@GetSortUrl("phone", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Liên hệ
+                                    @if (currentSortBy == "phone")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@GetSortUrl("points", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Hạng / Điểm
+                                    @if (currentSortBy == "points")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
                             <th>Tài khoản Online</th>
                             <th>Trạng thái</th>
                             <th class="text-center">Thao tác</th>

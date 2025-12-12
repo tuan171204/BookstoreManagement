@@ -20,10 +20,15 @@ namespace BookstoreManagement.Controllers
         }
 
         // GET: Publisher
-        public async Task<IActionResult> Index(string searchString, int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string searchString, string sortBy = "CreatedAt", string sortOrder = "desc", int pageNumber = 1, int pageSize = 10)
         {
             ViewData["CurrentFilter"] = searchString;
-            var publishersQuery = _context.Publishers.AsQueryable();
+            ViewData["SortBy"] = sortBy;
+            ViewData["SortOrder"] = sortOrder;
+            
+            var publishersQuery = _context.Publishers
+                .Include(p => p.Books)
+                .AsQueryable();
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -33,11 +38,28 @@ namespace BookstoreManagement.Controllers
                     (p.Phone != null && p.Phone.Contains(searchString)));
             }
 
+            // Apply sorting
+            publishersQuery = sortBy?.ToLower() switch
+            {
+                "name" => sortOrder == "asc" 
+                    ? publishersQuery.OrderBy(p => p.Name) 
+                    : publishersQuery.OrderByDescending(p => p.Name),
+                "address" => sortOrder == "asc" 
+                    ? publishersQuery.OrderBy(p => p.Address ?? "") 
+                    : publishersQuery.OrderByDescending(p => p.Address ?? ""),
+                "bookscount" => sortOrder == "asc" 
+                    ? publishersQuery.OrderBy(p => p.Books.Count) 
+                    : publishersQuery.OrderByDescending(p => p.Books.Count),
+                "createdat" => sortOrder == "asc" 
+                    ? publishersQuery.OrderBy(p => p.CreatedAt) 
+                    : publishersQuery.OrderByDescending(p => p.CreatedAt),
+                _ => publishersQuery.OrderByDescending(p => p.CreatedAt)
+            };
+
             var totalItems = await publishersQuery.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
             var publishers = await publishersQuery
-                .OrderByDescending(p => p.CreatedAt)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(p => new PublisherViewModel

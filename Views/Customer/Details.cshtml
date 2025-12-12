@@ -70,9 +70,15 @@
                     </div>
 
                     <div class="mt-4">
-                        <a asp-action="Edit" asp-route-id="@Model.CustomerId" class="btn btn-warning w-100">
+                        <a asp-action="Edit" asp-route-id="@Model.CustomerId" class="btn btn-warning w-100 mb-2">
                             <i class="bi bi-pencil-square"></i> Cập nhật hồ sơ
                         </a>
+                        @if (Model.HasAccount && (User.IsInRole("Admin") || User.IsInRole("Manager")))
+                        {
+                            <a asp-action="ResetPassword" asp-route-id="@Model.CustomerId" class="btn btn-danger w-100">
+                                <i class="bi bi-key"></i> Reset mật khẩu
+                            </a>
+                        }
                     </div>
                 </div>
             </div>

@@ -70,6 +70,17 @@
         queryParams.Add($"{statusParam}={Uri.EscapeDataString(ViewData["StatusFilter"].ToString())}");
     }
     
+    // Sort parameters
+    if (ViewData["SortBy"] != null && !string.IsNullOrEmpty(ViewData["SortBy"].ToString()))
+    {
+        queryParams.Add($"sortBy={Uri.EscapeDataString(ViewData["SortBy"].ToString())}");
+    }
+    
+    if (ViewData["SortOrder"] != null && !string.IsNullOrEmpty(ViewData["SortOrder"].ToString()))
+    {
+        queryParams.Add($"sortOrder={Uri.EscapeDataString(ViewData["SortOrder"].ToString())}");
+    }
+    
     // Helper function để tạo URL với pageNumber
     Func<int, string> GetPageUrl = (pageNum) =>
     {

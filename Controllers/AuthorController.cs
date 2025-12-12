@@ -24,11 +24,15 @@ namespace BookstoreManagement.Controllers
         }
 
         // GET: Author
-        public async Task<IActionResult> Index(string searchString, int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string searchString, string sortBy = "CreatedAt", string sortOrder = "desc", int pageNumber = 1, int pageSize = 10)
         {
             ViewData["CurrentFilter"] = searchString;
+            ViewData["SortBy"] = sortBy;
+            ViewData["SortOrder"] = sortOrder;
 
-            var authorsQuery = _context.Authors.AsQueryable();
+            var authorsQuery = _context.Authors
+                .Include(a => a.Books)
+                .AsQueryable();
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -38,11 +42,23 @@ namespace BookstoreManagement.Controllers
                     (a.Pseudonym != null && a.Pseudonym.Contains(searchString)));
             }
 
+            // Apply sorting
+            authorsQuery = sortBy?.ToLower() switch
+            {
+                "name" => sortOrder == "asc" ? authorsQuery.OrderBy(a => a.Name) : authorsQuery.OrderByDescending(a => a.Name),
+                "bookscount" => sortOrder == "asc" 
+                    ? authorsQuery.OrderBy(a => a.Books.Count) 
+                    : authorsQuery.OrderByDescending(a => a.Books.Count),
+                "createdat" => sortOrder == "asc" 
+                    ? authorsQuery.OrderBy(a => a.CreatedAt) 
+                    : authorsQuery.OrderByDescending(a => a.CreatedAt),
+                _ => authorsQuery.OrderByDescending(a => a.CreatedAt)
+            };
+
             var totalItems = await authorsQuery.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
             var authors = await authorsQuery
-                .OrderByDescending(a => a.CreatedAt)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(a => new AuthorViewModel
