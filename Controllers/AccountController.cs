@@ -19,32 +19,56 @@ namespace BookstoreManagement.Controllers
         // Quản lý người dùng của Identity
         private readonly UserManager<AppUser> _userManager;
 
+        // Quản lý Role
+        private readonly RoleManager<AppRole> _roleManager;
+
         private readonly IEmailSender _emailSender;
 
         private readonly BookstoreContext _context;
 
-        public AccountController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, IEmailSender emailSender, BookstoreContext context)
+        public AccountController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, RoleManager<AppRole> roleManager, IEmailSender emailSender, BookstoreContext context)
         {
             _signInManager = signInManager;
             _userManager = userManager;
+            _roleManager = roleManager;
             _emailSender = emailSender;
             _context = context;
         }
 
-        // ------------------ LOGIN & LOGOUT ------------------
-        // Hiển thị trang đăng nhập
+        // ------------------ ADMIN LOGIN & LOGOUT ------------------
+        // Hiển thị trang đăng nhập Admin
         [HttpGet]
         [AllowAnonymous] // Cho phép người chưa đăng nhập truy cập
-        public IActionResult Login()
+        public IActionResult Login(string? returnUrl = null)
         {
+            // Nếu user đã đăng nhập, kiểm tra role và redirect
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                // Nếu là admin đã đăng nhập, redirect về trang admin
+                if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                {
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    {
+                        return Redirect(returnUrl);
+                    }
+                    return RedirectToAction("Index", "Book");
+                }
+                // Nếu là customer đã đăng nhập, redirect về trang client
+                else
+                {
+                    return RedirectToAction("Index", "Shopping");
+                }
+            }
+            
+            ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
 
-        // Submit form đăng nhập
+        // Submit form đăng nhập Admin (chỉ cho phép Admin, Manager)
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken] // Bảo vệ tấn công CSRF
-        public async Task<IActionResult> Login(string email, string password, bool rememberMe)
+        public async Task<IActionResult> Login(string email, string password, bool rememberMe, string? returnUrl = null)
         {
             if (!ModelState.IsValid) // Các validation trong models không hợp lệ
             {
@@ -61,10 +85,35 @@ namespace BookstoreManagement.Controllers
             if (result.Succeeded)
             {
                 var user = await _userManager.FindByEmailAsync(email);
+                
+                if (user == null)
+                {
+                    ModelState.AddModelError("", "Không tìm thấy tài khoản.");
+                    await _signInManager.SignOutAsync();
+                    return View();
+                }
 
-                if (user != null && user.IsDefaultPassword)
+                // Kiểm tra role: Chỉ cho phép Admin hoặc Manager
+                var userRoles = await _userManager.GetRolesAsync(user);
+                var isAdmin = userRoles.Any(r => r == "Admin" || r == "Manager");
+                
+                if (!isAdmin)
+                {
+                    // Nếu không phải Admin/Manager, đăng xuất và báo lỗi
+                    await _signInManager.SignOutAsync();
+                    ModelState.AddModelError("", "Tài khoản này không có quyền truy cập trang quản trị. Vui lòng đăng nhập tại trang khách hàng.");
+                    return View();
+                }
+
+                if (user.IsDefaultPassword)
                 {
                     return RedirectToAction("Index", "Setting");
+                }
+
+                // Nếu có returnUrl thì quay lại trang đó (ví dụ đang truy cập trang admin bị chặn)
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
                 }
 
                 return RedirectToAction("Index", "Book");
@@ -148,11 +197,20 @@ namespace BookstoreManagement.Controllers
         // ------------------ RESET PASSWORD ------------------
         [HttpGet]
         [AllowAnonymous]
-        public IActionResult ResetPassword(string token, string email)
+        public async Task<IActionResult> ResetPassword(string token, string email)
         {
             if (token == null || email == null)
             {
                 return RedirectToAction("Login");
+            }
+
+            // Kiểm tra role của user để redirect đúng trang login sau khi reset
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user != null)
+            {
+                var userRoles = await _userManager.GetRolesAsync(user);
+                var isAdmin = userRoles.Any(r => r == "Admin" || r == "Manager");
+                ViewBag.IsAdmin = isAdmin; // Lưu vào ViewBag để view biết redirect đến đâu
             }
 
             var model = new ResetPasswordViewModel { Token = token, Email = email };
@@ -179,6 +237,11 @@ namespace BookstoreManagement.Controllers
 
                 await _userManager.UpdateAsync(user);
 
+                // Kiểm tra role để redirect đúng trang login
+                var userRoles = await _userManager.GetRolesAsync(user);
+                var isAdmin = userRoles.Any(r => r == "Admin" || r == "Manager");
+                ViewBag.IsAdmin = isAdmin;
+                
                 return RedirectToAction(nameof(ResetPasswordConfirmation));
             }
 
@@ -200,7 +263,15 @@ namespace BookstoreManagement.Controllers
         public async Task<IActionResult> RequestChangePassword()
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) return RedirectToAction("Login");
+            if (user == null)
+            {
+                // Kiểm tra role để redirect đúng trang login
+                if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                {
+                    return RedirectToAction("Login");
+                }
+                return RedirectToAction("ClientLogin");
+            }
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
@@ -221,8 +292,35 @@ namespace BookstoreManagement.Controllers
         // 1. ĐĂNG NHẬP KHÁCH HÀNG (Giao diện riêng)
         [HttpGet]
         [AllowAnonymous]
-        public IActionResult ClientLogin(string? returnUrl = null)
+        public async Task<IActionResult> ClientLogin(string? returnUrl = null)
         {
+            // Nếu user đã đăng nhập, kiểm tra role
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user != null)
+                {
+                    var userRoles = await _userManager.GetRolesAsync(user);
+                    var isAdmin = userRoles.Any(r => r == "Admin" || r == "Manager");
+                    
+                    if (isAdmin)
+                    {
+                        // Nếu là admin đã đăng nhập, đăng xuất và hiển thị thông báo
+                        await _signInManager.SignOutAsync();
+                        ViewBag.ErrorMessage = "Tài khoản quản trị không thể đăng nhập tại đây.";
+                    }
+                    else
+                    {
+                        // Nếu là customer đã đăng nhập, redirect về trang chủ
+                        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                        {
+                            return Redirect(returnUrl);
+                        }
+                        return RedirectToAction("Index", "Shopping");
+                    }
+                }
+            }
+            
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
@@ -234,9 +332,41 @@ namespace BookstoreManagement.Controllers
         {
             if (ModelState.IsValid)
             {
+                // Kiểm tra role TRƯỚC KHI sign in
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user != null)
+                {
+                    var userRoles = await _userManager.GetRolesAsync(user);
+                    var isAdmin = userRoles.Any(r => r == "Admin" || r == "Manager");
+                    
+                    if (isAdmin)
+                    {
+                        // Nếu là Admin/Manager, KHÔNG cho phép sign in, báo lỗi ngay
+                        ModelState.AddModelError(string.Empty, "Tài khoản quản trị không thể đăng nhập tại đây.");
+                        return View(model);
+                    }
+                }
+                
+                // Chỉ sign in nếu không phải admin
                 var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
+                    // Double check: Kiểm tra lại role sau khi sign in (để chắc chắn)
+                    var signedInUser = await _userManager.FindByEmailAsync(model.Email);
+                    if (signedInUser != null)
+                    {
+                        var roles = await _userManager.GetRolesAsync(signedInUser);
+                        var isAdminAfterSignIn = roles.Any(r => r == "Admin" || r == "Manager");
+                        
+                        if (isAdminAfterSignIn)
+                        {
+                            // Nếu vẫn là admin (trường hợp hiếm), đăng xuất ngay
+                            await _signInManager.SignOutAsync();
+                            ModelState.AddModelError(string.Empty, "Tài khoản quản trị không thể đăng nhập tại đây.");
+                            return View(model);
+                        }
+                    }
+
                     // Nếu có returnUrl thì quay lại trang đó (ví dụ đang thanh toán)
                     if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     {
@@ -301,7 +431,16 @@ namespace BookstoreManagement.Controllers
 
                 if (result.Succeeded)
                 {
-                    // D. Xử lý liên kết Customer
+                    // D. Gán role Customer cho user mới đăng ký
+                    var customerRoleExists = await _roleManager.RoleExistsAsync("Customer");
+                    if (!customerRoleExists)
+                    {
+                        // Tạo role Customer nếu chưa tồn tại
+                        await _roleManager.CreateAsync(new AppRole { Name = "Customer" });
+                    }
+                    await _userManager.AddToRoleAsync(user, "Customer");
+
+                    // E. Xử lý liên kết Customer
                     if (existingCustomer != null)
                     {
                         // TRƯỜNG HỢP 1: Khách đã mua tại quầy (Có hồ sơ, chưa có Account)
@@ -336,7 +475,7 @@ namespace BookstoreManagement.Controllers
 
                     await _context.SaveChangesAsync();
 
-                    // E. Đăng nhập ngay sau khi đăng ký
+                    // F. Đăng nhập ngay sau khi đăng ký
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     return RedirectToAction("Index", "Shopping");
                 }

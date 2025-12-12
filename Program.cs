@@ -160,9 +160,9 @@ if (builder.Environment.IsProduction())
 	{
 		options.Cookie.HttpOnly = true;
 		options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // lâu hơn chút
-		options.LoginPath = "/login/";
-		options.LogoutPath = "/logout/";
-		options.AccessDeniedPath = "/Home/HandleError/403";
+		options.LoginPath = "/Account/Login"; // Trang đăng nhập admin
+		options.LogoutPath = "/Account/Logout";
+		options.AccessDeniedPath = "/Home/AccessDenied";
 		options.SlidingExpiration = true;
 	});
 

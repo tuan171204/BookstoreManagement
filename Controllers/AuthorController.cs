@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace BookstoreManagement.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,Manager")]
     public class AuthorController : Controller
     {
         private readonly BookstoreContext _context;

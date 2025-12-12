@@ -85,6 +85,7 @@
                     
                     Func<int, string> GetPageUrl = (pageNum) =>
                     {
+                        // Chỉ giữ pageNumber, loại bỏ tất cả filter parameters
                         return $"?pageNumber={pageNum}";
                     };
                 }
@@ -252,7 +253,8 @@
             });
 
             // --- XỬ LÝ PAGINATION CHO FILTER (AJAX) ---
-            $(document).on('click', '.pagination .page-link', function(e) {
+            // Chỉ xử lý pagination trong #featured-container (filter results)
+            $(document).on('click', '#featured-container .pagination .page-link', function(e) {
                 e.preventDefault();
                 var href = $(this).attr('href');
                 if (!href || href === '#') return;
@@ -291,6 +293,8 @@
                     }
                 });
             });
+            
+            // Pagination của "tất cả sách" sẽ dùng normal page reload (không cần xử lý JavaScript)
             
             // --- XỬ LÝ BỘ LỌC NÂNG CAO ---
             $('#btnApplyFilter').click(function () {

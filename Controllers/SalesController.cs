@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 
 namespace BookstoreManagement.Controllers
 {
+    [Authorize(Roles = "Admin,Manager")]
     public class SalesController : Controller
     {
         private readonly BookstoreContext _context;

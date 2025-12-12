@@ -15,6 +15,14 @@
                         <p class="text-muted">Đăng nhập để mua sắm và tích điểm</p>
                     </div>
 
+                    @if (ViewBag.ErrorMessage != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>@ViewBag.ErrorMessage
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
                     <form asp-action="ClientLogin" method="post">
                         <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
                         <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>

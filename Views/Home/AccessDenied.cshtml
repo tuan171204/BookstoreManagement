@@ -1,11 +1,20 @@
 @{
     ViewData["Title"] = "Không được phép truy cập";
-    Layout = "_Layout";
+    // Kiểm tra role để dùng layout phù hợp
+    bool isAdmin = User.IsInRole("Admin") || User.IsInRole("Manager");
+    Layout = isAdmin ? "_Layout" : "_LayoutClient";
 }
 
 <div class="text-center mt-5">
     <h1 class="display-4 text-warning">403</h1>
     <h2 class="text-secondary">@ViewBag.ErrorMessage</h2>
     <p>Bạn không có quyền để xem trang này. Vui lòng liên hệ quản trị viên.</p>
-    <a asp-action="Index" asp-controller="Book" class="btn btn-info mt-3">Trở về</a>
+    @if (isAdmin)
+    {
+        <a asp-action="Index" asp-controller="Book" class="btn btn-info mt-3">Trở về trang quản trị</a>
+    }
+    else
+    {
+        <a asp-action="Index" asp-controller="Shopping" class="btn btn-info mt-3">Trở về trang chủ</a>
+    }
 </div>

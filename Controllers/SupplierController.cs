@@ -5,7 +5,7 @@ using BookstoreManagement.Models;
 
 namespace BookstoreManagement.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,Manager")]
     public class SupplierController : Controller
     {
         private readonly BookstoreContext _context;

@@ -10,6 +10,7 @@ using OfficeOpenXml;
 using OfficeOpenXml.Style;
 
 
+[Authorize(Roles = "Admin,Manager")]
 public class WarehouseController : Controller
 {
     private readonly BookstoreContext _context;
