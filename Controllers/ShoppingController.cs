@@ -2,6 +2,7 @@ using BookstoreManagement.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
@@ -32,6 +33,18 @@ namespace BookstoreManagement.Controllers
                                                 int pageNumber = 1,
                                                 int pageSize = 12)
         {
+
+            // 1. LẤY KHUYẾN MÃI TOÀN SÀN (ApplyType = "All")
+            var now = DateTime.Now;
+            var globalPromo = await _context.Promotions
+                .Where(p => p.IsActive == true
+                        && p.ApplyType == "All"
+                        && (p.EndDate == null || p.EndDate >= now)
+                        && (p.ApplyChannel == "All" || p.ApplyChannel == "Online"))
+                .OrderByDescending(p => p.DiscountPercent)
+                .FirstOrDefaultAsync();
+
+            ViewBag.GlobalPromo = globalPromo;
             // 1. Lấy danh sách thể loại cho Menu (giữ nguyên)
             ViewBag.Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
             ViewBag.Authors = await _context.Authors.OrderBy(a => a.Name).Select(a => new { a.AuthorId, a.Name }).ToListAsync();
@@ -52,7 +65,10 @@ namespace BookstoreManagement.Controllers
 
                     if (topBookIds.Any())
                     {
-                        var books = await _context.Books.Include(b => b.Author).Where(b => topBookIds.Contains(b.BookId)).ToListAsync();
+                        var books = await _context.Books
+                            .Include(b => b.Author)
+                            .Include(b => b.BookPromotions).ThenInclude(bp => bp.Promotion) // <--- THÊM
+                            .Where(b => topBookIds.Contains(b.BookId)).ToListAsync();
                         featuredBooks = topBookIds.Join(books, id => id, b => b.BookId, (id, b) => b).ToList();
                     }
                     break;
@@ -60,7 +76,9 @@ namespace BookstoreManagement.Controllers
                 case "new":
                     var today = DateTime.Now;
                     var startOfMonth = new DateTime(today.Year, today.Month, 1);
-                    featuredBooks = await _context.Books.Include(b => b.Author)
+                    featuredBooks = await _context.Books
+                        .Include(b => b.Author)
+                        .Include(b => b.BookPromotions).ThenInclude(bp => bp.Promotion) // <--- THÊM
                         .Where(b => b.CreatedAt >= startOfMonth && b.IsDeleted != true)
                         .OrderByDescending(b => b.CreatedAt).ToListAsync();
 
@@ -74,14 +92,16 @@ namespace BookstoreManagement.Controllers
 
                 case "promotion":
                     featuredTitle = "Sách đang khuyến mãi";
-                    var now = DateTime.Now;
                     var activePromotions = _context.Promotions.Where(p => p.IsActive == true && (p.EndDate == null || p.EndDate >= now));
                     var activePromoIds = await activePromotions.Select(p => p.PromotionId).ToListAsync();
                     var bookIdsInPromo = await _context.BookPromotions.Where(bp => activePromoIds.Contains(bp.PromotionId)).Select(bp => bp.BookId).ToListAsync();
                     var giftBookIds = await activePromotions.Where(p => p.GiftBookId != null).Select(p => p.GiftBookId.Value).ToListAsync();
                     var allPromoBookIds = bookIdsInPromo.Concat(giftBookIds).Distinct().ToList();
 
-                    featuredBooks = await _context.Books.Include(b => b.Author).Where(b => allPromoBookIds.Contains(b.BookId) && b.IsDeleted != true).ToListAsync();
+                    featuredBooks = await _context.Books
+                        .Include(b => b.Author)
+                        .Include(b => b.BookPromotions).ThenInclude(bp => bp.Promotion) // <--- THÊM
+                        .Where(b => allPromoBookIds.Contains(b.BookId) && b.IsDeleted != true).ToListAsync();
                     break;
 
                 case "filter":
@@ -90,7 +110,8 @@ namespace BookstoreManagement.Controllers
                     // Khởi tạo query cơ bản
                     var query = _context.Books
                         .Include(b => b.Author)
-                        .Include(b => b.Publisher) // Include thêm Publisher để hiển thị nếu cần
+                        .Include(b => b.Publisher)
+                        .Include(b => b.BookPromotions).ThenInclude(bp => bp.Promotion) // <--- ĐÃ CÓ (Kiểm tra lại)
                         .Where(b => b.IsDeleted != true && b.StockQuantity > 0);
 
                     // 1. Lọc theo Thể loại
@@ -125,7 +146,7 @@ namespace BookstoreManagement.Controllers
                     // Pagination cho filter
                     var totalFilterItems = await query.CountAsync();
                     var totalFilterPages = (int)Math.Ceiling(totalFilterItems / (double)pageSize);
-                    
+
                     ViewBag.TotalFilterItems = totalFilterItems;
                     ViewBag.TotalFilterPages = totalFilterPages;
                     ViewBag.PageNumber = pageNumber;
@@ -147,6 +168,7 @@ namespace BookstoreManagement.Controllers
                 default:
                     featuredTitle = "Sách nổi bật";
                     featuredBooks = await _context.Books.Include(b => b.Author)
+                                                        .Include(b => b.BookPromotions).ThenInclude(bp => bp.Promotion)
                                                         .Where(b => b.IsDeleted != true && b.StockQuantity > 0)
                                                         .OrderByDescending(b => b.CreatedAt)
                                                         .Take(8).ToListAsync();
@@ -169,16 +191,19 @@ namespace BookstoreManagement.Controllers
             var allBooksQuery = _context.Books
                 .Include(b => b.Author)
                 .Where(b => b.IsDeleted != true);
-            
+
             var totalAllBooks = await allBooksQuery.CountAsync();
             var totalAllPages = (int)Math.Ceiling(totalAllBooks / (double)pageSize);
-            
+
             ViewBag.TotalAllBooks = totalAllBooks;
             ViewBag.TotalAllPages = totalAllPages;
             ViewBag.AllBooksPageNumber = pageNumber;
             ViewBag.AllBooksPageSize = pageSize;
 
             var allBooks = await allBooksQuery
+                .Include(b => b.BookPromotions)
+                    .ThenInclude(bp => bp.Promotion)
+                .Where(b => b.IsDeleted != true)
                 .OrderBy(b => b.Title)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
@@ -215,32 +240,77 @@ namespace BookstoreManagement.Controllers
 
             ViewBag.CurrentUserRating = currentUserRating;
 
-            // --- LOGIC LẤY KHUYẾN MÃI (BỔ SUNG) ---
+            // --- LOGIC LẤY KHUYẾN MÃI (ĐÃ CẬP NHẬT KÊNH ONLINE) ---
             object promotionInfo = null;
             var now = DateTime.Now;
 
-            // 1. Kiểm tra BookPromotion (Sách nằm trong danh sách áp dụng)
-            promotionInfo = await _context.BookPromotions
-                .Where(bp => bp.BookId == id && bp.Promotion.IsActive == true && (bp.Promotion.EndDate == null || bp.Promotion.EndDate >= now))
-                .Select(bp => new { Name = bp.Promotion.Name, TypeId = bp.Promotion.TypeId, Discount = bp.Promotion.DiscountPercent, MinPurchase = bp.Promotion.MinPurchaseAmount })
+            // 1. Ưu tiên: Tìm khuyến mãi RIÊNG cho sách này (trong bảng BookPromotions)
+            // Điều kiện: Active + Chưa hết hạn + Kênh (All hoặc Online)
+            var specificPromoInfo = await _context.BookPromotions
+                .Where(bp => bp.BookId == id
+                          && bp.Promotion.IsActive == true
+                          && (bp.Promotion.EndDate == null || bp.Promotion.EndDate >= now)
+                          && bp.Promotion.ApplyType == "Specific"
+                          && (bp.Promotion.ApplyChannel == "All" || bp.Promotion.ApplyChannel == "Online")) // <--- Lọc kênh
+                .Select(bp => new
+                {
+                    Name = bp.Promotion.Name,
+                    TypeId = bp.Promotion.TypeId,
+                    Discount = bp.Promotion.DiscountPercent,
+                    MinPurchase = bp.Promotion.MinPurchaseAmount,
+                    IsGlobal = false
+                })
                 .FirstOrDefaultAsync();
 
-            // 2. Kiểm tra GiftBook (Sách là quà tặng)
+            if (specificPromoInfo != null)
+            {
+                promotionInfo = specificPromoInfo;
+            }
+            else
+            {
+                // 2. Nếu không có khuyến mãi riêng -> Tìm khuyến mãi TOÀN SÀN
+                // Điều kiện: Active + Chưa hết hạn + Không liên kết sách nào + Kênh (All hoặc Online)
+                var globalPromo = await _context.Promotions
+                    .Where(p => p.IsActive == true
+                                && (p.EndDate == null || p.EndDate >= now)
+                                && !p.BookPromotions.Any()
+                                && p.ApplyType == "All"
+                                && (p.ApplyChannel == "All" || p.ApplyChannel == "Online")) // <--- Lọc kênh
+                    .OrderByDescending(p => p.DiscountPercent) // Lấy cái giảm sâu nhất
+                    .FirstOrDefaultAsync();
+
+                if (globalPromo != null)
+                {
+                    promotionInfo = new
+                    {
+                        Name = globalPromo.Name,
+                        TypeId = globalPromo.TypeId,
+                        Discount = globalPromo.DiscountPercent,
+                        MinPurchase = globalPromo.MinPurchaseAmount,
+                        IsGlobal = true
+                    };
+                }
+            }
+
+            // 3. Kiểm tra GiftBook (Sách là quà tặng) - Logic cũ giữ nguyên
             if (promotionInfo == null)
             {
-                promotionInfo = await _context.Promotions
-                    .Where(p => p.GiftBookId == id && p.IsActive == true && (p.EndDate == null || p.EndDate >= now))
+                var giftPromo = await _context.Promotions
+                    .Where(p => p.GiftBookId == id
+                             && p.IsActive == true
+                             && (p.EndDate == null || p.EndDate >= now)
+                             && (p.ApplyChannel == "All" || p.ApplyChannel == "Online")) // Thêm lọc kênh cho chắc
                     .Select(p => new { Name = p.Name, TypeId = p.TypeId, Discount = p.DiscountPercent, MinPurchase = p.MinPurchaseAmount })
                     .FirstOrDefaultAsync();
+
+                if (giftPromo != null) promotionInfo = giftPromo;
             }
 
             ViewBag.ActivePromotion = promotionInfo;
             // ----------------------------------------
 
-            // Trả về PartialView chứa HTML chi tiết sách
             return PartialView("_BookDetailsModal", book);
         }
-
 
         [HttpPost]
         [Authorize] // Bắt buộc đăng nhập mới được đánh giá
@@ -251,7 +321,7 @@ namespace BookstoreManagement.Controllers
             {
                 return Json(new { success = false, message = "Tài khoản quản trị không thể đánh giá sách." });
             }
-            
+
             if (ratingValue < 1 || ratingValue > 5)
             {
                 return Json(new { success = false, message = "Điểm đánh giá không hợp lệ." });
@@ -326,7 +396,7 @@ namespace BookstoreManagement.Controllers
             // 1. Tìm kiếm Tác giả (không phân biệt hoa thường)
             var matchingAuthors = await _context.Authors
                 .Include(a => a.Books)
-                .Where(a => a.Name.ToLower().Contains(keyword) || 
+                .Where(a => a.Name.ToLower().Contains(keyword) ||
                            (a.Pseudonym != null && a.Pseudonym.ToLower().Contains(keyword)))
                 .Select(a => new
                 {
@@ -343,7 +413,7 @@ namespace BookstoreManagement.Controllers
             var matchingBooks = await _context.Books
                 .Include(b => b.Author)
                 .Include(b => b.Publisher)
-                .Where(b => (b.Title.ToLower().Contains(keyword) || 
+                .Where(b => (b.Title.ToLower().Contains(keyword) ||
                             b.Author.Name.ToLower().Contains(keyword) ||
                             (b.Publisher != null && b.Publisher.Name.ToLower().Contains(keyword))) &&
                             b.IsDeleted != true && b.StockQuantity > 0)
@@ -407,27 +477,100 @@ namespace BookstoreManagement.Controllers
 
             // Chuyển chuỗi ID thành List<int>
             var ids = bookIds.Split(',').Select(int.Parse).ToList();
+            var now = DateTime.Now;
 
-            var cartItems = await _context.Books
+            // Load sách kèm khuyến mãi riêng
+            var books = await _context.Books
+                .Include(b => b.BookPromotions).ThenInclude(bp => bp.Promotion)
                 .Where(b => ids.Contains(b.BookId) && b.IsDeleted != true)
-                .Select(b => new
+                .ToListAsync();
+
+            // Load khuyến mãi toàn sàn (Global/All)
+            var globalPromo = await _context.Promotions
+                .Where(p => p.IsActive == true
+                         && p.ApplyType == "All"
+                         && (p.EndDate == null || p.EndDate >= now)
+                         && (p.ApplyChannel == "All" || p.ApplyChannel == "Online"))
+                .OrderByDescending(p => p.DiscountPercent)
+                .FirstOrDefaultAsync();
+
+            var cartItems = books.Select(b =>
+            {
+                // --- LOGIC TÍNH GIÁ (Giống PlaceOrder) ---
+                decimal finalPrice = b.Price;
+
+                // 1. Tìm khuyến mãi Specific
+                var specificPromo = b.BookPromotions
+                    .Where(bp => bp.Promotion.IsActive == true
+                              && bp.Promotion.ApplyType == "Specific"
+                              && (bp.Promotion.EndDate == null || bp.Promotion.EndDate >= now)
+                              && (bp.Promotion.ApplyChannel == "All" || bp.Promotion.ApplyChannel == "Online"))
+                    .Select(bp => bp.Promotion)
+                    .FirstOrDefault();
+
+                // 2. Nếu không có, dùng Global
+                var activePromo = specificPromo ?? globalPromo;
+
+                if (activePromo != null)
+                {
+                    if (activePromo.TypeId == 1) // %
+                        finalPrice = b.Price * (1 - (activePromo.DiscountPercent ?? 0) / 100);
+                    else if (activePromo.TypeId == 2) // Tiền
+                        finalPrice = b.Price - (activePromo.DiscountPercent ?? 0);
+
+                    if (finalPrice < 0) finalPrice = 0;
+                }
+
+                return new
                 {
                     bookId = b.BookId,
                     title = b.Title,
-                    price = b.Price,
+                    price = finalPrice, // Trả về giá ĐÃ GIẢM
+                    originalPrice = b.Price, // Giá gốc (để hiển thị gạch ngang nếu muốn)
                     imageUrl = b.ImageUrl,
-                    stock = b.StockQuantity,
-                    // Thêm các thông tin khuyến mãi nếu cần
-                })
-                .ToListAsync();
+                    stock = b.StockQuantity
+                };
+            }).ToList();
 
             return Json(new { success = true, items = cartItems });
         }
 
         [HttpGet]
-        public IActionResult Checkout()
+        public async Task<IActionResult> Checkout()
         {
-            return View();
+
+            var now = DateTime.Now;
+
+            var promotions = await _context.Promotions
+                .Where(p => p.IsActive == true
+                        && p.ApplyType == "Order"
+                        && (p.StartDate == null || p.StartDate <= now)
+                        && (p.EndDate == null || p.EndDate >= now)
+                        && (p.ApplyChannel == "All" || p.ApplyChannel == "Online"))
+                .OrderByDescending(p => p.DiscountPercent)
+                .Select(p => new
+                {
+                    Id = p.PromotionId,
+                    Name = p.Name, // Lấy trực tiếp tên (theo ý bạn)
+                    // Hoặc nếu muốn hiển thị chi tiết thì xử lý ở Client (Razor) hoặc lấy về Memory mới format
+                    // Value = p.DiscountPercent,
+                    // Min = p.MinPurchaseAmount
+                })
+                .ToListAsync();
+
+            // Tạo SelectList từ dữ liệu đã lấy về RAM
+            ViewBag.OrderPromotions = new SelectList(promotions, "Id", "Name");
+
+            // Nếu người dùng đã đăng nhập, lấy thông tin để điền sẵn
+            if (User.Identity.IsAuthenticated)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                // Truyền model User sang View để lấy địa chỉ mặc định
+                return View(user);
+            }
+
+            // Khách vãng lai thì truyền null
+            return View(null);
         }
 
         // 2. POST: Xử lý đặt hàng (API)
@@ -520,15 +663,15 @@ namespace BookstoreManagement.Controllers
                 };
                 _context.ExportTickets.Add(exportTicket);
 
-                // D. CHI TIẾT ĐƠN HÀNG & TRỪ TỒN KHO
+                // D. XỬ LÝ CHI TIẾT & KHUYẾN MÃI SẢN PHẨM
                 decimal subTotal = 0;
                 int totalQty = 0;
+                var now = DateTime.Now;
 
                 foreach (var item in request.CartItems)
                 {
                     var book = await _context.Books.FindAsync(item.BookId);
 
-                    // --- KIỂM TRA TỒN KHO (Như bạn yêu cầu) ---
                     if (book == null) throw new Exception($"Sách ID {item.BookId} không tồn tại");
                     if ((book.StockQuantity ?? 0) < item.Quantity)
                         throw new Exception($"Sách '{book.Title}' không đủ hàng (Còn: {book.StockQuantity})");
@@ -536,18 +679,54 @@ namespace BookstoreManagement.Controllers
                     // Trừ tồn kho
                     book.StockQuantity -= item.Quantity;
 
-                    // Tạo chi tiết đơn hàng
+                    // --- TÍNH GIÁ ITEM (Lọc kênh Online/All) ---
+                    decimal finalItemPrice = book.Price;
+
+                    // A. Tìm Specific
+                    var itemPromo = await _context.BookPromotions
+                        .Where(bp => bp.BookId == book.BookId
+                                  && bp.Promotion.IsActive == true
+                                  && bp.Promotion.ApplyType == "Specific"
+                                  && (bp.Promotion.EndDate == null || bp.Promotion.EndDate >= now)
+                                  && (bp.Promotion.ApplyChannel == "All" || bp.Promotion.ApplyChannel == "Online")) // <--- Online
+                        .Select(bp => bp.Promotion)
+                        .FirstOrDefaultAsync();
+
+                    // B. Tìm All
+                    if (itemPromo == null)
+                    {
+                        itemPromo = await _context.Promotions
+                            .Where(p => p.IsActive == true
+                                     && p.ApplyType == "All"
+                                     && (p.EndDate == null || p.EndDate >= now)
+                                     && (p.ApplyChannel == "All" || p.ApplyChannel == "Online")) // <--- Online
+                            .OrderByDescending(p => p.DiscountPercent)
+                            .FirstOrDefaultAsync();
+                    }
+
+                    // C. Áp dụng giá
+                    if (itemPromo != null)
+                    {
+                        if (itemPromo.TypeId == 1)
+                            finalItemPrice = book.Price * (1 - (itemPromo.DiscountPercent ?? 0) / 100);
+                        else if (itemPromo.TypeId == 2)
+                            finalItemPrice = book.Price - (itemPromo.DiscountPercent ?? 0);
+
+                        if (finalItemPrice < 0) finalItemPrice = 0;
+                    }
+
+                    // Tạo OrderDetail (Lưu giá đã giảm)
                     var orderDetail = new OrderDetail
                     {
                         OrderId = order.OrderId,
                         BookId = item.BookId,
                         Quantity = item.Quantity,
-                        UnitPrice = book.Price,
-                        Subtotal = book.Price * item.Quantity
+                        UnitPrice = finalItemPrice,
+                        Subtotal = finalItemPrice * item.Quantity
                     };
                     _context.OrderDetails.Add(orderDetail);
 
-                    // Tạo chi tiết xuất kho
+                    // Tạo chi tiết xuất kho (Giá trong kho thường lưu giá bán gốc hoặc giá vốn, ở đây lưu giá bán gốc)
                     var exportDetail = new ExportDetail
                     {
                         Export = exportTicket,
@@ -563,13 +742,38 @@ namespace BookstoreManagement.Controllers
                     totalQty += item.Quantity;
                 }
 
-                // E. CẬP NHẬT TỔNG TIỀN
+                // E. CẬP NHẬT TỔNG TIỀN ORDER
+                decimal orderDiscount = 0;
+
+                // Nếu khách chọn mã (request.PromotionId có giá trị)
+                if (request.PromotionId.HasValue && request.PromotionId > 0)
+                {
+                    var orderPromo = await _context.Promotions.FindAsync(request.PromotionId);
+
+                    if (orderPromo != null
+                        && orderPromo.IsActive == true
+                        && orderPromo.ApplyType == "Order" // Chỉ áp dụng loại Order
+                        && (orderPromo.EndDate == null || orderPromo.EndDate >= now)
+                        && (orderPromo.ApplyChannel == "All" || orderPromo.ApplyChannel == "Online") // <--- Online
+                        && subTotal >= (orderPromo.MinPurchaseAmount ?? 0))
+                    {
+                        order.PromotionId = orderPromo.PromotionId;
+
+                        if (orderPromo.TypeId == 1)
+                            orderDiscount = subTotal * (orderPromo.DiscountPercent ?? 0) / 100;
+                        else if (orderPromo.TypeId == 2)
+                            orderDiscount = orderPromo.DiscountPercent ?? 0;
+                    }
+                }
+
+                if (orderDiscount > subTotal) orderDiscount = subTotal;
+
                 order.TotalAmount = subTotal;
-                order.FinalAmount = subTotal; // Chưa tính khuyến mãi phức tạp cho online, có thể mở rộng sau
+                order.DiscountAmount = orderDiscount;
+                order.FinalAmount = subTotal - orderDiscount;
                 exportTicket.TotalQuantity = totalQty;
 
                 await _context.SaveChangesAsync();
-
 
 
                 // ==================================================================================
@@ -637,7 +841,7 @@ namespace BookstoreManagement.Controllers
                 await _signInManager.SignOutAsync();
                 return RedirectToAction("ClientLogin", "Account");
             }
-            
+
             var userId = _userManager.GetUserId(User);
 
             var ordersQuery = _context.Orders
@@ -670,7 +874,7 @@ namespace BookstoreManagement.Controllers
             {
                 return Json(new { success = false, message = "Tài khoản quản trị không thể truy cập tính năng này." });
             }
-            
+
             var userId = _userManager.GetUserId(User);
 
             var order = await _context.Orders
@@ -695,7 +899,7 @@ namespace BookstoreManagement.Controllers
                 await _signInManager.SignOutAsync();
                 return RedirectToAction("ClientLogin", "Account");
             }
-            
+
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("ClientLogin", "Account");
 
@@ -726,7 +930,7 @@ namespace BookstoreManagement.Controllers
                 await _signInManager.SignOutAsync();
                 return RedirectToAction("ClientLogin", "Account");
             }
-            
+
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("ClientLogin", "Account");
 
@@ -793,6 +997,7 @@ namespace BookstoreManagement.Controllers
             public string? CustomerPhone { get; set; }
             public string? Address { get; set; }
             public string? PaymentMethod { get; set; } // "Cash" (COD) hoặc "Transfer"
+            public int? PromotionId { get; set; }
             public List<CartItemDto> CartItems { get; set; }
         }
 

@@ -43,5 +43,14 @@ namespace BookstoreManagement.ViewModels.Promotion
         // For multi-select books
         [Display(Name = "Chọn sách áp dụng khuyến mãi")]
         public List<int>? SelectedBookIds { get; set; }
+
+        // Dùng để đổ dữ liệu vào dropdown chọn nhiều
+        public SelectList? AvailableBooks { get; set; }
+
+        [Display(Name = "Kênh áp dụng")]
+        public string ApplyChannel { get; set; } = "All";
+
+        [Display(Name = "Phạm vi áp dụng")]
+        public string ApplyType { get; set; } = "Specific";
     }
 }

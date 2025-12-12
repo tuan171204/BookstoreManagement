@@ -69,6 +69,8 @@ public partial class Book
 
     public virtual ICollection<BookCategory> BookCategories { get; set; } = new List<BookCategory>();
 
+    public virtual ICollection<BookPromotion> BookPromotions { get; set; } = new List<BookPromotion>();
+
     // Thêm quan hệ với bảng lịch sử giá
     public virtual ICollection<BookPriceHistory> PriceHistories { get; set; } = new List<BookPriceHistory>();
 

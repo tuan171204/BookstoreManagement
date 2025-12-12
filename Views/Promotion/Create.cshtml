@@ -14,12 +14,13 @@
                 <div class="card-body">
                     <form asp-action="Create" method="post">
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-                        
+
                         <div class="row g-3">
                             <!-- Tên khuyến mãi -->
                             <div class="col-md-12">
                                 <label asp-for="Name" class="form-label"></label>
-                                <input asp-for="Name" class="form-control" placeholder="Nhập tên chương trình khuyến mãi" />
+                                <input asp-for="Name" class="form-control"
+                                    placeholder="Nhập tên chương trình khuyến mãi" />
                                 <span asp-validation-for="Name" class="text-danger"></span>
                             </div>
 
@@ -72,8 +73,48 @@
                                 <span asp-validation-for="GiftBookId" class="text-danger"></span>
                             </div>
 
-                            <!-- Trạng thái -->
+                            <div class="col-md-6">
+                                <label asp-for="ApplyChannel" class="form-label fw-bold">Phạm vi áp dụng</label>
+                                <select asp-for="ApplyChannel" class="form-select">
+                                    <option value="All">Tất cả (Online & Tại quầy)</option>
+                                    <option value="Online">Chỉ áp dụng Online</option>
+                                    <option value="InStore">Chỉ áp dụng Tại cửa hàng</option>
+                                </select>
+                                <span asp-validation-for="ApplyChannel" class="text-danger"></span>
+                            </div>
+
                             <div class="col-md-12">
+                                <label class="form-label fw-bold">Phạm vi khuyến mãi</label>
+                                <div class="d-flex gap-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" asp-for="ApplyType"
+                                            value="Specific" id="typeSpecific" checked onclick="toggleBookSelect()">
+                                        <label class="form-check-label" for="typeSpecific">Chỉ sách được chọn</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" asp-for="ApplyType" value="All"
+                                            id="typeAll" onclick="toggleBookSelect()">
+                                        <label class="form-check-label" for="typeAll">Toàn bộ sách (Giảm trên từng
+                                            cuốn)</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" asp-for="ApplyType" value="Order"
+                                            id="typeOrder" onclick="toggleBookSelect()">
+                                        <label class="form-check-label" for="typeOrder">Tổng hóa đơn (Giảm trên tổng
+                                            tiền)</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12" id="bookSelectContainer">
+                                <label asp-for="SelectedBookIds" class="form-label fw-bold">Chọn sách áp dụng:</label>
+                                <select asp-for="SelectedBookIds" class="form-select" id="ddlPromoBooks"
+                                    asp-items="Model.AvailableBooks" multiple>
+                                </select>
+                            </div>
+
+                            <!-- Trạng thái -->
+                            <div class="col-md-6">
                                 <div class="form-check">
                                     <input asp-for="IsActive" class="form-check-input" type="checkbox" />
                                     <label asp-for="IsActive" class="form-check-label"></label>
@@ -97,5 +138,33 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#ddlPromoBooks').select2({
+                theme: 'bootstrap-5',
+                placeholder: "Tìm và chọn sách...",
+                closeOnSelect: false,
+                allowClear: true
+            });
+        });
+
+        function toggleBookSelect() {
+            if (document.getElementById('typeSpecific').checked) {
+                document.getElementById('bookSelectContainer').style.display = 'block';
+            } else {
+                document.getElementById('bookSelectContainer').style.display = 'none';
+            }
+        }
+        // Gọi 1 lần khi load trang (cho Edit)
+        window.onload = toggleBookSelect;
+    </script>
 }

@@ -47,22 +47,84 @@
     <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4">
         @foreach (var book in Model)
         {
+            // --- LOGIC TÍNH GIÁ KHUYẾN MÃI TẠI VIEW ---
+            var now = DateTime.Now;
+
+            // 1. Lấy khuyến mãi toàn sàn từ ViewBag
+            var globalPromo = ViewBag.GlobalPromo as BookstoreManagement.Models.Promotion;
+
+            // 2. Tìm khuyến mãi riêng (Specific) ưu tiên cao nhất
+            var specificPromo = book.BookPromotions
+            .Where(bp => bp.Promotion.IsActive == true
+            && bp.Promotion.ApplyType == "Specific"
+            && (bp.Promotion.EndDate == null || bp.Promotion.EndDate >= now)
+            && (bp.Promotion.ApplyChannel == "All" || bp.Promotion.ApplyChannel == "Online"))
+            .Select(bp => bp.Promotion)
+            .FirstOrDefault();
+
+            // 3. Quyết định khuyến mãi nào được áp dụng
+            var activePromo = specificPromo ?? globalPromo;
+
+            decimal originalPrice = book.Price;
+            decimal finalPrice = originalPrice;
+            bool isDiscounted = false;
+            string badgeHtml = "";
+
+            if (activePromo != null)
+            {
+                isDiscounted = true;
+                decimal discountAmount = 0;
+
+                if (activePromo.TypeId == 1) // %
+                {
+                    discountAmount = originalPrice * (activePromo.DiscountPercent ?? 0) / 100;
+                    badgeHtml = $"<span class='position-absolute top-0 start-0 m-2 badge       bg-danger'>-{activePromo.DiscountPercent?.ToString("0")}%</span>";
+                }
+                else if (activePromo.TypeId == 2) // Tiền mặt
+                {
+                    discountAmount = activePromo.DiscountPercent ?? 0;
+                    badgeHtml = $"<span class='position-absolute top-0 start-0 m-2 badge       bg-danger'>-{discountAmount.ToString("N0")}đ</span>";
+                }
+
+                finalPrice = originalPrice - discountAmount;
+                if (finalPrice < 0) finalPrice = 0;
+            }
+
             <div class="col">
                 <div class="card h-100 border-0 shadow-sm book-card" onclick="showBookDetails(@book.BookId)"
                     style="cursor: pointer;">
                     <div class="position-relative text-center p-3 bg-white">
                         <img src="@book.ImageUrl" class="card-img-top shadow-sm"
                             style="height: 160px; width: auto; object-fit: cover;" alt="@book.Title">
+
                         @if ((book.StockQuantity ?? 0) == 0)
                         {
                             <span class="position-absolute top-0 start-0 m-2 badge bg-secondary">Hết hàng</span>
                         }
+                        else if (isDiscounted)
+                        {
+                            @Html.Raw(badgeHtml)
+                        }
                     </div>
+
                     <div class="card-body d-flex flex-column p-2">
                         <h6 class="card-title fw-bold text-truncate small mb-1" title="@book.Title">@book.Title</h6>
                         <p class="card-text text-muted small mb-2" style="font-size: 0.8rem;">@book.Author?.Name</p>
+
                         <div class="mt-auto d-flex justify-content-between align-items-center">
-                            <span class="fw-bold text-primary">@book.Price.ToString("N0") đ</span>
+                            <div>
+                                @if (isDiscounted)
+                                {
+                                    <div class="text-decoration-line-through text-muted small" style="font-size: 0.8rem;">
+                                        @originalPrice.ToString("N0") đ</div>
+                                    <span class="fw-bold text-danger">@finalPrice.ToString("N0") đ</span>
+                                }
+                                else
+                                {
+                                    <span class="fw-bold text-primary">@originalPrice.ToString("N0") đ</span>
+                                }
+                            </div>
+
                             <button class="btn btn-sm btn-outline-primary rounded-circle"
                                 onclick="event.stopPropagation(); addToCart(@book.BookId)">
                                 <i class="fas fa-plus"></i>
@@ -228,11 +290,11 @@
 
                 // 2. Hiển thị Loading
                 container.html(`
-                                                        <div class="text-center py-5">
-                                                            <div class="spinner-border text-primary" role="status"></div>
-                                                            <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
-                                                        </div>
-                                                    `);
+                                                                    <div class="text-center py-5">
+                                                                        <div class="spinner-border text-primary" role="status"></div>
+                                                                        <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+                                                                    </div>
+                                                                `);
 
                 // 3. Gọi AJAX về Server
                 $.ajax({
@@ -322,11 +384,11 @@
                 }, 500);
 
                 container.html(`
-                                                    <div class="text-center py-5">
-                                                        <div class="spinner-border text-primary" role="status"></div>
-                                                        <p class="mt-2 text-muted">Đang lọc dữ liệu...</p>
-                                                    </div>
-                                                `);
+                                                                <div class="text-center py-5">
+                                                                    <div class="spinner-border text-primary" role="status"></div>
+                                                                    <p class="mt-2 text-muted">Đang lọc dữ liệu...</p>
+                                                                </div>
+                                                            `);
 
                 // 4. Reset style menu active (vì đang dùng filter riêng)
                 $('.ajax-filter').removeClass('text-primary fw-bold').addClass('text-dark');

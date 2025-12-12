@@ -16,15 +16,17 @@ public partial class ExportTicket
 
     public int? TotalQuantity { get; set; }
 
-[Column(TypeName = "nvarchar(100)")]
+    public decimal? TotalPrice { get; set; }
+
+    [Column(TypeName = "nvarchar(100)")]
     public string Status { get; set; } = null!;
 
-[Column(TypeName = "nvarchar(100)")]
+    [Column(TypeName = "nvarchar(100)")]
     public string Reason { get; set; } = null!;
 
     public string? DocumentNumber { get; set; }
 
-[Column(TypeName = "nvarchar(255)")]
+    [Column(TypeName = "nvarchar(255)")]
     public string? Note { get; set; }
 
     public DateTime? CreatedAt { get; set; }

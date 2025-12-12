@@ -4,6 +4,7 @@ using BookstoreManagement.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookstoreManagement.Migrations
 {
     [DbContext(typeof(BookstoreContext))]
-    partial class BookstoreContextModelSnapshot : ModelSnapshot
+    [Migration("20251212000821_AddIndexes")]
+    partial class AddIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -329,19 +332,9 @@ namespace BookstoreManagement.Migrations
                         .HasColumnType("int")
                         .HasColumnName("PromotionID");
 
-                    b.Property<int?>("BookId1")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("PromotionId1")
-                        .HasColumnType("int");
-
-                    b.HasKey("BookId", "PromotionId");
-
-                    b.HasIndex("BookId1");
+                    b.HasIndex("BookId");
 
                     b.HasIndex("PromotionId");
-
-                    b.HasIndex("PromotionId1");
 
                     b.ToTable("BookPromotions");
                 });
@@ -668,9 +661,6 @@ namespace BookstoreManagement.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasDefaultValue("Pending");
 
-                    b.Property<decimal?>("TotalPrice")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<int?>("TotalQuantity")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
@@ -988,14 +978,6 @@ namespace BookstoreManagement.Migrations
                         .HasColumnName("PromotionID");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PromotionId"));
-
-                    b.Property<string>("ApplyChannel")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("ApplyType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -1340,20 +1322,11 @@ namespace BookstoreManagement.Migrations
                         .IsRequired()
                         .HasConstraintName("FK__BookPromo__BookI__0A9D95DB");
 
-                    b.HasOne("BookstoreManagement.Models.Book", null)
-                        .WithMany("BookPromotions")
-                        .HasForeignKey("BookId1");
-
                     b.HasOne("BookstoreManagement.Models.Promotion", "Promotion")
                         .WithMany()
                         .HasForeignKey("PromotionId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK__BookPromo__Promo__0B91BA14");
-
-                    b.HasOne("BookstoreManagement.Models.Promotion", null)
-                        .WithMany("BookPromotions")
-                        .HasForeignKey("PromotionId1");
 
                     b.Navigation("Book");
 
@@ -1630,8 +1603,6 @@ namespace BookstoreManagement.Migrations
                 {
                     b.Navigation("BookCategories");
 
-                    b.Navigation("BookPromotions");
-
                     b.Navigation("BookRatings");
 
                     b.Navigation("ExportDetails");
@@ -1690,8 +1661,6 @@ namespace BookstoreManagement.Migrations
 
             modelBuilder.Entity("BookstoreManagement.Models.Promotion", b =>
                 {
-                    b.Navigation("BookPromotions");
-
                     b.Navigation("Orders");
                 });
 

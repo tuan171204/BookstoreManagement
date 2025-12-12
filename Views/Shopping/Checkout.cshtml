@@ -1,3 +1,4 @@
+@model BookstoreManagement.Models.AppUser
 @{
     ViewData["Title"] = "Thanh toán";
     Layout = "~/Views/Shared/_LayoutClient.cshtml";
@@ -21,20 +22,53 @@
                                 <label class="form-label fw-bold">Số điện thoại <span
                                         class="text-danger">*</span></label>
                                 <input type="tel" class="form-control" id="cxPhone" placeholder="Ví dụ: 0912345678"
-                                    required>
+                                    required value="@(User.Identity.IsAuthenticated? @Model.PhoneNumber: "")">
                             </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Địa chỉ nhận hàng <span
-                                        class="text-danger">*</span></label>
+                            @if (User.Identity.IsAuthenticated && Model != null && !string.IsNullOrEmpty(Model.Address))
+                            {
+                                <div class="mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="addressOption" id="addrDefault"
+                                            value="default" checked onchange="toggleAddressInput()">
+                                        <label class="form-check-label" for="addrDefault">
+                                            Sử dụng địa chỉ mặc định: <strong>@Model.Address</strong>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="addressOption" id="addrNew"
+                                            value="new" onchange="toggleAddressInput()">
+                                        <label class="form-check-label" for="addrNew">
+                                            Nhập địa chỉ giao hàng mới
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <input type="text" class="form-control mt-2" id="cxAddress"
+                                    placeholder="Nhập địa chỉ mới..." style="display:none;">
+
+                                <input type="hidden" id="defaultAddressVal" value="@Model.Address" />
+                            }
+                            else
+                            {
                                 <input type="text" class="form-control" id="cxAddress"
                                     placeholder="Số nhà, đường, phường/xã..." required>
-                            </div>
+                            }
 
                             <div class="col-12">
                                 <label class="form-label fw-bold">Ghi chú đơn hàng</label>
                                 <textarea class="form-control" id="cxNote" rows="2"
                                     placeholder="Ví dụ: Giao giờ hành chính..."></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-bold"><i class="fas fa-ticket-alt text-warning me-1"></i> Mã
+                                    khuyến mãi (Hóa đơn)</label>
+                                <select class="form-select" id="promotionSelect" asp-items="ViewBag.OrderPromotions">
+                                    <option value="">-- Không áp dụng --</option>
+                                </select>
+                                <div class="form-text small">Chỉ áp dụng cho tổng giá trị đơn hàng sau khi đã trừ khuyến
+                                    mãi từng sản phẩm.</div>
                             </div>
                         </div>
                     </form>
@@ -135,6 +169,11 @@
 
         $(document).ready(function () {
             loadCheckoutCart();
+
+            // Gọi hàm này 1 lần khi trang load để thiết lập trạng thái ban đầu
+            if ($('input[name="addressOption"]').length > 0) {
+                toggleAddressInput();
+            }
         });
 
         function loadCheckoutCart() {
@@ -161,6 +200,19 @@
             });
         }
 
+        // --- HÀM MỚI: Xử lý ẩn hiện ô nhập địa chỉ ---
+        function toggleAddressInput() {
+            // Kiểm tra xem radio button "Địa chỉ mới" có được chọn không
+            const isNewAddr = $('#addrNew').is(':checked');
+
+            if (isNewAddr) {
+                $('#cxAddress').show().val('').focus(); // Hiện ô nhập và xóa trắng
+            } else {
+                // Nếu chọn mặc định -> Ẩn ô nhập và gán giá trị mặc định vào nó (hoặc xử lý lúc submit)
+                $('#cxAddress').hide().val($('#defaultAddressVal').val());
+            }
+        }
+
         function renderCheckoutItems(dbItems, localItems) {
             let html = '';
             let total = 0;
@@ -172,38 +224,79 @@
                     const sub = db.price * local.qty;
                     total += sub;
 
-                    // Push vào mảng để chuẩn bị gửi server
                     checkoutCartItems.push({ BookId: local.id, Quantity: local.qty });
 
+                    // --- LOGIC HIỂN THỊ GIÁ (MỚI) ---
+                    let priceDisplay = '';
+                    if (db.price < db.originalPrice) {
+                        // Có giảm giá: Hiện giá gốc gạch ngang + Giá mới màu đỏ
+                        priceDisplay = `
+                        <div class="d-flex flex-column">
+                            <small class="text-decoration-line-through text-muted" style="font-size: 12px;">
+                                ${db.originalPrice.toLocaleString('vi-VN')} đ
+                            </small>
+                            <span class="text-danger fw-bold">
+                                ${db.price.toLocaleString('vi-VN')} đ
+                            </span>
+                        </div>
+                    `;
+                    } else {
+                        // Không giảm giá
+                        priceDisplay = `<span class="text-muted">${db.price.toLocaleString('vi-VN')} đ</span>`;
+                    }
+                    // ---------------------------------
+
                     html += `
-                                <div class="d-flex mb-3 align-items-center">
-                                    <img src="${db.imageUrl}" class="rounded border me-3" style="width: 50px; height: 75px; object-fit: cover;">
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0 text-truncate" style="max-width: 200px;">${db.title}</h6>
-                                        <small class="text-muted">${db.price.toLocaleString('vi-VN')} đ x ${local.qty}</small>
-                                    </div>
-                                    <span class="fw-bold text-dark">${sub.toLocaleString('vi-VN')} đ</span>
-                                </div>
-                            `;
+                    <div class="d-flex mb-3 align-items-center border-bottom pb-2">
+                        <img src="${db.imageUrl}" class="rounded border me-3" style="width: 50px; height: 75px; object-fit: cover;">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0 text-truncate" style="max-width: 200px;">${db.title}</h6>
+                            <div class="d-flex align-items-center gap-2 mt-1">
+                                ${priceDisplay}
+                                <small class="text-muted">x ${local.qty}</small>
+                            </div>
+                        </div>
+                        <span class="fw-bold text-dark">${sub.toLocaleString('vi-VN')} đ</span>
+                    </div>
+                `;
                 }
             });
 
             $('#checkoutItemsList').html(html);
             $('#checkoutSubTotal').text(total.toLocaleString('vi-VN') + ' đ');
             $('#checkoutTotal').text(total.toLocaleString('vi-VN') + ' đ');
-            $('#checkoutTotal').data('value', total); // Lưu giá trị số để dùng cho QR
+            $('#checkoutTotal').data('value', total);
         }
 
         function processCheckout() {
             // 1. Validate Form
             const name = $('#cxName').val().trim();
             const phone = $('#cxPhone').val().trim();
-            const address = $('#cxAddress').val().trim();
+
+            // --- SỬA LOGIC LẤY ĐỊA CHỈ ---
+            let address = "";
+
+            // Kiểm tra xem có radio button lựa chọn không
+            if ($('input[name="addressOption"]').length > 0) {
+                if ($('#addrDefault').is(':checked')) {
+                    address = $('#defaultAddressVal').val(); // Lấy từ biến ẩn
+                } else {
+                    address = $('#cxAddress').val().trim(); // Lấy từ ô nhập
+                }
+            } else {
+                // Trường hợp khách vãng lai
+                address = $('#cxAddress').val().trim();
+            }
 
             if (!name || !phone || !address) {
-                alert("Vui lòng điền đầy đủ thông tin giao hàng!");
+                showToast('warning', 'Vui lòng điền đầy đủ thông tin giao hàng!');
+                if ($('input[name="addressOption"]').length > 0 && $('#addrNew').is(':checked')) {
+                    $('#cxAddress').focus();
+                }
                 return;
             }
+
+            $('#cxAddress').val(address);
 
             // 2. Check Payment Method
             const method = $('input[name="paymentMethod"]:checked').val();
@@ -234,11 +327,14 @@
             const btn = event.target;
             // btn.disabled = true; 
 
+            const promoId = $('#promotionSelect').val();
+
             const payload = {
                 CustomerName: $('#cxName').val(),
                 CustomerPhone: $('#cxPhone').val(),
                 Address: $('#cxAddress').val(),
                 PaymentMethod: $('input[name="paymentMethod"]:checked').val(),
+                PromotionId: promoId ? parseInt(promoId) : 0,
                 CartItems: checkoutCartItems
             };
 
@@ -254,15 +350,18 @@
                         // Reset UI giỏ hàng
                         if (typeof initializeCart === 'function') initializeCart();
 
-                        alert("🎉 " + res.message);
-                        window.location.href = '/Shopping/Index';
+                        showToast('success', '🎉 ' + res.message);
+                        // Thêm delay nhỏ trước khi chuyển trang để người dùng kịp đọc
+                        setTimeout(() => {
+                            window.location.href = '/Shopping/Index';
+                        }, 2000);
                     } else {
-                        alert("❌ " + res.message);
+                        showToast('danger', 'Thanh toán thất bại: ' + res.message);
                         // btn.disabled = false;
                     }
                 },
                 error: function () {
-                    alert("Lỗi kết nối Server!");
+                    showToast('danger', 'Lỗi kết nối server');
                 }
             });
         }

@@ -74,6 +74,9 @@
     </style>
 </head>
 
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+</div>
+
 <body>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-3">
@@ -148,7 +151,7 @@
                     </span>
                 </a>
 
-                @if ((await AuthorizationService.AuthorizeAsync(User, "Admin.View")).Succeeded)
+                @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
                 {
                     <a asp-controller="Book" asp-action="Index" class="btn btn-warning btn-sm rounded-pill py-2 px-3"
                         style="font-size:16px">
@@ -274,6 +277,52 @@
             };
         }
 
+        function showToast(type, message) {
+            const iconMap = {
+                'success': 'fas fa-check-circle',
+                'danger': 'fas fa-times-circle',
+                'warning': 'fas fa-exclamation-triangle',
+                'info': 'fas fa-info-circle'
+            };
+
+            const bgMap = {
+                'success': 'bg-success',
+                'danger': 'bg-danger',
+                'warning': 'bg-warning text-dark',
+                'info': 'bg-info text-dark'
+            };
+
+            const toastId = 'toast_' + Date.now();
+            const icon = iconMap[type] || 'fas fa-info-circle';
+            const bgClass = bgMap[type] || 'bg-primary';
+            const textClass = (type === 'warning' || type === 'info') ? 'text-dark' : 'text-white';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center ${textClass} ${bgClass} border-0 shadow-lg mb-3" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body fs-6">
+                            <i class="${icon} me-2 fa-lg"></i> ${message}
+                        </div>
+                        <button type="button" class="btn-close ${textClass === 'text-white' ? 'btn-close-white' : ''} me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+
+            // Chèn vào container
+            $('.toast-container').append(toastHtml);
+
+            // Khởi tạo và hiển thị
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 4000 }); // Tự tắt sau 4s
+            toast.show();
+
+            // Xóa khỏi DOM sau khi ẩn để nhẹ trang
+            toastElement.addEventListener('hidden.bs.toast', function () {
+                $(this).remove();
+            });
+        }
+
+
         $(document).ready(function () {
             const searchInput = $('#searchInput');
             // Thêm thẻ div container cho search results vào ngay sau input
@@ -358,6 +407,8 @@
             searchInput.closest('form').on('submit', function (e) {
                 e.preventDefault();
             });
+
+            window.alert = function (msg) { showToast('info', msg); }
         });
 
         // --- HÀM MỚI: MỞ MODAL TÁC GIẢ ---
@@ -366,10 +417,10 @@
 
             // Reset loading state
             document.getElementById('authorDetailContent').innerHTML = `
-        <div class="text-center p-5">
-            <div class="spinner-border text-info" role="status"></div>
-            <p class="mt-2 text-muted">Đang tải thông tin tác giả...</p>
-        </div>`;
+                    <div class="text-center p-5">
+                        <div class="spinner-border text-info" role="status"></div>
+                        <p class="mt-2 text-muted">Đang tải thông tin tác giả...</p>
+                    </div>`;
 
             myModal.show();
 
@@ -438,7 +489,7 @@
 
             localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(clientCart));
             updateCartCountUI();
-            alert("Đã thêm sản phẩm vào giỏ!");
+            showToast('success', 'Đã thêm sản phẩm vào giỏ hàng!');
         }
 
 
