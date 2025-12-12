@@ -109,6 +109,11 @@ public class WarehouseController : Controller
             exportList = await exportQuery.OrderByDescending(t => t.Date).ToListAsync();
         }
 
+        if (string.IsNullOrEmpty(typeFilter) || typeFilter == "Phiếu Nhập")
+        {
+            importList = await importQuery.OrderByDescending(t => t.Date).ToListAsync();
+        }
+
         var allTickets = importList.Concat(exportList).ToList();
 
         // Apply sorting
