@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookstoreManagement.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,Manager")]
     public class BookController : Controller
     {
         private readonly BookstoreContext _context;

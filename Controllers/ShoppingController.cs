@@ -13,11 +13,13 @@ namespace BookstoreManagement.Controllers
     {
         private readonly BookstoreContext _context;
         private readonly UserManager<AppUser> _userManager;
+        private readonly SignInManager<AppUser> _signInManager;
 
-        public ShoppingController(BookstoreContext context, UserManager<AppUser> userManager)
+        public ShoppingController(BookstoreContext context, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
         {
             _context = context;
             _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         public async Task<IActionResult> Index(string type = "normal",
@@ -244,6 +246,12 @@ namespace BookstoreManagement.Controllers
         [Authorize] // Bắt buộc đăng nhập mới được đánh giá
         public async Task<IActionResult> RateBook(int bookId, int ratingValue, string? comment)
         {
+            // Kiểm tra role: Chỉ cho phép Customer
+            if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                return Json(new { success = false, message = "Tài khoản quản trị không thể đánh giá sách." });
+            }
+            
             if (ratingValue < 1 || ratingValue > 5)
             {
                 return Json(new { success = false, message = "Điểm đánh giá không hợp lệ." });
@@ -623,6 +631,13 @@ namespace BookstoreManagement.Controllers
         [Authorize]
         public async Task<IActionResult> MyOrders(int pageNumber = 1, int pageSize = 10)
         {
+            // Kiểm tra role: Chỉ cho phép Customer
+            if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                await _signInManager.SignOutAsync();
+                return RedirectToAction("ClientLogin", "Account");
+            }
+            
             var userId = _userManager.GetUserId(User);
 
             var ordersQuery = _context.Orders
@@ -650,6 +665,12 @@ namespace BookstoreManagement.Controllers
         [Authorize]
         public async Task<IActionResult> GetOrderDetails(int id)
         {
+            // Kiểm tra role: Chỉ cho phép Customer
+            if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                return Json(new { success = false, message = "Tài khoản quản trị không thể truy cập tính năng này." });
+            }
+            
             var userId = _userManager.GetUserId(User);
 
             var order = await _context.Orders
@@ -668,8 +689,15 @@ namespace BookstoreManagement.Controllers
         [Authorize]
         public async Task<IActionResult> MyAccount()
         {
+            // Kiểm tra role: Chỉ cho phép Customer
+            if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                await _signInManager.SignOutAsync();
+                return RedirectToAction("ClientLogin", "Account");
+            }
+            
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) return RedirectToAction("Login", "Account");
+            if (user == null) return RedirectToAction("ClientLogin", "Account");
 
             // Lấy thông tin Customer kèm Rank
             var customerInfo = await _context.Customers
@@ -692,8 +720,15 @@ namespace BookstoreManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateProfile(string fullName, string phoneNumber, string address, string email)
         {
+            // Kiểm tra role: Chỉ cho phép Customer
+            if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                await _signInManager.SignOutAsync();
+                return RedirectToAction("ClientLogin", "Account");
+            }
+            
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) return RedirectToAction("Login", "Account");
+            if (user == null) return RedirectToAction("ClientLogin", "Account");
 
             // 1. Cập nhật bảng Users (AppUser)
             user.FullName = fullName;

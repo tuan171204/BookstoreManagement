@@ -1,6 +1,6 @@
 @model BookstoreManagement.ViewModels.Account.LoginViewModel
 @{
-    ViewData["Title"] = "Đăng nhập";
+    ViewData["Title"] = "Đăng nhập Quản trị";
 }
 
 <style>
@@ -54,8 +54,27 @@
 
 <img src="~/images/bookstore_logo1.jpg" alt="Logo" class="login-logo" />
 
+<div class="container w-50 mb-3">
+    <div class="alert alert-info text-center">
+        <i class="fas fa-shield-alt me-2"></i>
+        <strong>Trang đăng nhập Quản trị</strong><br>
+        <small class="text-muted">Chỉ dành cho Admin và Manager</small>
+    </div>
+</div>
+
 <form method="post" asp-action="Login" class="login-form container w-50">
     @Html.AntiForgeryToken()
+    <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+    
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <div>@error.ErrorMessage</div>
+            }
+        </div>
+    }
 
     <div class="form-group mb-3">
         <label>Email</label>
