@@ -72,3 +72,5 @@ Nếu gặp lỗi khi apply migration hoặc database bị xung đột, bạn c�
 > dotnet ef migrations add "Init"
 
 > dotnet ef database update
+
+### TRONG THƯ MỤC DỰ ÁN CÓ ĐÍNH KÈM FILE .SQL, CÓ THỂ CHẠY FILE .SQL ĐÍNH KÈM ĐỂ CÓ SẴN DỮ LIỆU MẪU
