@@ -14,9 +14,6 @@ public partial class Category
     [Column(TypeName = "nvarchar(100)")]
     public string? Description { get; set; }
 
-    // % Lợi nhuận mặc định cho thể loại này (VD: 20 nghĩa là 20%)
-    public double? DefaultProfitMargin { get; set; }
-
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }

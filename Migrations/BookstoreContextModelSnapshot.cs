@@ -395,9 +395,6 @@ namespace BookstoreManagement.Migrations
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())");
 
-                    b.Property<double?>("DefaultProfitMargin")
-                        .HasColumnType("float");
-
                     b.Property<string>("Description")
                         .HasMaxLength(255)
                         .IsUnicode(false)
