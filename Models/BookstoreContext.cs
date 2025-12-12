@@ -80,11 +80,21 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
                 .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            // Index tìm kiếm tác giả
+            entity.HasIndex(e => e.Name);
         });
 
         modelBuilder.Entity<Book>(entity =>
         {
             entity.HasKey(e => e.BookId).HasName("PK__Books__3DE0C22769882623");
+
+            // --- CÁC INDEX MỚI CHO SÁCH ---
+            entity.HasIndex(e => e.Title).HasDatabaseName("IX_Book_Title"); // Tìm theo tên
+            entity.HasIndex(e => e.IsDeleted); // Lọc sách chưa xóa
+            entity.HasIndex(e => e.AuthorId);  // Lọc theo tác giả
+            entity.HasIndex(e => e.PublisherId); // Lọc theo NXB
+            // ------------------------------
 
             entity.Property(e => e.BookId).HasColumnName("BookID");
             entity.Property(e => e.AuthorId).HasColumnName("AuthorID");
@@ -145,7 +155,7 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
 
         modelBuilder.Entity<BookPromotion>(entity =>
         {
-            entity.HasNoKey();
+            entity.HasKey(e => new { e.BookId, e.PromotionId });
 
             entity.Property(e => e.BookId).HasColumnName("BookID");
             entity.Property(e => e.PromotionId).HasColumnName("PromotionID");
@@ -157,7 +167,7 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
 
             entity.HasOne(d => d.Promotion).WithMany()
                 .HasForeignKey(d => d.PromotionId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK__BookPromo__Promo__0B91BA14");
         });
 
@@ -207,6 +217,10 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
             entity.HasKey(e => e.EmployeeId);
             entity.HasIndex(e => e.PhoneNumber).IsUnique(); // SĐT nhân viên không được trùng
 
+            // --- INDEX MỚI CHO NHÂN VIÊN ---
+            entity.HasIndex(e => e.FullName); // Tìm nhân viên theo tên
+            // -------------------------------
+
             // Cấu hình quan hệ 1-1 (hoặc 1-0) với AppUser
             // Một Employee có thể có 0 hoặc 1 AppUser
             entity.HasOne(e => e.AppUser)
@@ -222,6 +236,10 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
             entity.HasIndex(e => e.Phone, "UQ__Customer__5C7E359E320E9AE8").IsUnique();
 
             entity.HasIndex(e => e.Email, "UQ__Customer__A9D10534848515B3").IsUnique();
+
+            // --- INDEX MỚI CHO KHÁCH HÀNG ---
+            entity.HasIndex(e => e.FullName); // Tìm khách theo tên
+            // --------------------------------
 
             entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
             entity.Property(e => e.Address)
@@ -287,6 +305,11 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
             entity.HasKey(e => e.ExportId).HasName("PK__ExportTi__E5C997A4BDE4968A");
 
             entity.HasIndex(e => e.DocumentNumber, "UQ__ExportTi__6899391801847116").IsUnique();
+
+            // --- INDEX MỚI CHO PHIẾU XUẤT ---
+            entity.HasIndex(e => e.Date);   // Thống kê xuất theo ngày
+            entity.HasIndex(e => e.Status); // Lọc phiếu xuất theo trạng thái
+            // --------------------------------
 
             entity.Property(e => e.ExportId).HasColumnName("ExportID");
             entity.Property(e => e.CreatedAt)
@@ -358,6 +381,11 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
 
             entity.HasIndex(e => e.DocumentNumber, "UQ__ImportTi__68993918E68FB85E").IsUnique();
 
+            // --- INDEX MỚI CHO PHIẾU NHẬP ---
+            entity.HasIndex(e => e.Date);   // Thống kê nhập theo ngày
+            entity.HasIndex(e => e.Status); // Lọc phiếu nhập theo trạng thái
+            // --------------------------------
+
             entity.Property(e => e.ImportId).HasColumnName("ImportID");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -402,6 +430,11 @@ public partial class BookstoreContext : IdentityDbContext<AppUser, AppRole, stri
         modelBuilder.Entity<Order>(entity =>
         {
             entity.HasKey(e => e.OrderId).HasName("PK__Orders__C3905BAF071592E8");
+
+            // --- INDEX MỚI CHO ĐƠN HÀNG ---
+            entity.HasIndex(e => e.OrderDate); // Thống kê doanh thu theo ngày
+            entity.HasIndex(e => e.Status);    // Lọc trạng thái đơn
+            // ------------------------------
 
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
             entity.Property(e => e.CreatedAt)

@@ -37,10 +37,11 @@ namespace BookstoreManagement.Controllers
             ViewData["SortBy"] = sortBy;
             ViewData["SortOrder"] = sortOrder;
 
+            ViewBag.StatusFilter = statusFilter;
+
             var booksQuery = _context.Books
                 .Include(b => b.Author)
                 .Include(b => b.Publisher)
-                .Where(b => b.IsDeleted != true)
                 .AsQueryable();
 
             // Search filter
@@ -134,6 +135,18 @@ namespace BookstoreManagement.Controllers
                     : booksQuery.OrderByDescending(b => b.CreatedAt),
                 _ => booksQuery.OrderByDescending(b => b.CreatedAt)
             };
+            // --- LOGIC LỌC TRẠNG THÁI (MỚI) ---
+            if (statusFilter == "Deleted")
+            {
+                // Xem danh sách đã xóa mềm
+                booksQuery = booksQuery.Where(b => b.IsDeleted == true);
+            }
+            else
+            {
+                // Mặc định: Chỉ xem sách chưa xóa
+                booksQuery = booksQuery.Where(b => b.IsDeleted != true);
+            }
+            // ----------------------------------
 
             var totalItems = await booksQuery.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
@@ -653,6 +666,110 @@ namespace BookstoreManagement.Controllers
             return Json(new { success = true, message = "Xóa sách thành công" });
         }
 
+        // 2. THÊM HÀM XÓA CỨNG (HARD DELETE)
+        [Authorize(Policy = "Book.Delete")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> HardDelete(int id)
+        {
+            // 1. Load sách kèm theo các bảng phụ thuộc cần xóa (SupplierBooks, Categories...)
+            var book = await _context.Books
+                .Include(b => b.SupplierBooks)   // <--- Quan trọng: Load bảng gây lỗi
+                .Include(b => b.BookCategories)  // <--- Nên load thêm cái này để tránh lỗi tương tự
+                .Include(b => b.BookPromotions)  // <--- Load thêm khuyến mãi (nếu có)
+                .FirstOrDefaultAsync(b => b.BookId == id);
+
+            if (book == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy sách" });
+            }
+
+            // 2. KIỂM TRA RÀNG BUỘC DỮ LIỆU QUAN TRỌNG (Không được xóa nếu tồn tại)
+            bool hasImport = await _context.ImportDetails.AnyAsync(x => x.BookId == id);
+            bool hasExport = await _context.ExportDetails.AnyAsync(x => x.BookId == id);
+            bool hasOrder = await _context.OrderDetails.AnyAsync(x => x.BookId == id);
+
+            if (hasImport || hasExport || hasOrder)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = $"Không thể xóa vĩnh viễn! Sách này đã có dữ liệu lịch sử: " +
+                              $"{(hasImport ? "[Phiếu Nhập] " : "")}" +
+                              $"{(hasExport ? "[Phiếu Xuất] " : "")}" +
+                              $"{(hasOrder ? "[Đơn Hàng]" : "")}"
+                });
+            }
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // 3. XÓA CÁC DỮ LIỆU PHỤ THUỘC TRƯỚC (Clean up dependencies)
+
+                // Xóa thông tin định giá của NCC (Nguyên nhân gây lỗi chính)
+                if (book.SupplierBooks != null && book.SupplierBooks.Any())
+                {
+                    _context.SupplierBooks.RemoveRange(book.SupplierBooks);
+                }
+
+                // Xóa phân loại sách
+                if (book.BookCategories != null && book.BookCategories.Any())
+                {
+                    _context.BookCategories.RemoveRange(book.BookCategories);
+                }
+
+                // Xóa khuyến mãi sách
+                if (book.BookPromotions != null && book.BookPromotions.Any())
+                {
+                    _context.BookPromotions.RemoveRange(book.BookPromotions);
+                }
+
+                // Lưu thay đổi xóa bảng phụ trước
+                await _context.SaveChangesAsync();
+
+                // 4. Xóa ảnh (Optional)
+                if (!string.IsNullOrEmpty(book.ImageUrl))
+                {
+                    var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", book.ImageUrl.TrimStart('/'));
+                    if (System.IO.File.Exists(imagePath))
+                    {
+                        System.IO.File.Delete(imagePath);
+                    }
+                }
+
+                // 5. Cuối cùng mới xóa Sách
+                _context.Books.Remove(book);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync(); // Xác nhận giao dịch
+
+                return Json(new { success = true, message = "Đã xóa vĩnh viễn sách và các dữ liệu liên quan." });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                // Log lỗi chi tiết ra console để debug nếu cần
+                Console.WriteLine(ex.ToString());
+                return Json(new { success = false, message = "Lỗi hệ thống: " + ex.Message });
+            }
+        }
+
+        // 3. THÊM HÀM KHÔI PHỤC (RESTORE) - Để tiện dụng
+        [Authorize(Policy = "Book.Update")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Restore(int id)
+        {
+            var book = await _context.Books.FindAsync(id);
+            if (book == null) return Json(new { success = false, message = "Không tìm thấy sách" });
+
+            book.IsDeleted = false;
+            book.UpdatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Đã khôi phục sách thành công." });
+        }
+
         private bool BookExists(int id)
         {
             return _context.Books.Any(e => e.BookId == id);
@@ -682,9 +799,9 @@ namespace BookstoreManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> GetInventoryFlow(int bookId, DateTime? fromDate, DateTime? toDate)
         {
-            // 1. Thiết lập khoảng thời gian (Mặc định 30 ngày gần nhất nếu null)
-            var endDate = toDate?.Date ?? DateTime.Today;
-            var startDate = fromDate?.Date ?? endDate.AddDays(-29);
+            // 1. Thiết lập khoảng thời gian (Mặc định 7 ngày gần nhất nếu null)
+            var endDate = toDate?.Date ?? DateTime.Today.AddDays(2);
+            var startDate = fromDate?.Date ?? endDate.AddDays(-6);
 
             if (startDate > endDate) return BadRequest("Ngày bắt đầu phải nhỏ hơn ngày kết thúc");
 

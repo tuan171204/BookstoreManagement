@@ -4,6 +4,7 @@ using BookstoreManagement.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookstoreManagement.Migrations
 {
     [DbContext(typeof(BookstoreContext))]
-    partial class BookstoreContextModelSnapshot : ModelSnapshot
+    [Migration("20251212035154_AddPromotionApplyType")]
+    partial class AddPromotionApplyType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -395,9 +398,6 @@ namespace BookstoreManagement.Migrations
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())");
 
-                    b.Property<double?>("DefaultProfitMargin")
-                        .HasColumnType("float");
-
                     b.Property<string>("Description")
                         .HasMaxLength(255)
                         .IsUnicode(false)
@@ -670,9 +670,6 @@ namespace BookstoreManagement.Migrations
                         .IsUnicode(false)
                         .HasColumnType("nvarchar(100)")
                         .HasDefaultValue("Pending");
-
-                    b.Property<decimal?>("TotalPrice")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("TotalQuantity")
                         .ValueGeneratedOnAdd()

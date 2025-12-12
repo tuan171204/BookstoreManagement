@@ -101,27 +101,45 @@ public class WarehouseController : Controller
                 Date = t.Date,
                 Reference = t.Reason == "Sale" && t.Reference != null ? "ĐH: " + t.Reference.OrderId : t.Reason,
                 TotalQuantity = t.TotalQuantity,
-                TotalCost = null,
+                TotalCost = t.TotalPrice, // Export không có TotalCost thì gán 0
                 Status = t.Status
             });
 
         // Apply search filter after select (on ViewModel properties)
         if (!String.IsNullOrEmpty(searchString))
         {
-            importQuery = importQuery.Where(t => (t.DocumentNumber != null && t.DocumentNumber.Contains(searchString))
-                                              || t.Reference.Contains(searchString));
-            exportQuery = exportQuery.Where(t => (t.DocumentNumber != null && t.DocumentNumber.Contains(searchString))
-                                              || t.Reference.Contains(searchString));
+            importQuery = importQuery.Where(t => t.DocumentNumber.Contains(searchString) || t.Reference.Contains(searchString));
+            exportQuery = exportQuery.Where(t => t.DocumentNumber.Contains(searchString) || t.Reference.Contains(searchString));
+        }
+
+        var importList = new List<WarehouseTicketViewModel>();
+        var exportList = new List<WarehouseTicketViewModel>();
+        if (!string.IsNullOrEmpty(statusFilter))
+        {
+            importQuery = importQuery.Where(t => t.Status == statusFilter);
+            exportQuery = exportQuery.Where(t => t.Status == statusFilter);
+        }
+
+        // 4. Kết hợp dữ liệu (Union) và Phân trang (Pagination) TẠI DATABASE
+        IQueryable<WarehouseTicketViewModel> finalQuery;
+
+        if (typeFilter == "Phiếu Nhập")
+        {
+            finalQuery = importQuery;
+        }
+        else if (typeFilter == "Phiếu Xuất")
+        {
+            finalQuery = exportQuery;
+        }
+        else
+        {
+            // Kỹ thuật Union giúp gộp 2 bảng thành 1 ngay trong câu SQL
+            finalQuery = importQuery.Union(exportQuery);
         }
 
         var importList = new List<WarehouseTicketViewModel>();
         var exportList = new List<WarehouseTicketViewModel>();
 
-        // Get all tickets first to calculate total
-        if (string.IsNullOrEmpty(typeFilter) || typeFilter == "Phiếu Nhập")
-        {
-            importList = await importQuery.OrderByDescending(t => t.Date).ToListAsync();
-        }
 
         if (string.IsNullOrEmpty(typeFilter) || typeFilter == "Phiếu Xuất")
         {
@@ -133,22 +151,22 @@ public class WarehouseController : Controller
         // Apply sorting
         var sortedTickets = sortBy?.ToLower() switch
         {
-            "documentnumber" => sortOrder == "asc" 
+            "documentnumber" => sortOrder == "asc"
                 ? allTickets.OrderBy(t => t.DocumentNumber ?? "").ToList()
                 : allTickets.OrderByDescending(t => t.DocumentNumber ?? "").ToList(),
-            "type" => sortOrder == "asc" 
+            "type" => sortOrder == "asc"
                 ? allTickets.OrderBy(t => t.Type).ToList()
                 : allTickets.OrderByDescending(t => t.Type).ToList(),
-            "date" => sortOrder == "asc" 
+            "date" => sortOrder == "asc"
                 ? allTickets.OrderBy(t => t.Date).ToList()
                 : allTickets.OrderByDescending(t => t.Date).ToList(),
-            "totalquantity" => sortOrder == "asc" 
+            "totalquantity" => sortOrder == "asc"
                 ? allTickets.OrderBy(t => t.TotalQuantity).ToList()
                 : allTickets.OrderByDescending(t => t.TotalQuantity).ToList(),
-            "totalcost" => sortOrder == "asc" 
+            "totalcost" => sortOrder == "asc"
                 ? allTickets.OrderBy(t => t.TotalCost ?? 0).ToList()
                 : allTickets.OrderByDescending(t => t.TotalCost ?? 0).ToList(),
-            "status" => sortOrder == "asc" 
+            "status" => sortOrder == "asc"
                 ? allTickets.OrderBy(t => t.Status).ToList()
                 : allTickets.OrderByDescending(t => t.Status).ToList(),
             _ => allTickets.OrderByDescending(t => t.Date).ToList()
@@ -162,7 +180,7 @@ public class WarehouseController : Controller
         var finalTickets = sortedTickets
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .ToList();
+            .ToList(); // <--- Lúc này mới thực sự truy vấn DB
 
         ViewBag.PageNumber = pageNumber;
         ViewBag.PageSize = pageSize;
@@ -359,7 +377,7 @@ public class WarehouseController : Controller
                 {
                     UserId = userId ?? "1",
                     Date = DateTime.Now,
-                    Status = "Completed",
+                    Status = "Pending", // <--- SỬA THÀNH PENDING
                     Reason = viewModel.Reason,
                     Note = viewModel.Note,
                     DocumentNumber = $"PX{DateTimeOffset.Now.ToUnixTimeSeconds()}",
@@ -369,6 +387,7 @@ public class WarehouseController : Controller
 
 
                 int totalQty = 0;
+                decimal totalPrice = 0;
 
                 foreach (var item in viewModel.Details)
                 {
@@ -386,11 +405,6 @@ public class WarehouseController : Controller
                         throw new Exception($"Sách '{book.Title}' không đủ số lượng để xuất (Tồn: {book.StockQuantity}).");
                     }
 
-
-                    book.StockQuantity -= item.Quantity;
-                    book.UpdatedAt = DateTime.Now;
-
-
                     exportTicket.ExportDetails.Add(new ExportDetail
                     {
                         BookId = item.BookId,
@@ -400,9 +414,11 @@ public class WarehouseController : Controller
                     });
 
                     totalQty += item.Quantity;
+                    totalPrice += item.UnitPrice;
                 }
 
                 exportTicket.TotalQuantity = totalQty;
+                exportTicket.TotalPrice = totalPrice;
 
 
                 _context.ExportTickets.Add(exportTicket);
@@ -843,6 +859,132 @@ public class WarehouseController : Controller
         return RedirectToAction("Details", new { id = importId, type = "Import" });
     }
 
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApproveExport(int id)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var ticket = await _context.ExportTickets
+                .Include(t => t.ExportDetails)
+                .FirstOrDefaultAsync(t => t.ExportId == id);
+
+            if (ticket == null) return NotFound();
+
+            if (ticket.Status != "Pending")
+            {
+                TempData["ErrorMessage"] = "Phiếu này đã được xử lý trước đó.";
+                return RedirectToAction("Details", new { id = id, type = "Export" });
+            }
+
+            // Thực hiện trừ kho
+            foreach (var detail in ticket.ExportDetails)
+            {
+                var book = await _context.Books.FindAsync(detail.BookId);
+                if (book == null) throw new Exception($"Sách ID {detail.BookId} không tồn tại.");
+
+                // Kiểm tra lại tồn kho lần cuối trước khi duyệt
+                if ((book.StockQuantity ?? 0) < detail.Quantity)
+                {
+                    throw new Exception($"Không thể duyệt! Sách '{book.Title}' chỉ còn {book.StockQuantity}, nhưng phiếu yêu cầu xuất {detail.Quantity}.");
+                }
+
+                book.StockQuantity -= detail.Quantity;
+                book.UpdatedAt = DateTime.Now;
+                _context.Books.Update(book);
+            }
+
+            ticket.Status = "Completed";
+            ticket.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            TempData["SuccessMessage"] = "Đã DUYỆT phiếu xuất và trừ kho thành công!";
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            TempData["ErrorMessage"] = "Lỗi khi duyệt: " + ex.Message;
+        }
+
+        return RedirectToAction("Details", new { id = id, type = "Export" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CancelExport(int id)
+    {
+        var ticket = await _context.ExportTickets.FindAsync(id);
+        if (ticket == null) return NotFound();
+
+        if (ticket.Status != "Pending")
+        {
+            TempData["ErrorMessage"] = "Chỉ có thể hủy phiếu đang ở trạng thái chờ.";
+            return RedirectToAction("Details", new { id = id, type = "Export" });
+        }
+
+        ticket.Status = "Cancelled";
+        ticket.UpdatedAt = DateTime.Now;
+
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = "Đã HỦY phiếu xuất.";
+
+        return RedirectToAction("Details", new { id = id, type = "Export" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateExportQuantity(int exportId, Dictionary<int, ExportDetailUpdateModel> details)
+    {
+        // Lưu ý: Dùng lại class ImportDetailUpdateModel cho tiện vì cấu trúc giống hệt (DetailId, Quantity)
+
+        var ticket = await _context.ExportTickets
+            .Include(t => t.ExportDetails)
+            .ThenInclude(d => d.Book) // Include sách để lấy lại đơn giá
+            .FirstOrDefaultAsync(t => t.ExportId == exportId);
+
+        if (ticket == null) return NotFound();
+
+        if (ticket.Status != "Pending")
+        {
+            TempData["ErrorMessage"] = "Không thể chỉnh sửa phiếu đã hoàn thành hoặc đã hủy.";
+            return RedirectToAction("Details", new { id = exportId, type = "Export" });
+        }
+
+        try
+        {
+            int newTotalQuantity = 0;
+
+            foreach (var item in details.Values)
+            {
+                var detailEntity = ticket.ExportDetails.FirstOrDefault(d => d.ExportDetailId == item.DetailId);
+                if (detailEntity != null)
+                {
+                    detailEntity.Quantity = item.Quantity;
+                    // Tính lại thành tiền dựa trên giá bán (UnitPrice)
+                    detailEntity.Subtotal = detailEntity.Quantity * detailEntity.UnitPrice;
+
+                    newTotalQuantity += detailEntity.Quantity;
+                }
+            }
+
+            ticket.TotalQuantity = newTotalQuantity;
+            ticket.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Cập nhật số lượng phiếu xuất thành công!";
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = "Lỗi khi cập nhật: " + ex.Message;
+        }
+
+        return RedirectToAction("Details", new { id = exportId, type = "Export" });
+    }
+
     [Authorize(Policy = "Warehouse.View")] // Hoặc policy phù hợp của bạn
     [HttpGet]
     public async Task<IActionResult> ExportTicketDetail(int id, string type)
@@ -1005,6 +1147,12 @@ public class WarehouseController : Controller
     }
 
     public class ImportDetailUpdateModel
+    {
+        public int DetailId { get; set; }
+        public int Quantity { get; set; }
+    }
+
+    public class ExportDetailUpdateModel
     {
         public int DetailId { get; set; }
         public int Quantity { get; set; }

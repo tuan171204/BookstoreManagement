@@ -162,43 +162,65 @@ namespace BookstoreManagement.Controllers
         {
             var viewModel = new PromotionCreateViewModel
             {
-                PromotionTypes = await GetPromotionTypesAsync(),
-                Books = await GetBooksAsync(),
-                StartDate = DateTime.Now,
-                EndDate = DateTime.Now.AddMonths(1)
-            };
+                // SỬA: Chuyển đổi thủ công sang List<SelectListItem>
+                PromotionTypes = await _context.Codes
+                    .Where(c => c.Entity == "PromotionType")
+                    .OrderBy(c => c.Key)
+                    .Select(c => new SelectListItem
+                    {
+                        Value = c.CodeId.ToString(), // Dùng CodeId làm khóa ngoại
+                        Text = c.Value
+                    }).ToListAsync(),
 
+                // SỬA: Chuyển đổi thủ công sang List<SelectListItem>
+                Books = await _context.Books
+                    .Where(b => b.IsDeleted != true)
+                    .OrderBy(b => b.Title)
+                    .Select(b => new SelectListItem
+                    {
+                        Value = b.BookId.ToString(),
+                        Text = b.Title
+                    }).ToListAsync(),
+
+                // Multiselect vẫn dùng SelectList (vì ViewModel khai báo là SelectList?)
+                // Nếu ViewModel khai báo AvailableBooks là SelectList thì giữ nguyên dòng này:
+                AvailableBooks = new SelectList(await _context.Books.Where(b => b.IsDeleted != true).OrderBy(b => b.Title).ToListAsync(), "BookId", "Title")
+            };
             return View(viewModel);
         }
 
-        // POST: Promotion/Create
+        // 2. POST: Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(PromotionCreateViewModel viewModel)
+        public async Task<IActionResult> Create(PromotionCreateViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var promotion = new Models.Promotion
+                var promotion = new Promotion
                 {
-                    Name = viewModel.Name,
-                    TypeId = viewModel.TypeId,
-                    DiscountPercent = viewModel.DiscountPercent,
-                    StartDate = viewModel.StartDate,
-                    EndDate = viewModel.EndDate,
-                    MinPurchaseAmount = viewModel.MinPurchaseAmount,
-                    GiftBookId = viewModel.GiftBookId,
-                    IsActive = viewModel.IsActive,
-                    CreatedAt = DateTime.Now
+                    Name = model.Name,
+                    TypeId = model.TypeId,
+                    DiscountPercent = model.DiscountPercent,
+                    StartDate = model.StartDate,
+                    EndDate = model.EndDate,
+                    MinPurchaseAmount = model.MinPurchaseAmount,
+                    GiftBookId = model.GiftBookId,
+                    IsActive = model.IsActive,
+                    ApplyChannel = model.ApplyChannel,
+                    ApplyType = model.ApplyType,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
                 };
 
                 _context.Add(promotion);
                 await _context.SaveChangesAsync();
 
-                if (viewModel.SelectedBookIds != null && viewModel.SelectedBookIds.Any())
+                // Lưu danh sách sách áp dụng
+                if (model.ApplyType == "Specific" && model.SelectedBookIds != null)
                 {
-                    foreach (var bookId in viewModel.SelectedBookIds)
+                    foreach (var bookId in model.SelectedBookIds)
                     {
-                        _context.Set<BookPromotion>().Add(new BookPromotion
+                        _context.BookPromotions.Add(new BookPromotion
                         {
                             PromotionId = promotion.PromotionId,
                             BookId = bookId
@@ -207,31 +229,35 @@ namespace BookstoreManagement.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                TempData["SuccessMessage"] = "Thêm chương trình khuyến mãi thành công!";
+                TempData["SuccessMessage"] = "Thêm khuyến mãi thành công!";
                 return RedirectToAction(nameof(Index));
             }
 
-            viewModel.PromotionTypes = await GetPromotionTypesAsync();
-            viewModel.Books = await GetBooksAsync();
+            // Reload dropdowns nếu lỗi validation
+            model.PromotionTypes = await _context.Codes
+                .Where(c => c.Entity == "PromotionType")
+                .OrderBy(c => c.Key)
+                .Select(c => new SelectListItem { Value = c.CodeId.ToString(), Text = c.Value })
+                .ToListAsync();
 
-            return View(viewModel);
+            model.Books = await _context.Books
+                .Where(b => b.IsDeleted != true)
+                .OrderBy(b => b.Title)
+                .Select(b => new SelectListItem { Value = b.BookId.ToString(), Text = b.Title })
+                .ToListAsync();
+
+            model.AvailableBooks = new SelectList(await _context.Books.Where(b => b.IsDeleted != true).OrderBy(b => b.Title).ToListAsync(), "BookId", "Title");
+            return View(model);
         }
 
-        // GET: Promotion/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        // 3. GET: Edit
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var promotion = await _context.Promotions.FindAsync(id);
-            if (promotion == null)
-            {
-                return NotFound();
-            }
+            if (promotion == null) return NotFound();
 
-            var selectedBookIds = await _context.Set<BookPromotion>()
+            // Lấy danh sách sách đang được áp dụng khuyến mãi này
+            var selectedBookIds = await _context.BookPromotions
                 .Where(bp => bp.PromotionId == id)
                 .Select(bp => bp.BookId)
                 .ToListAsync();
@@ -246,87 +272,95 @@ namespace BookstoreManagement.Controllers
                 EndDate = promotion.EndDate,
                 MinPurchaseAmount = promotion.MinPurchaseAmount,
                 GiftBookId = promotion.GiftBookId,
-                IsActive = promotion.IsActive ?? false,
-                SelectedBookIds = selectedBookIds,
-                PromotionTypes = await GetPromotionTypesAsync(),
-                Books = await GetBooksAsync()
-            };
+                ApplyChannel = promotion.ApplyChannel ?? "All",
+                IsActive = promotion.IsActive == true,
 
+                // Set dữ liệu đã chọn
+                SelectedBookIds = selectedBookIds,
+
+                // SỬA: Load Dropdowns bằng SelectListItem
+                PromotionTypes = await _context.Codes
+                    .Where(c => c.Entity == "PromotionType")
+                    .OrderBy(c => c.Key)
+                    .Select(c => new SelectListItem { Value = c.CodeId.ToString(), Text = c.Value })
+                    .ToListAsync(),
+
+                Books = await _context.Books
+                    .Where(b => b.IsDeleted != true)
+                    .OrderBy(b => b.Title)
+                    .Select(b => new SelectListItem { Value = b.BookId.ToString(), Text = b.Title })
+                    .ToListAsync(),
+
+                AvailableBooks = new SelectList(await _context.Books.Where(b => b.IsDeleted != true).OrderBy(b => b.Title).ToListAsync(), "BookId", "Title")
+            };
             return View(viewModel);
         }
 
-        // POST: Promotion/Edit/5
+        // 4. POST: Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, PromotionEditViewModel viewModel)
+        public async Task<IActionResult> Edit(int id, PromotionEditViewModel model)
         {
-            if (id != viewModel.PromotionId)
-            {
-                return NotFound();
-            }
+            if (id != model.PromotionId) return NotFound();
 
             if (ModelState.IsValid)
             {
-                try
+                var promotion = await _context.Promotions.FindAsync(id);
+                if (promotion == null) return NotFound();
+
+                promotion.Name = model.Name;
+                promotion.TypeId = model.TypeId;
+                promotion.DiscountPercent = model.DiscountPercent;
+                promotion.StartDate = model.StartDate;
+                promotion.EndDate = model.EndDate;
+                promotion.MinPurchaseAmount = model.MinPurchaseAmount;
+                promotion.GiftBookId = model.GiftBookId;
+                promotion.ApplyChannel = model.ApplyChannel;
+                promotion.ApplyType = model.ApplyType;
+                promotion.IsActive = model.IsActive;
+                promotion.UpdatedAt = DateTime.Now;
+
+                _context.Update(promotion);
+
+                // --- CẬP NHẬT BOOK PROMOTIONS ---
+                // 1. Xóa cũ
+                var oldLinks = _context.BookPromotions.Where(bp => bp.PromotionId == id);
+                _context.BookPromotions.RemoveRange(oldLinks);
+
+                // 2. Thêm mới
+                if (model.ApplyType == "Specific" && model.SelectedBookIds != null)
                 {
-                    var promotion = await _context.Promotions.FindAsync(id);
-                    if (promotion == null)
+                    foreach (var bookId in model.SelectedBookIds)
                     {
-                        return NotFound();
-                    }
-
-                    promotion.Name = viewModel.Name;
-                    promotion.TypeId = viewModel.TypeId;
-                    promotion.DiscountPercent = viewModel.DiscountPercent;
-                    promotion.StartDate = viewModel.StartDate;
-                    promotion.EndDate = viewModel.EndDate;
-                    promotion.MinPurchaseAmount = viewModel.MinPurchaseAmount;
-                    promotion.GiftBookId = viewModel.GiftBookId;
-                    promotion.IsActive = viewModel.IsActive;
-                    promotion.UpdatedAt = DateTime.Now;
-
-                    _context.Update(promotion);
-
-                    var existingBookPromotions = await _context.Set<BookPromotion>()
-                        .Where(bp => bp.PromotionId == id)
-                        .ToListAsync();
-
-                    _context.Set<BookPromotion>().RemoveRange(existingBookPromotions);
-
-                    if (viewModel.SelectedBookIds != null && viewModel.SelectedBookIds.Any())
-                    {
-                        foreach (var bookId in viewModel.SelectedBookIds)
+                        _context.BookPromotions.Add(new BookPromotion
                         {
-                            _context.Set<BookPromotion>().Add(new BookPromotion
-                            {
-                                PromotionId = id,
-                                BookId = bookId
-                            });
-                        }
-                    }
-
-                    await _context.SaveChangesAsync();
-
-                    TempData["SuccessMessage"] = "Cập nhật chương trình khuyến mãi thành công!";
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!PromotionExists(viewModel.PromotionId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
+                            PromotionId = id,
+                            BookId = bookId
+                        });
                     }
                 }
+
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Cập nhật khuyến mãi thành công!";
+                return RedirectToAction(nameof(Index));
             }
 
-            viewModel.PromotionTypes = await GetPromotionTypesAsync();
-            viewModel.Books = await GetBooksAsync();
+            // Reload dropdowns nếu lỗi
+            model.PromotionTypes = await _context.Codes
+                .Where(c => c.Entity == "PromotionType")
+                .OrderBy(c => c.Key)
+                .Select(c => new SelectListItem { Value = c.CodeId.ToString(), Text = c.Value })
+                .ToListAsync();
 
-            return View(viewModel);
+            model.Books = await _context.Books
+                .Where(b => b.IsDeleted != true)
+                .OrderBy(b => b.Title)
+                .Select(b => new SelectListItem { Value = b.BookId.ToString(), Text = b.Title })
+                .ToListAsync();
+
+            model.AvailableBooks = new SelectList(await _context.Books.Where(b => b.IsDeleted != true).OrderBy(b => b.Title).ToListAsync(), "BookId", "Title");
+
+            return View(model);
         }
 
         // POST: Promotion/Delete/5

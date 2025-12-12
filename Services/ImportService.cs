@@ -41,20 +41,7 @@ namespace BookstoreManagement.Services
 
 
                 _context.ImportTickets.Add(ticket);
-                await _context.SaveChangesAsync();
 
-                foreach (var detail in ticket.ImportDetails)
-                {
-
-                    var book = await _context.Books.FindAsync(detail.BookId);
-                    if (book != null)
-                    {
-
-                        book.StockQuantity = (book.StockQuantity ?? 0) + detail.Quantity;
-                        book.UpdatedAt = DateTime.Now;
-                        _context.Books.Update(book);
-                    }
-                }
                 await _context.SaveChangesAsync();
 
 
