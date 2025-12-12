@@ -29,6 +29,13 @@ namespace BookstoreManagement.ViewModels.Book
         [DisplayFormat(DataFormatString = "{0:N0} ₫")]
         public decimal Price { get; set; }
 
+        [Display(Name = "Giá vốn")]
+        [DisplayFormat(DataFormatString = "{0:N0} ₫")]
+        public decimal CostPrice { get; set; }
+
+        [Display(Name = "% Lợi nhuận")]
+        public double ProfitMargin { get; set; }
+
         [Display(Name = "Tồn kho")]
         public int? StockQuantity { get; set; }
 

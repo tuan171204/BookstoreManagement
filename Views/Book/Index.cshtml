@@ -66,10 +66,11 @@
     <!-- Search and Filter -->
     <div class="card mb-4">
         <div class="card-body">
-            <form asp-action="Index" method="get" class="row g-3">
+            <form asp-action="Index" method="get">
                 <input type="hidden" name="pageNumber" value="1" />
                 <input type="hidden" name="sortBy" value="@currentSortBy" />
                 <input type="hidden" name="sortOrder" value="@currentSortOrder" />
+                <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Tìm kiếm</label>
                     <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control"
@@ -115,11 +116,44 @@
                     </select>
                 </div>
 
+                <div class="col-md-2">
+                    <label class="form-label">Giá vốn từ</label>
+                    <input type="number" name="minCostPrice" class="form-control" step="1000" min="0" 
+                        value="@ViewData["MinCostPrice"]" placeholder="Min" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Giá vốn đến</label>
+                    <input type="number" name="maxCostPrice" class="form-control" step="1000" min="0" 
+                        value="@ViewData["MaxCostPrice"]" placeholder="Max" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Giá bán từ</label>
+                    <input type="number" name="minPrice" class="form-control" step="1000" min="0" 
+                        value="@ViewData["MinPrice"]" placeholder="Min" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Giá bán đến</label>
+                    <input type="number" name="maxPrice" class="form-control" step="1000" min="0" 
+                        value="@ViewData["MaxPrice"]" placeholder="Max" />
+                </div>
+            </div>
+            <div class="row g-3 mt-1">
+                <div class="col-md-2">
+                    <label class="form-label">% Lợi nhuận từ</label>
+                    <input type="number" name="minProfitMargin" class="form-control" step="0.1" min="0" 
+                        value="@ViewData["MinProfitMargin"]" placeholder="Min %" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">% Lợi nhuận đến</label>
+                    <input type="number" name="maxProfitMargin" class="form-control" step="0.1" min="0" 
+                        value="@ViewData["MaxProfitMargin"]" placeholder="Max %" />
+                </div>
                 <div class="col-md-2 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-search"></i> Tìm
                     </button>
                 </div>
+            </div>
             </form>
         </div>
     </div>
@@ -191,8 +225,34 @@
                                 </a>
                             </th>
                             <th>
+                                <a href="@GetSortUrl("costprice", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Giá vốn
+                                    @if (currentSortBy == "costprice")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@GetSortUrl("profitmargin", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    % Lợi nhuận
+                                    @if (currentSortBy == "profitmargin")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
                                 <a href="@GetSortUrl("price", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
-                                    Giá
+                                    Giá bán
                                     @if (currentSortBy == "price")
                                     {
                                         <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
@@ -249,7 +309,11 @@
                                     <td>@item.AuthorName</td>
                                     <td>@item.PublisherName</td>
                                     <td>@item.PublicationYear</td>
-                                    <td>@item.Price.ToString("N0") ₫</td>
+                                    <td class="text-end">@item.CostPrice.ToString("N0") ₫</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">@item.ProfitMargin.ToString("F1")%</span>
+                                    </td>
+                                    <td class="text-end fw-bold text-success">@item.Price.ToString("N0") ₫</td>
                                     <td>
                                         <span
                                             class="badge @(item.StockQuantity > item.LowStockThreshold ? "bg-success" : "bg-danger")">

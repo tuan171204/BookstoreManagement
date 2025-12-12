@@ -73,8 +73,21 @@
                                     }
                                 </a>
                             </th>
-                            <th style="width: 40%">Mô tả</th>
-                            <th style="width: 15%">
+                            <th style="width: 30%">Mô tả</th>
+                            <th style="width: 15%" class="text-center">
+                                <a href="@GetSortUrl("defaultprofitmargin", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    % Lợi nhuận mặc định
+                                    @if (currentSortBy == "defaultprofitmargin")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th style="width: 12%">
                                 <a href="@GetSortUrl("createdat", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
                                     Ngày tạo
                                     @if (currentSortBy == "createdat")
@@ -100,7 +113,7 @@
                                     }
                                 </a>
                             </th>
-                            <th class="text-center" style="width: 10%">Thao tác</th>
+                            <th class="text-center" style="width: 8%">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -120,6 +133,16 @@
                                         else
                                         {
                                             <span class="text-muted small">Chưa có mô tả</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (item.DefaultProfitMargin.HasValue)
+                                        {
+                                            <span class="badge bg-success">@item.DefaultProfitMargin.Value.ToString("F1")%</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Chưa đặt</span>
                                         }
                                     </td>
                                     <td class="small">@item.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</td>
@@ -142,7 +165,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">
+                                <td colspan="6" class="text-center py-4 text-muted">
                                     <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                                     Chưa có dữ liệu thể loại nào
                                 </td>
