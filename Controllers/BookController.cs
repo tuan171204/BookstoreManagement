@@ -19,12 +19,21 @@ namespace BookstoreManagement.Controllers
 
         // GET: Book
         [Authorize(Policy = "Book.View")]
-        public async Task<IActionResult> Index(string searchString, int? authorId, int? publisherId, int? categoryId, string sortBy = "CreatedAt", string sortOrder = "desc", int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string searchString, int? authorId, int? publisherId, int? categoryId, 
+            decimal? minCostPrice, decimal? maxCostPrice, decimal? minPrice, decimal? maxPrice, 
+            double? minProfitMargin, double? maxProfitMargin,
+            string sortBy = "CreatedAt", string sortOrder = "desc", int pageNumber = 1, int pageSize = 10)
         {
             ViewData["CurrentFilter"] = searchString;
             ViewData["AuthorId"] = authorId;
             ViewData["PublisherId"] = publisherId;
             ViewData["CategoryId"] = categoryId;
+            ViewData["MinCostPrice"] = minCostPrice;
+            ViewData["MaxCostPrice"] = maxCostPrice;
+            ViewData["MinPrice"] = minPrice;
+            ViewData["MaxPrice"] = maxPrice;
+            ViewData["MinProfitMargin"] = minProfitMargin;
+            ViewData["MaxProfitMargin"] = maxProfitMargin;
             ViewData["SortBy"] = sortBy;
             ViewData["SortOrder"] = sortOrder;
 
@@ -63,6 +72,36 @@ namespace BookstoreManagement.Controllers
                 booksQuery = booksQuery.Where(b => bookIdsInCat.Contains(b.BookId));
             }
 
+            // Filter theo giá vốn
+            if (minCostPrice.HasValue)
+            {
+                booksQuery = booksQuery.Where(b => b.CostPrice >= minCostPrice.Value);
+            }
+            if (maxCostPrice.HasValue)
+            {
+                booksQuery = booksQuery.Where(b => b.CostPrice <= maxCostPrice.Value);
+            }
+
+            // Filter theo giá bán
+            if (minPrice.HasValue)
+            {
+                booksQuery = booksQuery.Where(b => b.Price >= minPrice.Value);
+            }
+            if (maxPrice.HasValue)
+            {
+                booksQuery = booksQuery.Where(b => b.Price <= maxPrice.Value);
+            }
+
+            // Filter theo % lợi nhuận
+            if (minProfitMargin.HasValue)
+            {
+                booksQuery = booksQuery.Where(b => b.ProfitMargin >= minProfitMargin.Value);
+            }
+            if (maxProfitMargin.HasValue)
+            {
+                booksQuery = booksQuery.Where(b => b.ProfitMargin <= maxProfitMargin.Value);
+            }
+
             // Apply sorting
             booksQuery = sortBy?.ToLower() switch
             {
@@ -81,6 +120,12 @@ namespace BookstoreManagement.Controllers
                 "price" => sortOrder == "asc" 
                     ? booksQuery.OrderBy(b => b.Price) 
                     : booksQuery.OrderByDescending(b => b.Price),
+                "costprice" => sortOrder == "asc" 
+                    ? booksQuery.OrderBy(b => b.CostPrice) 
+                    : booksQuery.OrderByDescending(b => b.CostPrice),
+                "profitmargin" => sortOrder == "asc" 
+                    ? booksQuery.OrderBy(b => b.ProfitMargin) 
+                    : booksQuery.OrderByDescending(b => b.ProfitMargin),
                 "stockquantity" => sortOrder == "asc" 
                     ? booksQuery.OrderBy(b => b.StockQuantity ?? 0) 
                     : booksQuery.OrderByDescending(b => b.StockQuantity ?? 0),
@@ -107,6 +152,8 @@ namespace BookstoreManagement.Controllers
                     PublisherId = b.PublisherId,
                     PublicationYear = b.PublicationYear,
                     Price = b.Price,
+                    CostPrice = b.CostPrice,
+                    ProfitMargin = b.ProfitMargin,
                     StockQuantity = b.StockQuantity,
                     Description = b.Description,
                     LowStockThreshold = b.LowStockThreshold,
@@ -243,6 +290,12 @@ namespace BookstoreManagement.Controllers
                     .ToListAsync()
             };
 
+            // Lấy danh sách category với DefaultProfitMargin để truyền vào ViewBag
+            ViewBag.CategoriesWithProfit = await _context.Categories
+                .Where(c => c.DefaultProfitMargin.HasValue && c.DefaultProfitMargin.Value > 0)
+                .Select(c => new { CategoryId = c.CategoryId, DefaultProfitMargin = c.DefaultProfitMargin.Value })
+                .ToListAsync();
+
             return View(viewModel);
         }
 
@@ -257,6 +310,18 @@ namespace BookstoreManagement.Controllers
                 if (viewModel.ImageFile != null)
                 {
                     imagePath = await SaveImage(viewModel.ImageFile);
+                }
+
+                // --- TỰ ĐỘNG LẤY % LỢI NHUẬN TỪ CATEGORY NẾU CHƯA NHẬP ---
+                if (viewModel.ProfitMargin <= 0 && viewModel.SelectedCategoryIds != null && viewModel.SelectedCategoryIds.Any())
+                {
+                    // Lấy category đầu tiên được chọn
+                    var firstCategoryId = viewModel.SelectedCategoryIds.First();
+                    var category = await _context.Categories.FindAsync(firstCategoryId);
+                    if (category != null && category.DefaultProfitMargin.HasValue && category.DefaultProfitMargin.Value > 0)
+                    {
+                        viewModel.ProfitMargin = category.DefaultProfitMargin.Value;
+                    }
                 }
 
                 // --- LOGIC TÍNH GIÁ MỚI ---
@@ -453,6 +518,18 @@ namespace BookstoreManagement.Controllers
                     }
 
                     var primarySupplierBook = book.SupplierBooks.FirstOrDefault();
+
+                    // --- TỰ ĐỘNG LẤY % LỢI NHUẬN TỪ CATEGORY NẾU CHƯA NHẬP ---
+                    if (viewModel.ProfitMargin <= 0 && viewModel.SelectedCategoryIds != null && viewModel.SelectedCategoryIds.Any())
+                    {
+                        // Lấy category đầu tiên được chọn
+                        var firstCategoryId = viewModel.SelectedCategoryIds.First();
+                        var category = await _context.Categories.FindAsync(firstCategoryId);
+                        if (category != null && category.DefaultProfitMargin.HasValue && category.DefaultProfitMargin.Value > 0)
+                        {
+                            viewModel.ProfitMargin = category.DefaultProfitMargin.Value;
+                        }
+                    }
 
                     // --- XỬ LÝ THAY ĐỔI GIÁ ---
                     bool priceChanged = false;
