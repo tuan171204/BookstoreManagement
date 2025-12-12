@@ -1,7 +1,7 @@
 @model BookstoreManagement.ViewModels.Role.RoleViewModel
 
 @{
-    ViewData["Title"] = "Thêm chức vụ mới";
+    ViewData["Title"] = "Thêm quyền mới";
     Layout = "_Layout";
 }
 
@@ -10,25 +10,22 @@
         <div class="col-md-6">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="bi bi-shield-plus"></i> Thêm chức vụ mới</h4>
+                    <h4 class="mb-0"><i class="bi bi-shield-plus"></i> Thêm quyền mới</h4>
                 </div>
                 <div class="card-body">
                     <form asp-action="Create" method="post">
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
                         <div class="mb-3">
-                            <label asp-for="Name" class="form-label">Tên chức vụ (Mã quyền) <span
+                            <label asp-for="Name" class="form-label">Tên quyền (Mã quyền) <span
                                     class="text-danger">*</span></label>
                             <input asp-for="Name" class="form-control" placeholder="Ví dụ: Employee, Manager..." />
                             <span asp-validation-for="Name" class="text-danger"></span>
                             <small class="text-muted">Dùng tiếng Anh viết liền, ví dụ: Employee</small>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Salary" class="form-label">Lương cơ bản</label>
-                            <input asp-for="Salary" class="form-control" type="number" />
-                            <span asp-validation-for="Salary" class="text-danger"></span>
-                        </div>
+                        @* Ẩn trường lương cơ bản - mặc định = 1 *@
+                        <input type="hidden" asp-for="Salary" value="1" />
 
                         <div class="mb-3">
                             <label asp-for="Description" class="form-label">Mô tả</label>
@@ -38,7 +35,7 @@
 
                         <div class="mt-4 pt-2 border-top">
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save"></i> Lưu chức vụ
+                                <i class="bi bi-save"></i> Lưu quyền
                             </button>
                             <a asp-action="Index" class="btn btn-secondary">
                                 <i class="bi bi-x-circle"></i> Hủy
