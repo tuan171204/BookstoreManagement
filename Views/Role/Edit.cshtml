@@ -1,7 +1,7 @@
 @model BookstoreManagement.ViewModels.Role.RoleViewModel
 
 @{
-    ViewData["Title"] = "Cập nhật chức vụ & Phân quyền";
+    ViewData["Title"] = "Cập nhật quyền & Phân quyền";
     Layout = "_Layout";
 }
 
@@ -10,23 +10,20 @@
         <div class="col-md-8"> @* Tăng độ rộng cột để chứa bảng quyền *@
             <div class="card shadow-sm">
                 <div class="card-header bg-warning">
-                    <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Cập nhật chức vụ</h4>
+                    <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Cập nhật quyền</h4>
                 </div>
                 <div class="card-body">
                     <form asp-action="Edit" method="post">
                         <input type="hidden" asp-for="Id" />
+                        @* Ẩn trường lương cơ bản - giữ giá trị hiện tại *@
+                        <input type="hidden" asp-for="Salary" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Name" class="form-label">Tên chức vụ</label>
+                            <div class="col-md-12 mb-3">
+                                <label asp-for="Name" class="form-label">Tên quyền</label>
                                 <input asp-for="Name" class="form-control" />
                                 <span asp-validation-for="Name" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Salary" class="form-label">Lương cơ bản</label>
-                                <input asp-for="Salary" class="form-control" type="number" />
-                                <span asp-validation-for="Salary" class="text-danger"></span>
                             </div>
                         </div>
 
@@ -57,7 +54,7 @@
                                                 { "Customer", "Quản lý Khách hàng (Customer)" },
                                                 { "Report", "Báo cáo & Thống kê (Report)" },
                                                 { "User", "Quản lý Nhân viên (User)" },
-                                                { "Role", "Quản lý Chức vụ (Role)" },
+                                                { "Role", "Quản lý Quyền (Role)" },
                                                 { "Warehouse", "Quản lý Kho (Warehouse)" },
                                                 { "System", "Hệ thống (System)" },
                                                 { "Promotion", "Khuyến mãi (Promotion)" }

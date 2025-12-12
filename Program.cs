@@ -85,7 +85,7 @@ builder.Services.AddAuthorization(options =>
 	options.AddPolicy("Report.Inventory", policy => policy.RequireClaim("Permission", "Report.Inventory"));
 	options.AddPolicy("Report.Export", policy => policy.RequireClaim("Permission", "Report.Export"));
 
-	// Quản lý Người dùng & Chức vụ (User/Role)
+	// Quản lý Người dùng & Quyền (User/Role)
 	options.AddPolicy("User.View", policy => policy.RequireClaim("Permission", "User.View"));
 	options.AddPolicy("User.Create", policy => policy.RequireClaim("Permission", "User.Create"));
 	options.AddPolicy("User.Update", policy => policy.RequireClaim("Permission", "User.Update"));

@@ -46,7 +46,7 @@ namespace BookstoreManagement.Controllers
             {
                 if (await _roleManager.RoleExistsAsync(model.Name))
                 {
-                    ModelState.AddModelError("Name", "Tên chức vụ này đã tồn tại.");
+                    ModelState.AddModelError("Name", "Tên quyền này đã tồn tại.");
                     return View(model);
                 }
 
@@ -54,7 +54,7 @@ namespace BookstoreManagement.Controllers
                 {
                     Name = model.Name,
                     Description = model.Description,
-                    Salary = model.Salary,
+                    Salary = model.Salary > 0 ? model.Salary : 1, // Mặc định = 1 nếu không có giá trị
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
                 };
@@ -62,7 +62,7 @@ namespace BookstoreManagement.Controllers
                 var result = await _roleManager.CreateAsync(role);
                 if (result.Succeeded)
                 {
-                    TempData["SuccessMessage"] = "Thêm chức vụ mới thành công!";
+                    TempData["SuccessMessage"] = "Thêm quyền mới thành công!";
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -149,7 +149,7 @@ namespace BookstoreManagement.Controllers
                     }
 
                     await transaction.CommitAsync();
-                    TempData["SuccessMessage"] = "Cập nhật chức vụ và phân quyền thành công!";
+                    TempData["SuccessMessage"] = "Cập nhật quyền và phân quyền thành công!";
                 }
                 catch (Exception ex)
                 {
@@ -182,7 +182,7 @@ namespace BookstoreManagement.Controllers
                 var result = await _roleManager.DeleteAsync(role);
                 if (result.Succeeded)
                 {
-                    TempData["SuccessMessage"] = "Đã xóa chức vụ thành công.";
+                    TempData["SuccessMessage"] = "Đã xóa quyền thành công.";
                 }
                 else
                 {
