@@ -2,6 +2,26 @@
 
 @{
     ViewData["Title"] = "Quản lý Khuyến mãi";
+    
+    Func<string, string, string, string> GetSortUrl = (column, currentSortBy, currentSortOrder) =>
+    {
+        var queryParams = new List<string>();
+        if (ViewData["CurrentFilter"] != null && !string.IsNullOrEmpty(ViewData["CurrentFilter"].ToString()))
+        {
+            queryParams.Add($"searchString={Uri.EscapeDataString(ViewData["CurrentFilter"].ToString())}");
+        }
+        if (ViewData["IsActiveFilter"] != null && !string.IsNullOrEmpty(ViewData["IsActiveFilter"].ToString()))
+        {
+            queryParams.Add($"isActive={ViewData["IsActiveFilter"]}");
+        }
+        string newSortOrder = currentSortBy == column && currentSortOrder == "asc" ? "desc" : "asc";
+        queryParams.Add($"sortBy={column}");
+        queryParams.Add($"sortOrder={newSortOrder}");
+        queryParams.Add($"pageNumber=1");
+        return "?" + string.Join("&", queryParams);
+    };
+    string currentSortBy = ViewData["SortBy"]?.ToString() ?? "CreatedAt";
+    string currentSortOrder = ViewData["SortOrder"]?.ToString() ?? "desc";
 }
 
 <div class="container-fluid py-4">
@@ -29,6 +49,8 @@
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3">
                 <input type="hidden" name="pageNumber" value="1" />
+                <input type="hidden" name="sortBy" value="@currentSortBy" />
+                <input type="hidden" name="sortOrder" value="@currentSortOrder" />
                 <div class="col-md-8">
                     <label class="form-label">Tìm kiếm</label>
                     <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control"
@@ -64,12 +86,72 @@
                 <table class="table table-hover">
                     <thead class="table-light">
                         <tr>
-                            <th>Tên chương trình</th>
-                            <th>Loại</th>
-                            <th>Giảm giá</th>
-                            <th>Thời gian</th>
+                            <th>
+                                <a href="@GetSortUrl("name", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Tên chương trình
+                                    @if (currentSortBy == "name")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@GetSortUrl("type", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Loại
+                                    @if (currentSortBy == "type")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@GetSortUrl("discountpercent", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Giảm giá
+                                    @if (currentSortBy == "discountpercent")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@GetSortUrl("startdate", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Thời gian
+                                    @if (currentSortBy == "startdate")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
                             <th>Số sách</th>
-                            <th>Trạng thái</th>
+                            <th>
+                                <a href="@GetSortUrl("isactive", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Trạng thái
+                                    @if (currentSortBy == "isactive")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
                             <th class="text-center">Thao tác</th>
                         </tr>
                     </thead>

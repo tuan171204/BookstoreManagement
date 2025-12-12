@@ -3,6 +3,26 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Quản lý nhân viên";
+    
+    Func<string, string, string, string> GetSortUrl = (column, currentSortBy, currentSortOrder) =>
+    {
+        var queryParams = new List<string>();
+        if (ViewData["CurrentFilter"] != null && !string.IsNullOrEmpty(ViewData["CurrentFilter"].ToString()))
+        {
+            queryParams.Add($"searchString={Uri.EscapeDataString(ViewData["CurrentFilter"].ToString())}");
+        }
+        if (ViewBag.IsActiveParam != null)
+        {
+            queryParams.Add($"isActive={ViewBag.IsActiveParam}");
+        }
+        string newSortOrder = currentSortBy == column && currentSortOrder == "asc" ? "desc" : "asc";
+        queryParams.Add($"sortBy={column}");
+        queryParams.Add($"sortOrder={newSortOrder}");
+        queryParams.Add($"pageNumber=1");
+        return "?" + string.Join("&", queryParams);
+    };
+    string currentSortBy = ViewData["SortBy"]?.ToString() ?? "HireDate";
+    string currentSortOrder = ViewData["SortOrder"]?.ToString() ?? "desc";
 }
 
 <div class="container-fluid py-4">
@@ -17,6 +37,8 @@
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3">
                 <input type="hidden" name="pageNumber" value="1" />
+                <input type="hidden" name="sortBy" value="@currentSortBy" />
+                <input type="hidden" name="sortOrder" value="@currentSortOrder" />
 
                 <div class="col-md-6">
                     <label class="form-label">Tìm kiếm</label>
@@ -49,11 +71,59 @@
                 <table class="table table-hover table-striped align-middle mb-0">
                     <thead class="table-light text-secondary">
                         <tr>
-                            <th>Họ tên / Email</th>
-                            <th>Số điện thoại</th>
-                            <th>Ngày vào làm</th>
+                            <th>
+                                <a href="@GetSortUrl("fullname", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Họ tên / Email
+                                    @if (currentSortBy == "fullname")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@GetSortUrl("phonenumber", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Số điện thoại
+                                    @if (currentSortBy == "phonenumber")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@GetSortUrl("hiredate", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Ngày vào làm
+                                    @if (currentSortBy == "hiredate")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
                             <th>Tài khoản HT</th>
-                            <th class="text-center">Trạng thái</th>
+                            <th>
+                                <a href="@GetSortUrl("isactive", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Trạng thái
+                                    @if (currentSortBy == "isactive")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
                             <th class="text-center" style="width: 150px;">Thao tác</th>
                         </tr>
                     </thead>

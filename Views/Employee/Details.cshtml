@@ -92,6 +92,12 @@
                         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning px-4">
                             <i class="bi bi-pencil-square"></i> Chỉnh sửa
                         </a>
+                        @if (!string.IsNullOrEmpty(Model.AccountId))
+                        {
+                            <a asp-action="ResetPassword" asp-route-id="@Model.Id" class="btn btn-danger px-4">
+                                <i class="bi bi-key"></i> Reset mật khẩu
+                            </a>
+                        }
                         <a asp-action="Index" class="btn btn-secondary px-4">
                             <i class="bi bi-arrow-left"></i> Quay lại
                         </a>

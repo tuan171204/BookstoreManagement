@@ -19,12 +19,14 @@ namespace BookstoreManagement.Controllers
 
         // GET: Book
         [Authorize(Policy = "Book.View")]
-        public async Task<IActionResult> Index(string searchString, int? authorId, int? publisherId, int? categoryId, int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string searchString, int? authorId, int? publisherId, int? categoryId, string sortBy = "CreatedAt", string sortOrder = "desc", int pageNumber = 1, int pageSize = 10)
         {
             ViewData["CurrentFilter"] = searchString;
             ViewData["AuthorId"] = authorId;
             ViewData["PublisherId"] = publisherId;
             ViewData["CategoryId"] = categoryId;
+            ViewData["SortBy"] = sortBy;
+            ViewData["SortOrder"] = sortOrder;
 
             var booksQuery = _context.Books
                 .Include(b => b.Author)
@@ -61,11 +63,37 @@ namespace BookstoreManagement.Controllers
                 booksQuery = booksQuery.Where(b => bookIdsInCat.Contains(b.BookId));
             }
 
+            // Apply sorting
+            booksQuery = sortBy?.ToLower() switch
+            {
+                "title" => sortOrder == "asc" 
+                    ? booksQuery.OrderBy(b => b.Title) 
+                    : booksQuery.OrderByDescending(b => b.Title),
+                "author" => sortOrder == "asc" 
+                    ? booksQuery.OrderBy(b => b.Author.Name) 
+                    : booksQuery.OrderByDescending(b => b.Author.Name),
+                "publisher" => sortOrder == "asc" 
+                    ? booksQuery.OrderBy(b => b.Publisher.Name) 
+                    : booksQuery.OrderByDescending(b => b.Publisher.Name),
+                "publicationyear" => sortOrder == "asc" 
+                    ? booksQuery.OrderBy(b => b.PublicationYear ?? 0) 
+                    : booksQuery.OrderByDescending(b => b.PublicationYear ?? 0),
+                "price" => sortOrder == "asc" 
+                    ? booksQuery.OrderBy(b => b.Price) 
+                    : booksQuery.OrderByDescending(b => b.Price),
+                "stockquantity" => sortOrder == "asc" 
+                    ? booksQuery.OrderBy(b => b.StockQuantity ?? 0) 
+                    : booksQuery.OrderByDescending(b => b.StockQuantity ?? 0),
+                "createdat" => sortOrder == "asc" 
+                    ? booksQuery.OrderBy(b => b.CreatedAt) 
+                    : booksQuery.OrderByDescending(b => b.CreatedAt),
+                _ => booksQuery.OrderByDescending(b => b.CreatedAt)
+            };
+
             var totalItems = await booksQuery.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
             var books = await booksQuery
-                .OrderByDescending(b => b.CreatedAt)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(b => new BookViewModel

@@ -18,9 +18,11 @@ namespace BookstoreManagement.Controllers
         }
 
         // GET: Promotion
-        public async Task<IActionResult> Index(string searchString, bool? isActive, int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string searchString, bool? isActive, string sortBy = "CreatedAt", string sortOrder = "desc", int pageNumber = 1, int pageSize = 10)
         {
             ViewData["CurrentFilter"] = searchString;
+            ViewData["SortBy"] = sortBy;
+            ViewData["SortOrder"] = sortOrder;
             if (isActive.HasValue)
             {
                 ViewData["IsActiveFilter"] = isActive.Value.ToString();
@@ -46,11 +48,37 @@ namespace BookstoreManagement.Controllers
                 promotionsQuery = promotionsQuery.Where(p => p.IsActive == isActive.Value);
             }
 
+            // Apply sorting
+            promotionsQuery = sortBy?.ToLower() switch
+            {
+                "name" => sortOrder == "asc" 
+                    ? promotionsQuery.OrderBy(p => p.Name) 
+                    : promotionsQuery.OrderByDescending(p => p.Name),
+                "type" => sortOrder == "asc" 
+                    ? promotionsQuery.OrderBy(p => p.Type.Value) 
+                    : promotionsQuery.OrderByDescending(p => p.Type.Value),
+                "discountpercent" => sortOrder == "asc" 
+                    ? promotionsQuery.OrderBy(p => p.DiscountPercent ?? 0) 
+                    : promotionsQuery.OrderByDescending(p => p.DiscountPercent ?? 0),
+                "startdate" => sortOrder == "asc" 
+                    ? promotionsQuery.OrderBy(p => p.StartDate ?? DateTime.MinValue) 
+                    : promotionsQuery.OrderByDescending(p => p.StartDate ?? DateTime.MinValue),
+                "enddate" => sortOrder == "asc" 
+                    ? promotionsQuery.OrderBy(p => p.EndDate ?? DateTime.MaxValue) 
+                    : promotionsQuery.OrderByDescending(p => p.EndDate ?? DateTime.MaxValue),
+                "isactive" => sortOrder == "asc" 
+                    ? promotionsQuery.OrderBy(p => p.IsActive) 
+                    : promotionsQuery.OrderByDescending(p => p.IsActive),
+                "createdat" => sortOrder == "asc" 
+                    ? promotionsQuery.OrderBy(p => p.CreatedAt) 
+                    : promotionsQuery.OrderByDescending(p => p.CreatedAt),
+                _ => promotionsQuery.OrderByDescending(p => p.CreatedAt)
+            };
+
             var totalItems = await promotionsQuery.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
             var promotions = await promotionsQuery
-                .OrderByDescending(p => p.CreatedAt)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(p => new PromotionViewModel

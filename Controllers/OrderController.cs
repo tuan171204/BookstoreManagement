@@ -18,9 +18,14 @@ namespace BookstoreManagement.Controllers
         }
 
         // GET: /Order (Danh sách hóa đơn)
-        public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, string? status, int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, string? status, string sortBy = "OrderDate", string sortOrder = "desc", int pageNumber = 1, int pageSize = 10)
         {
             TempData["CurrentFeature"] = "Order";
+            ViewData["SortBy"] = sortBy;
+            ViewData["SortOrder"] = sortOrder;
+            if (fromDate.HasValue) ViewData["FromDateFilter"] = fromDate.Value.ToString("yyyy-MM-dd");
+            if (toDate.HasValue) ViewData["ToDateFilter"] = toDate.Value.ToString("yyyy-MM-dd");
+            if (!string.IsNullOrEmpty(status)) ViewData["StatusFilter"] = status;
 
             // Tạo query cơ bản
             var ordersQuery = _context.Orders
@@ -48,13 +53,36 @@ namespace BookstoreManagement.Controllers
                 ordersQuery = ordersQuery.Where(o => o.Status == status);
             }
 
+            // Apply sorting
+            ordersQuery = sortBy?.ToLower() switch
+            {
+                "orderid" => sortOrder == "asc" 
+                    ? ordersQuery.OrderBy(o => o.OrderId) 
+                    : ordersQuery.OrderByDescending(o => o.OrderId),
+                "orderdate" => sortOrder == "asc" 
+                    ? ordersQuery.OrderBy(o => o.OrderDate) 
+                    : ordersQuery.OrderByDescending(o => o.OrderDate),
+                "customer" => sortOrder == "asc" 
+                    ? ordersQuery.OrderBy(o => o.Customer.FullName) 
+                    : ordersQuery.OrderByDescending(o => o.Customer.FullName),
+                "user" => sortOrder == "asc" 
+                    ? ordersQuery.OrderBy(o => o.User.FullName) 
+                    : ordersQuery.OrderByDescending(o => o.User.FullName),
+                "finalamount" => sortOrder == "asc" 
+                    ? ordersQuery.OrderBy(o => o.FinalAmount) 
+                    : ordersQuery.OrderByDescending(o => o.FinalAmount),
+                "status" => sortOrder == "asc" 
+                    ? ordersQuery.OrderBy(o => o.Status) 
+                    : ordersQuery.OrderByDescending(o => o.Status),
+                _ => ordersQuery.OrderByDescending(o => o.OrderDate)
+            };
+
             // Tính tổng số items trước khi phân trang
             var totalItems = await ordersQuery.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
             // Phân trang và sắp xếp
             var orders = await ordersQuery
-                .OrderByDescending(o => o.OrderDate)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

@@ -23,13 +23,15 @@ public class WarehouseController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(string searchString, string typeFilter, string statusFilter, int pageNumber = 1, int pageSize = 10)
+    public async Task<IActionResult> Index(string searchString, string typeFilter, string statusFilter, string sortBy = "Date", string sortOrder = "desc", int pageNumber = 1, int pageSize = 10)
     {
         ViewBag.TypeFilter = new SelectList(new[] { "Phiếu Nhập", "Phiếu Xuất" }, typeFilter);
         ViewBag.StatusFilter = new SelectList(new[] { "Completed", "Pending", "Cancelled" }, statusFilter);
         ViewData["CurrentFilter"] = searchString;
         ViewData["TypeFilter"] = typeFilter;
         ViewData["StatusFilter"] = statusFilter;
+        ViewData["SortBy"] = sortBy;
+        ViewData["SortOrder"] = sortOrder;
 
 
         var importQuery = _context.ImportTickets
@@ -91,14 +93,38 @@ public class WarehouseController : Controller
             exportList = await exportQuery.OrderByDescending(t => t.Date).ToListAsync();
         }
 
-        var allTickets = importList.Concat(exportList).OrderByDescending(t => t.Date).ToList();
+        var allTickets = importList.Concat(exportList).ToList();
+
+        // Apply sorting
+        var sortedTickets = sortBy?.ToLower() switch
+        {
+            "documentnumber" => sortOrder == "asc" 
+                ? allTickets.OrderBy(t => t.DocumentNumber ?? "").ToList()
+                : allTickets.OrderByDescending(t => t.DocumentNumber ?? "").ToList(),
+            "type" => sortOrder == "asc" 
+                ? allTickets.OrderBy(t => t.Type).ToList()
+                : allTickets.OrderByDescending(t => t.Type).ToList(),
+            "date" => sortOrder == "asc" 
+                ? allTickets.OrderBy(t => t.Date).ToList()
+                : allTickets.OrderByDescending(t => t.Date).ToList(),
+            "totalquantity" => sortOrder == "asc" 
+                ? allTickets.OrderBy(t => t.TotalQuantity).ToList()
+                : allTickets.OrderByDescending(t => t.TotalQuantity).ToList(),
+            "totalcost" => sortOrder == "asc" 
+                ? allTickets.OrderBy(t => t.TotalCost ?? 0).ToList()
+                : allTickets.OrderByDescending(t => t.TotalCost ?? 0).ToList(),
+            "status" => sortOrder == "asc" 
+                ? allTickets.OrderBy(t => t.Status).ToList()
+                : allTickets.OrderByDescending(t => t.Status).ToList(),
+            _ => allTickets.OrderByDescending(t => t.Date).ToList()
+        };
 
         // Calculate pagination
-        var totalItems = allTickets.Count;
+        var totalItems = sortedTickets.Count;
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
         // Apply pagination
-        var finalTickets = allTickets
+        var finalTickets = sortedTickets
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToList();
