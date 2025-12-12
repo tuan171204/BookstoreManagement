@@ -1114,5 +1114,28 @@ namespace BookstoreManagement.Controllers
             public int Quantity { get; set; }
         }
 
+        // 2. Action: Chuyển từ "Shipping" -> "Completed"
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CompleteOrder(int id)
+        {
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null) return NotFound();
+
+            if (order.Status != "Shipping")
+            {
+                TempData["ErrorMessage"] = "Chỉ đơn hàng đang giao mới có thể xác nhận hoàn thành.";
+            }
+            else
+            {
+                order.Status = "Completed"; // Trạng thái cuối: Hoàn thành
+                order.UpdatedAt = DateTime.Now;
+                _context.Update(order);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Đơn hàng đã hoàn thành!";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }
