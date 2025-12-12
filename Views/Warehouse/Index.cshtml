@@ -2,6 +2,30 @@
 
 @{
     ViewData["Title"] = "Quản lý Kho";
+    
+    Func<string, string, string, string> GetSortUrl = (column, currentSortBy, currentSortOrder) =>
+    {
+        var queryParams = new List<string>();
+        if (ViewData["CurrentFilter"] != null && !string.IsNullOrEmpty(ViewData["CurrentFilter"].ToString()))
+        {
+            queryParams.Add($"searchString={Uri.EscapeDataString(ViewData["CurrentFilter"].ToString())}");
+        }
+        if (ViewData["TypeFilter"] != null && !string.IsNullOrEmpty(ViewData["TypeFilter"].ToString()))
+        {
+            queryParams.Add($"typeFilter={Uri.EscapeDataString(ViewData["TypeFilter"].ToString())}");
+        }
+        if (ViewData["StatusFilter"] != null && !string.IsNullOrEmpty(ViewData["StatusFilter"].ToString()))
+        {
+            queryParams.Add($"statusFilter={Uri.EscapeDataString(ViewData["StatusFilter"].ToString())}");
+        }
+        string newSortOrder = currentSortBy == column && currentSortOrder == "asc" ? "desc" : "asc";
+        queryParams.Add($"sortBy={column}");
+        queryParams.Add($"sortOrder={newSortOrder}");
+        queryParams.Add($"pageNumber=1");
+        return "?" + string.Join("&", queryParams);
+    };
+    string currentSortBy = ViewData["SortBy"]?.ToString() ?? "Date";
+    string currentSortOrder = ViewData["SortOrder"]?.ToString() ?? "desc";
 }
 
 <div class="container-fluid py-4">
@@ -36,6 +60,8 @@
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3">
                 <input type="hidden" name="pageNumber" value="1" />
+                <input type="hidden" name="sortBy" value="@currentSortBy" />
+                <input type="hidden" name="sortOrder" value="@currentSortOrder" />
                 <div class="col-md-5">
                     <label class="form-label">Tìm kiếm</label>
                     <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control"
@@ -85,13 +111,85 @@
                 <table class="table table-hover">
                     <thead class="table-light">
                         <tr>
-                            <th>Mã phiếu</th>
-                            <th>Loại</th>
-                            <th>Ngày</th>
+                            <th>
+                                <a href="@GetSortUrl("documentnumber", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Mã phiếu
+                                    @if (currentSortBy == "documentnumber")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@GetSortUrl("type", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Loại
+                                    @if (currentSortBy == "type")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@GetSortUrl("date", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Ngày
+                                    @if (currentSortBy == "date")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
                             <th>Đối tượng/Lý do</th>
-                            <th>Tổng SL</th>
-                            <th>Tổng tiền</th>
-                            <th>Trạng thái</th>
+                            <th>
+                                <a href="@GetSortUrl("totalquantity", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Tổng SL
+                                    @if (currentSortBy == "totalquantity")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@GetSortUrl("totalcost", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Tổng tiền
+                                    @if (currentSortBy == "totalcost")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@GetSortUrl("status", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Trạng thái
+                                    @if (currentSortBy == "status")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
                             <th class="text-center">Thao tác</th>
                         </tr>
                     </thead>

@@ -5,7 +5,7 @@ using BookstoreManagement.Models;
 
 namespace BookstoreManagement.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,Manager")]
     public class SupplierController : Controller
     {
         private readonly BookstoreContext _context;
@@ -17,9 +17,11 @@ namespace BookstoreManagement.Controllers
 
         // TRANG DANH SÁCH (INDEX)
         [HttpGet]
-        public async Task<IActionResult> Index(string searchString, bool? isActive, int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string searchString, bool? isActive, string sortBy = "CreatedAt", string sortOrder = "desc", int pageNumber = 1, int pageSize = 10)
         {
             ViewData["CurrentFilter"] = searchString;
+            ViewData["SortBy"] = sortBy;
+            ViewData["SortOrder"] = sortOrder;
             if (isActive.HasValue)
             {
                 ViewData["IsActiveFilter"] = isActive.Value.ToString();
@@ -41,13 +43,33 @@ namespace BookstoreManagement.Controllers
                 query = query.Where(s => s.IsActive == isActive.Value);
             }
 
+            // Apply sorting
+            query = sortBy?.ToLower() switch
+            {
+                "name" => sortOrder == "asc" 
+                    ? query.OrderBy(s => s.Name) 
+                    : query.OrderByDescending(s => s.Name),
+                "contactinfo" => sortOrder == "asc" 
+                    ? query.OrderBy(s => s.ContactInfo ?? "") 
+                    : query.OrderByDescending(s => s.ContactInfo ?? ""),
+                "address" => sortOrder == "asc" 
+                    ? query.OrderBy(s => s.Address ?? "") 
+                    : query.OrderByDescending(s => s.Address ?? ""),
+                "isactive" => sortOrder == "asc" 
+                    ? query.OrderBy(s => s.IsActive) 
+                    : query.OrderByDescending(s => s.IsActive),
+                "createdat" => sortOrder == "asc" 
+                    ? query.OrderBy(s => s.CreatedAt) 
+                    : query.OrderByDescending(s => s.CreatedAt),
+                _ => query.OrderByDescending(s => s.CreatedAt)
+            };
+
             // Calculate pagination
             var totalItems = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
             // Apply pagination
             var suppliers = await query
-                .OrderByDescending(s => s.CreatedAt)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

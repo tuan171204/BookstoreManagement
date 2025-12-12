@@ -392,6 +392,9 @@
         const CART_STORAGE_KEY = 'bookstore_client_cart';
         let cartOffcanvasInstance = null; // Khởi tạo biến lưu instance Offcanvas
         const formatCurrency = (amount) => amount.toLocaleString('vi-VN') + ' đ';
+        
+        // Kiểm tra trạng thái đăng nhập (từ Razor)
+        const isUserAuthenticated = @((User.Identity?.IsAuthenticated ?? false).ToString().ToLower());
 
 
         // --- Hàm 0: Khởi tạo/Đồng bộ giỏ hàng từ localStorage ---
@@ -415,6 +418,16 @@
 
         // --- Hàm 2: Thêm sản phẩm vào giỏ hàng ---
         function addToCart(bookId, quantity = 1) {
+            // Kiểm tra đăng nhập trước khi thêm vào giỏ
+            if (!isUserAuthenticated) {
+                // Chưa đăng nhập - Hiển thị thông báo và redirect đến trang đăng nhập với returnUrl
+                if (confirm("Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.\n\nBạn có muốn đăng nhập ngay bây giờ không?")) {
+                    const currentUrl = window.location.pathname + window.location.search;
+                    window.location.href = '/Account/ClientLogin?returnUrl=' + encodeURIComponent(currentUrl);
+                }
+                return;
+            }
+
             const existingItem = clientCart.find(item => item.id === bookId);
 
             if (existingItem) {

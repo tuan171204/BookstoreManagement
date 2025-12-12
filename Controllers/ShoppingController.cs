@@ -13,11 +13,13 @@ namespace BookstoreManagement.Controllers
     {
         private readonly BookstoreContext _context;
         private readonly UserManager<AppUser> _userManager;
+        private readonly SignInManager<AppUser> _signInManager;
 
-        public ShoppingController(BookstoreContext context, UserManager<AppUser> userManager)
+        public ShoppingController(BookstoreContext context, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
         {
             _context = context;
             _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         public async Task<IActionResult> Index(string type = "normal",
@@ -26,7 +28,9 @@ namespace BookstoreManagement.Controllers
                                                 int? authorId = null,
                                                 int? publisherId = null,
                                                 decimal? minPrice = null,
-                                                decimal? maxPrice = null)
+                                                decimal? maxPrice = null,
+                                                int pageNumber = 1,
+                                                int pageSize = 12)
         {
             // 1. Lấy danh sách thể loại cho Menu (giữ nguyên)
             ViewBag.Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
@@ -118,8 +122,26 @@ namespace BookstoreManagement.Controllers
                         query = query.Where(b => b.Price <= maxPrice.Value);
                     }
 
-                    // Thực thi query
-                    featuredBooks = await query.OrderByDescending(b => b.CreatedAt).ToListAsync();
+                    // Pagination cho filter
+                    var totalFilterItems = await query.CountAsync();
+                    var totalFilterPages = (int)Math.Ceiling(totalFilterItems / (double)pageSize);
+                    
+                    ViewBag.TotalFilterItems = totalFilterItems;
+                    ViewBag.TotalFilterPages = totalFilterPages;
+                    ViewBag.PageNumber = pageNumber;
+                    ViewBag.PageSize = pageSize;
+                    ViewBag.CategoryId = categoryId;
+                    ViewBag.AuthorId = authorId;
+                    ViewBag.PublisherId = publisherId;
+                    ViewBag.MinPrice = minPrice;
+                    ViewBag.MaxPrice = maxPrice;
+
+                    // Thực thi query với pagination
+                    featuredBooks = await query
+                        .OrderByDescending(b => b.CreatedAt)
+                        .Skip((pageNumber - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToListAsync();
                     break;
 
                 default:
@@ -143,10 +165,24 @@ namespace BookstoreManagement.Controllers
             // --- TRƯỜNG HỢP LOAD TRANG BÌNH THƯỜNG ---
             ViewBag.FeaturedBooks = featuredBooks; // Đẩy dữ liệu vào ViewBag để View chính dùng lần đầu
 
-            var allBooks = await _context.Books
+            // Pagination cho all books
+            var allBooksQuery = _context.Books
                 .Include(b => b.Author)
-                .Where(b => b.IsDeleted != true)
-                .OrderBy(b => b.Title).Take(50).ToListAsync();
+                .Where(b => b.IsDeleted != true);
+            
+            var totalAllBooks = await allBooksQuery.CountAsync();
+            var totalAllPages = (int)Math.Ceiling(totalAllBooks / (double)pageSize);
+            
+            ViewBag.TotalAllBooks = totalAllBooks;
+            ViewBag.TotalAllPages = totalAllPages;
+            ViewBag.AllBooksPageNumber = pageNumber;
+            ViewBag.AllBooksPageSize = pageSize;
+
+            var allBooks = await allBooksQuery
+                .OrderBy(b => b.Title)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             return View(allBooks);
         }
@@ -210,6 +246,12 @@ namespace BookstoreManagement.Controllers
         [Authorize] // Bắt buộc đăng nhập mới được đánh giá
         public async Task<IActionResult> RateBook(int bookId, int ratingValue, string? comment)
         {
+            // Kiểm tra role: Chỉ cho phép Customer
+            if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                return Json(new { success = false, message = "Tài khoản quản trị không thể đánh giá sách." });
+            }
+            
             if (ratingValue < 1 || ratingValue > 5)
             {
                 return Json(new { success = false, message = "Điểm đánh giá không hợp lệ." });
@@ -278,13 +320,14 @@ namespace BookstoreManagement.Controllers
                 return Json(new { authors = new List<object>(), books = new List<object>() });
             }
 
-            string keyword = term.Trim();
+            string keyword = term.Trim().ToLower(); // Chuyển sang lowercase để tìm kiếm không phân biệt hoa thường
             var now = DateTime.Now;
 
-            // 1. Tìm kiếm Tác giả
+            // 1. Tìm kiếm Tác giả (không phân biệt hoa thường)
             var matchingAuthors = await _context.Authors
                 .Include(a => a.Books)
-                .Where(a => a.Name.Contains(keyword) || (a.Pseudonym != null && a.Pseudonym.Contains(keyword)))
+                .Where(a => a.Name.ToLower().Contains(keyword) || 
+                           (a.Pseudonym != null && a.Pseudonym.ToLower().Contains(keyword)))
                 .Select(a => new
                 {
                     Id = a.AuthorId,
@@ -296,10 +339,14 @@ namespace BookstoreManagement.Controllers
                 .Take(5)
                 .ToListAsync();
 
-            // 2. Tìm kiếm Sách
+            // 2. Tìm kiếm Sách (tìm trong Title, Author Name, và Publisher Name)
             var matchingBooks = await _context.Books
                 .Include(b => b.Author)
-                .Where(b => b.Title.Contains(keyword) && b.IsDeleted != true && b.StockQuantity > 0)
+                .Include(b => b.Publisher)
+                .Where(b => (b.Title.ToLower().Contains(keyword) || 
+                            b.Author.Name.ToLower().Contains(keyword) ||
+                            (b.Publisher != null && b.Publisher.Name.ToLower().Contains(keyword))) &&
+                            b.IsDeleted != true && b.StockQuantity > 0)
                 .Select(b => new
                 {
                     Id = b.BookId,
@@ -320,6 +367,8 @@ namespace BookstoreManagement.Controllers
                                         p.IsActive == true &&
                                         (p.EndDate == null || p.EndDate >= now))
                 })
+                .OrderByDescending(b => b.AverageRating) // Sắp xếp theo rating để hiển thị sách tốt nhất trước
+                .ThenByDescending(b => b.TotalRatings)
                 .Take(15)
                 .ToListAsync();
 
@@ -580,15 +629,34 @@ namespace BookstoreManagement.Controllers
 
         // GET: /Shopping/MyOrders
         [Authorize]
-        public async Task<IActionResult> MyOrders()
+        public async Task<IActionResult> MyOrders(int pageNumber = 1, int pageSize = 10)
         {
+            // Kiểm tra role: Chỉ cho phép Customer
+            if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                await _signInManager.SignOutAsync();
+                return RedirectToAction("ClientLogin", "Account");
+            }
+            
             var userId = _userManager.GetUserId(User);
 
-            var orders = await _context.Orders
+            var ordersQuery = _context.Orders
                 .Include(o => o.PaymentMethod)
-                .Where(o => o.UserId == userId)
+                .Where(o => o.UserId == userId);
+
+            var totalItems = await ordersQuery.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            var orders = await ordersQuery
                 .OrderByDescending(o => o.OrderDate)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalItems;
 
             return View(orders);
         }
@@ -597,6 +665,12 @@ namespace BookstoreManagement.Controllers
         [Authorize]
         public async Task<IActionResult> GetOrderDetails(int id)
         {
+            // Kiểm tra role: Chỉ cho phép Customer
+            if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                return Json(new { success = false, message = "Tài khoản quản trị không thể truy cập tính năng này." });
+            }
+            
             var userId = _userManager.GetUserId(User);
 
             var order = await _context.Orders
@@ -615,8 +689,15 @@ namespace BookstoreManagement.Controllers
         [Authorize]
         public async Task<IActionResult> MyAccount()
         {
+            // Kiểm tra role: Chỉ cho phép Customer
+            if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                await _signInManager.SignOutAsync();
+                return RedirectToAction("ClientLogin", "Account");
+            }
+            
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) return RedirectToAction("Login", "Account");
+            if (user == null) return RedirectToAction("ClientLogin", "Account");
 
             // Lấy thông tin Customer kèm Rank
             var customerInfo = await _context.Customers
@@ -639,8 +720,15 @@ namespace BookstoreManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateProfile(string fullName, string phoneNumber, string address, string email)
         {
+            // Kiểm tra role: Chỉ cho phép Customer
+            if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                await _signInManager.SignOutAsync();
+                return RedirectToAction("ClientLogin", "Account");
+            }
+            
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) return RedirectToAction("Login", "Account");
+            if (user == null) return RedirectToAction("ClientLogin", "Account");
 
             // 1. Cập nhật bảng Users (AppUser)
             user.FullName = fullName;

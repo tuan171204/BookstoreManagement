@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 
 namespace BookstoreManagement.Controllers
 {
+    [Authorize(Roles = "Admin,Manager")]
     public class SalesController : Controller
     {
         private readonly BookstoreContext _context;
@@ -55,6 +56,8 @@ namespace BookstoreManagement.Controllers
             string? employeeId,
             DateTime? fromDate,
             DateTime? toDate,
+            string sortBy = "OrderDate",
+            string sortOrder = "desc",
             int pageNumber = 1, 
             int pageSize = 10)
         {
@@ -63,6 +66,8 @@ namespace BookstoreManagement.Controllers
             ViewData["EmployeeFilter"] = employeeId;
             ViewData["FromDateFilter"] = fromDate?.ToString("yyyy-MM-dd");
             ViewData["ToDateFilter"] = toDate?.ToString("yyyy-MM-dd");
+            ViewData["SortBy"] = sortBy;
+            ViewData["SortOrder"] = sortOrder;
             ViewData["IsSalesPage"] = "true"; // Flag để pagination biết dùng "status" thay vì "statusFilter"
 
             var query = _context.Orders
@@ -104,13 +109,36 @@ namespace BookstoreManagement.Controllers
                 query = query.Where(o => o.OrderDate <= endDate);
             }
 
+            // Apply sorting
+            query = sortBy?.ToLower() switch
+            {
+                "orderid" => sortOrder == "asc" 
+                    ? query.OrderBy(o => o.OrderId) 
+                    : query.OrderByDescending(o => o.OrderId),
+                "orderdate" => sortOrder == "asc" 
+                    ? query.OrderBy(o => o.OrderDate) 
+                    : query.OrderByDescending(o => o.OrderDate),
+                "customer" => sortOrder == "asc" 
+                    ? query.OrderBy(o => o.Customer.FullName) 
+                    : query.OrderByDescending(o => o.Customer.FullName),
+                "user" => sortOrder == "asc" 
+                    ? query.OrderBy(o => o.User.FullName) 
+                    : query.OrderByDescending(o => o.User.FullName),
+                "finalamount" => sortOrder == "asc" 
+                    ? query.OrderBy(o => o.FinalAmount) 
+                    : query.OrderByDescending(o => o.FinalAmount),
+                "status" => sortOrder == "asc" 
+                    ? query.OrderBy(o => o.Status) 
+                    : query.OrderByDescending(o => o.Status),
+                _ => query.OrderByDescending(o => o.OrderDate)
+            };
+
             // Calculate pagination
             var totalItems = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
             // Apply pagination
             var orders = await query
-                .OrderByDescending(o => o.OrderDate)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

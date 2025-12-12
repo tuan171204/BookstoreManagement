@@ -2,6 +2,20 @@
 
 @{
     ViewData["Title"] = "Quản lý Thể loại sách";
+    
+    // Helper function để tạo sortable header link
+    Func<string, string, string, string> GetSortUrl = (column, currentSortBy, currentSortOrder) =>
+    {
+        string newSortOrder = "asc";
+        if (currentSortBy == column && currentSortOrder == "asc")
+        {
+            newSortOrder = "desc";
+        }
+        return $"?sortBy={column}&sortOrder={newSortOrder}";
+    };
+    
+    string currentSortBy = ViewData["SortBy"]?.ToString() ?? "CreatedAt";
+    string currentSortOrder = ViewData["SortOrder"]?.ToString() ?? "desc";
 }
 
 <div class="container-fluid py-4">
@@ -46,10 +60,46 @@
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th style="width: 25%">Tên thể loại</th>
+                            <th style="width: 25%">
+                                <a href="@GetSortUrl("name", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Tên thể loại
+                                    @if (currentSortBy == "name")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
                             <th style="width: 40%">Mô tả</th>
-                            <th style="width: 15%">Ngày tạo</th>
-                            <th style="width: 10%">Ngày cập nhật</th>
+                            <th style="width: 15%">
+                                <a href="@GetSortUrl("createdat", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Ngày tạo
+                                    @if (currentSortBy == "createdat")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th style="width: 10%">
+                                <a href="@GetSortUrl("updatedat", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Ngày cập nhật
+                                    @if (currentSortBy == "updatedat")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
                             <th class="text-center" style="width: 10%">Thao tác</th>
                         </tr>
                     </thead>

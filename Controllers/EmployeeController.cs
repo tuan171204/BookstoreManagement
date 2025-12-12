@@ -27,9 +27,11 @@ namespace BookstoreManagement.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> Index(string searchString, bool? isActive, string? roleName, int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string searchString, bool? isActive, string? roleName, string sortBy = "HireDate", string sortOrder = "desc", int pageNumber = 1, int pageSize = 10)
         {
             ViewData["CurrentFilter"] = searchString;
+            ViewData["SortBy"] = sortBy;
+            ViewData["SortOrder"] = sortOrder;
             ViewBag.IsActiveParam = isActive;
 
             // Truy vấn từ bảng Employees (không phải Users)
@@ -47,11 +49,31 @@ namespace BookstoreManagement.Controllers
                 query = query.Where(e => e.IsActive == isActive.Value);
             }
 
+            // Apply sorting
+            query = sortBy?.ToLower() switch
+            {
+                "fullname" => sortOrder == "asc" 
+                    ? query.OrderBy(e => e.FullName) 
+                    : query.OrderByDescending(e => e.FullName),
+                "email" => sortOrder == "asc" 
+                    ? query.OrderBy(e => e.Email ?? "") 
+                    : query.OrderByDescending(e => e.Email ?? ""),
+                "phonenumber" => sortOrder == "asc" 
+                    ? query.OrderBy(e => e.PhoneNumber) 
+                    : query.OrderByDescending(e => e.PhoneNumber),
+                "isactive" => sortOrder == "asc" 
+                    ? query.OrderBy(e => e.IsActive) 
+                    : query.OrderByDescending(e => e.IsActive),
+                "hiredate" => sortOrder == "asc" 
+                    ? query.OrderBy(e => e.HireDate) 
+                    : query.OrderByDescending(e => e.HireDate),
+                _ => query.OrderByDescending(e => e.HireDate)
+            };
+
             var totalItems = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
             var employees = await query
-                .OrderByDescending(e => e.HireDate)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(e => new EmployeeViewModel
@@ -341,45 +363,92 @@ namespace BookstoreManagement.Controllers
         // ============================================================
         // ADMIN RESET MẬT KHẨU (Force Reset)
         // ============================================================
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AdminResetPassword(int employeeId, string newPassword)
+        [HttpGet]
+        public async Task<IActionResult> ResetPassword(int id)
         {
-            // 1. Tìm nhân viên
-            var employee = await _context.Employees.FindAsync(employeeId);
-            if (employee == null || string.IsNullOrEmpty(employee.AccountId))
+            var employee = await _context.Employees
+                .Include(e => e.AppUser)
+                .FirstOrDefaultAsync(e => e.EmployeeId == id);
+
+            if (employee == null) return NotFound();
+
+            if (string.IsNullOrEmpty(employee.AccountId))
             {
-                TempData["ErrorMessage"] = "Nhân viên không tồn tại hoặc chưa có tài khoản.";
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = "Nhân viên này chưa có tài khoản đăng nhập.";
+                return RedirectToAction(nameof(Details), new { id });
             }
 
-            // 2. Tìm tài khoản AppUser tương ứng
+            ViewBag.EmployeeName = employee.FullName;
+            ViewBag.EmployeeId = employee.EmployeeId;
+            ViewBag.Email = employee.AppUser?.Email ?? employee.Email;
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(int id, string newPassword, string confirmPassword)
+        {
+            var employee = await _context.Employees
+                .Include(e => e.AppUser)
+                .FirstOrDefaultAsync(e => e.EmployeeId == id);
+
+            if (employee == null) return NotFound();
+
+            if (string.IsNullOrEmpty(employee.AccountId))
+            {
+                TempData["ErrorMessage"] = "Nhân viên này chưa có tài khoản đăng nhập.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            if (string.IsNullOrEmpty(newPassword) || newPassword.Length < 6)
+            {
+                ModelState.AddModelError("", "Mật khẩu phải có ít nhất 6 ký tự.");
+                ViewBag.EmployeeName = employee.FullName;
+                ViewBag.EmployeeId = employee.EmployeeId;
+                ViewBag.Email = employee.AppUser?.Email ?? employee.Email;
+                return View();
+            }
+
+            if (newPassword != confirmPassword)
+            {
+                ModelState.AddModelError("", "Mật khẩu xác nhận không khớp.");
+                ViewBag.EmployeeName = employee.FullName;
+                ViewBag.EmployeeId = employee.EmployeeId;
+                ViewBag.Email = employee.AppUser?.Email ?? employee.Email;
+                return View();
+            }
+
             var user = await _userManager.FindByIdAsync(employee.AccountId);
             if (user == null)
             {
-                TempData["ErrorMessage"] = "Không tìm thấy tài khoản liên kết.";
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = "Không tìm thấy tài khoản người dùng.";
+                return RedirectToAction(nameof(Details), new { id });
             }
 
-            // 3. Thực hiện Reset mật khẩu
-            // Cách làm: Tạo token reset -> Gọi hàm ResetPassword
+            // Reset password
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
 
             if (result.Succeeded)
             {
-                // (Tùy chọn) Đánh dấu là mật khẩu mặc định để bắt user đổi lần sau
-                user.IsDefaultPassword = true;
+                user.IsDefaultPassword = true; // Đánh dấu để user đổi lần sau
+                user.UpdatedAt = DateTime.Now;
                 await _userManager.UpdateAsync(user);
 
-                TempData["SuccessMessage"] = $"Đã đặt lại mật khẩu cho {employee.FullName} thành công!";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Lỗi: " + string.Join(", ", result.Errors.Select(e => e.Description));
+                TempData["SuccessMessage"] = $"Đã reset mật khẩu thành công cho nhân viên {employee.FullName}.";
+                return RedirectToAction(nameof(Details), new { id });
             }
 
-            return RedirectToAction(nameof(Index));
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError("", error.Description);
+            }
+
+            ViewBag.EmployeeName = employee.FullName;
+            ViewBag.EmployeeId = employee.EmployeeId;
+            ViewBag.Email = employee.AppUser?.Email ?? employee.Email;
+            return View();
         }
     }
 }
