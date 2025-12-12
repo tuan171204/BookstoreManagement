@@ -66,7 +66,7 @@
     <!-- Search and Filter -->
     <div class="card mb-4">
         <div class="card-body">
-            <form asp-action="Index" method="get" class="row g-3">
+            <form asp-action="Index" method="get">
                 <input type="hidden" name="pageNumber" value="1" />
                 <input type="hidden" name="sortBy" value="@currentSortBy" />
                 <input type="hidden" name="sortOrder" value="@currentSortOrder" />
@@ -129,6 +129,7 @@
                         <i class="bi bi-search"></i> Tìm
                     </button>
                 </div>
+            </div>
             </form>
         </div>
     </div>
@@ -206,9 +207,34 @@
                                 </a>
                             </th>
                             <th>
-                                <a href="@GetSortUrl("price", currentSortBy, currentSortOrder)"
-                                    class="text-decoration-none text-dark">
-                                    Giá
+                                <a href="@GetSortUrl("costprice", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Giá vốn
+                                    @if (currentSortBy == "costprice")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@GetSortUrl("profitmargin", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    % Lợi nhuận
+                                    @if (currentSortBy == "profitmargin")
+                                    {
+                                        <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up text-muted" style="opacity: 0.3;"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@GetSortUrl("price", currentSortBy, currentSortOrder)" class="text-decoration-none text-dark">
+                                    Giá bán
                                     @if (currentSortBy == "price")
                                     {
                                         <i class="bi bi-arrow-@(currentSortOrder == "asc" ? "up" : "down")"></i>
@@ -266,7 +292,11 @@
                                     <td>@item.AuthorName</td>
                                     <td>@item.PublisherName</td>
                                     <td>@item.PublicationYear</td>
-                                    <td>@item.Price.ToString("N0") ₫</td>
+                                    <td class="text-end">@item.CostPrice.ToString("N0") ₫</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">@item.ProfitMargin.ToString("F1")%</span>
+                                    </td>
+                                    <td class="text-end fw-bold text-success">@item.Price.ToString("N0") ₫</td>
                                     <td>
                                         <span
                                             class="badge p-2 w-50 @(item.StockQuantity > item.LowStockThreshold ? "bg-success" : "bg-danger")">

@@ -85,7 +85,7 @@ builder.Services.AddAuthorization(options =>
 	options.AddPolicy("Report.Inventory", policy => policy.RequireClaim("Permission", "Report.Inventory"));
 	options.AddPolicy("Report.Export", policy => policy.RequireClaim("Permission", "Report.Export"));
 
-	// Quản lý Người dùng & Chức vụ (User/Role)
+	// Quản lý Người dùng & Quyền (User/Role)
 	options.AddPolicy("User.View", policy => policy.RequireClaim("Permission", "User.View"));
 	options.AddPolicy("User.Create", policy => policy.RequireClaim("Permission", "User.Create"));
 	options.AddPolicy("User.Update", policy => policy.RequireClaim("Permission", "User.Update"));
@@ -223,10 +223,73 @@ using (var scope = app.Services.CreateScope())
 			};
 			context.Codes.AddRange(promotionTypes);
 			await context.SaveChangesAsync();
-			Console.WriteLine("Đã seed PromotionType codes!");
+			Console.WriteLine("Đã seed PaymentMethod codes!");
 		}
 
-
+		// Seed Categories với DefaultProfitMargin nếu chưa có
+		if (!context.Categories.Any())
+		{
+			var categories = new[]
+			{
+				new Category 
+				{ 
+					Name = "Tiểu thuyết", 
+					Description = "Thể loại tiểu thuyết văn học",
+					DefaultProfitMargin = 20.0, // 20% lợi nhuận mặc định
+					CreatedAt = DateTime.Now 
+				},
+				new Category 
+				{ 
+					Name = "Tình cảm", 
+					Description = "Thể loại sách tình cảm, lãng mạn",
+					DefaultProfitMargin = 25.0, // 25% lợi nhuận mặc định
+					CreatedAt = DateTime.Now 
+				},
+				new Category 
+				{ 
+					Name = "Kinh tế", 
+					Description = "Sách về kinh tế, tài chính",
+					DefaultProfitMargin = 15.0, // 15% lợi nhuận mặc định
+					CreatedAt = DateTime.Now 
+				},
+				new Category 
+				{ 
+					Name = "Khoa học", 
+					Description = "Sách khoa học, công nghệ",
+					DefaultProfitMargin = 18.0, // 18% lợi nhuận mặc định
+					CreatedAt = DateTime.Now 
+				},
+				new Category 
+				{ 
+					Name = "Thiếu nhi", 
+					Description = "Sách dành cho thiếu nhi",
+					DefaultProfitMargin = 30.0, // 30% lợi nhuận mặc định
+					CreatedAt = DateTime.Now 
+				}
+			};
+			context.Categories.AddRange(categories);
+			await context.SaveChangesAsync();
+			Console.WriteLine("Đã seed Categories với DefaultProfitMargin!");
+		}
+		else
+		{
+			// Cập nhật DefaultProfitMargin cho các category đã có (nếu chưa có giá trị)
+			var categoriesWithoutProfit = await context.Categories
+				.Where(c => c.DefaultProfitMargin == null || c.DefaultProfitMargin == 0)
+				.ToListAsync();
+			
+			if (categoriesWithoutProfit.Any())
+			{
+				// Set mặc định 20% cho các category chưa có DefaultProfitMargin
+				foreach (var category in categoriesWithoutProfit)
+				{
+					category.DefaultProfitMargin = 20.0;
+					category.UpdatedAt = DateTime.Now;
+				}
+				await context.SaveChangesAsync();
+				Console.WriteLine($"Đã cập nhật DefaultProfitMargin = 20% cho {categoriesWithoutProfit.Count} category!");
+			}
+		}
 
 		// Tạo user admin nếu chưa có
 		string adminEmail = "admin@bookstore.com";

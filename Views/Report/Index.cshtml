@@ -217,6 +217,32 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Bảng chi tiết nhập-xuất-tồn -->
+                    <div class="mt-4">
+                        <h6 class="text-center text-muted mb-3 small fw-bold">BẢNG CHI TIẾT NHẬP - XUẤT - TỒN KHO THEO DANH MỤC</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover table-sm" id="categoryDetailTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-center">STT</th>
+                                        <th>Danh mục</th>
+                                        <th class="text-end">Nhập trong kỳ</th>
+                                        <th class="text-end">Xuất trong kỳ</th>
+                                        <th class="text-end">Tồn kho hiện tại</th>
+                                        <th class="text-center">Tỷ lệ xuất (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="categoryDetailTableBody">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-3">
+                                            <i class="bi bi-hourglass-split"></i> Đang tải dữ liệu...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -401,9 +427,50 @@
                     }
                 });
 
+                // Cập nhật bảng chi tiết
+                updateCategoryDetailTable(data);
+
             } catch (error) {
                 console.error("Lỗi chart category:", error);
+                document.getElementById('categoryDetailTableBody').innerHTML = 
+                    '<tr><td colspan="6" class="text-center text-danger py-3">Lỗi tải dữ liệu</td></tr>';
             }
+        }
+
+        function updateCategoryDetailTable(data) {
+            const tbody = document.getElementById('categoryDetailTableBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Không có dữ liệu</td></tr>';
+                return;
+            }
+
+            // Tính tổng xuất để tính tỷ lệ
+            const totalExport = data.reduce((sum, item) => sum + (item.exportQty || 0), 0);
+
+            let html = '';
+            data.forEach((item, index) => {
+                const exportRate = totalExport > 0 ? ((item.exportQty / totalExport) * 100).toFixed(1) : '0.0';
+                html += `
+                    <tr>
+                        <td class="text-center">${index + 1}</td>
+                        <td><strong>${item.name}</strong></td>
+                        <td class="text-end">
+                            <span class="badge bg-success">${(item.importQty || 0).toLocaleString()}</span>
+                        </td>
+                        <td class="text-end">
+                            <span class="badge bg-danger">${(item.exportQty || 0).toLocaleString()}</span>
+                        </td>
+                        <td class="text-end">
+                            <span class="badge bg-primary">${(item.stockQty || 0).toLocaleString()}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-info">${exportRate}%</span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
         }
 
         document.addEventListener('DOMContentLoaded', () => {

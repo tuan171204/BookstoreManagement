@@ -28,6 +28,9 @@ namespace BookstoreManagement.Controllers
                 "name" => sortOrder == "asc" 
                     ? categoriesQuery.OrderBy(c => c.Name) 
                     : categoriesQuery.OrderByDescending(c => c.Name),
+                "defaultprofitmargin" => sortOrder == "asc" 
+                    ? categoriesQuery.OrderBy(c => c.DefaultProfitMargin ?? 0) 
+                    : categoriesQuery.OrderByDescending(c => c.DefaultProfitMargin ?? 0),
                 "createdat" => sortOrder == "asc" 
                     ? categoriesQuery.OrderBy(c => c.CreatedAt) 
                     : categoriesQuery.OrderByDescending(c => c.CreatedAt),
@@ -79,6 +82,7 @@ namespace BookstoreManagement.Controllers
                     var existingCat = await _context.Categories.FindAsync(id);
                     existingCat.Name = category.Name;
                     existingCat.Description = category.Description;
+                    existingCat.DefaultProfitMargin = category.DefaultProfitMargin;
                     existingCat.UpdatedAt = DateTime.Now;
 
                     await _context.SaveChangesAsync();

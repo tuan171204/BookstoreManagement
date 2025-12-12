@@ -7,8 +7,8 @@ namespace BookstoreManagement.ViewModels.Role
     {
         public string? Id { get; set; }
 
-        [Required(ErrorMessage = "Tên chức vụ không được bỏ trống")]
-        [Display(Name = "Tên chức vụ")]
+        [Required(ErrorMessage = "Tên quyền không được bỏ trống")]
+        [Display(Name = "Tên quyền")]
         public string Name { get; set; } = null!;
 
         [Display(Name = "Mô tả")]
@@ -16,7 +16,7 @@ namespace BookstoreManagement.ViewModels.Role
 
         [Display(Name = "Lương cơ bản")]
         [Range(0, double.MaxValue, ErrorMessage = "Lương phải lớn hơn hoặc bằng 0")]
-        public decimal Salary { get; set; }
+        public decimal Salary { get; set; } = 1; // Mặc định = 1
 
         public List<Permission>? AllPermissions { get; set; }
 

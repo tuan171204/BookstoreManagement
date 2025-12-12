@@ -23,11 +23,21 @@
                             <span asp-validation-for="Name" class="text-danger"></span>
                         </div>
 
-                        <div class="mb-4">
+                        <div class="mb-3">
                             <label asp-for="Description" class="form-label fw-bold">Mô tả</label>
                             <textarea asp-for="Description" class="form-control" rows="4"
                                 placeholder="Nhập mô tả ngắn gọn về thể loại này..."></textarea>
                             <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="DefaultProfitMargin" class="form-label fw-bold">% Lợi nhuận mặc định</label>
+                            <div class="input-group">
+                                <input asp-for="DefaultProfitMargin" class="form-control" type="number" step="0.1" min="0" max="500" placeholder="Ví dụ: 20 (nghĩa là 20%)" />
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <small class="text-muted">% lợi nhuận mặc định cho các sách thuộc thể loại này. Nếu không nhập, sẽ phải nhập thủ công khi tạo sách.</small>
+                            <span asp-validation-for="DefaultProfitMargin" class="text-danger"></span>
                         </div>
 
                         <div class="d-flex justify-content-end gap-2">
