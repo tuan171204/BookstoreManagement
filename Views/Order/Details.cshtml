@@ -21,11 +21,27 @@
 
             @if (Model.Status == "Pending")
             {
-                <form asp-action="StartShipping" method="post"
-                    onsubmit="return confirm('Xác nhận duyệt đơn và bắt đầu giao hàng?');">
+                @if (ViewBag.StockIssues != null && ((List<string>)ViewBag.StockIssues).Any())
+                {
+                    <div class="alert alert-warning mb-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Cảnh báo:</strong> Đơn hàng này không đủ hàng trong kho để duyệt:
+                        <ul class="mb-0 mt-2">
+                            @foreach (var issue in (List<string>)ViewBag.StockIssues)
+                            {
+                                <li>@issue</li>
+                            }
+                        </ul>
+                        <small class="text-muted">Vui lòng nhập thêm hàng vào kho trước khi duyệt đơn này.</small>
+                    </div>
+                }
+                
+                <form asp-action="ApproveOrder" method="post"
+                    onsubmit="return confirm('Xác nhận duyệt đơn hàng này?');">
                     <input type="hidden" name="id" value="@Model.OrderId" />
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-truck me-1"></i> Duyệt & Giao hàng
+                    <button type="submit" class="btn btn-success @(ViewBag.CanApprove == false ? "disabled" : "")" 
+                        @(ViewBag.CanApprove == false ? "disabled title='Không đủ hàng trong kho'" : "")>
+                        <i class="fas fa-check-circle me-1"></i> Duyệt đơn
                     </button>
                 </form>
 
@@ -37,6 +53,19 @@
                     </button>
                 </form>
             }
+
+            @if (Model.Status == "Approved")
+            {
+                <form asp-action="StartShipping" method="post"
+                    onsubmit="return confirm('Xác nhận bắt đầu giao hàng?');">
+                    <input type="hidden" name="id" value="@Model.OrderId" />
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-truck me-1"></i> Bắt đầu giao hàng
+                    </button>
+                </form>
+            }
+
+            @* Admin không xác nhận hoàn thành - chỉ client mới xác nhận nhận hàng *@
 
             <button onclick="window.print()" class="btn btn-outline-dark"><i class="fas fa-print"></i> In Hóa
                 Đơn</button>
@@ -53,18 +82,18 @@
                 }
                 else if (Model.Status == "Shipping")
                 {
-
                     <span class="badge bg-primary fs-6">Đang giao hàng</span>
                 }
-                else
-                if (Model.Status == "Pending")
+                else if (Model.Status == "Approved")
                 {
-
+                    <span class="badge bg-info fs-6">Đã duyệt</span>
+                }
+                else if (Model.Status == "Pending")
+                {
                     <span class="badge bg-warning text-dark fs-6">Chờ xử lý</span>
                 }
                 else if (Model.Status == "Cancelled")
                 {
-
                     <span class="badge bg-danger fs-6">Đã hủy</span>
                 }
 

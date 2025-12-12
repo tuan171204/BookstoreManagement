@@ -7,23 +7,29 @@
 
 <div class="modal-body">
     <div
-        class="alert @(Model.Status == "Completed" ? "alert-success" : (Model.Status == "Cancelled" ? "alert-danger" : "alert-warning")) d-flex align-items-center mb-3">
-        <i class="fas @(Model.Status == "Completed" ? "fa-check-circle" : "fa-info-circle") fa-lg me-2"></i>
+        class="alert @(Model.Status == "Completed" ? "alert-success" : (Model.Status == "Cancelled" ? "alert-danger" : (Model.Status == "Approved" ? "alert-info" : (Model.Status == "Shipping" ? "alert-primary" : "alert-warning")))) d-flex align-items-center mb-3">
+        <i class="fas @(Model.Status == "Completed" ? "fa-check-circle" : (Model.Status == "Cancelled" ? "fa-times-circle" : "fa-info-circle")) fa-lg me-2"></i>
         <div>
             <strong>Trạng thái:</strong>
             @if (Model.Status == "Pending")
             {
-                <span>Đang chờ xử lý</span>
+                <span class="text-warning fw-bold">Đang chờ xử lý</span>
+            }
+            else if (Model.Status == "Approved")
+            {
+                <span class="text-info fw-bold">Đã duyệt</span>
             }
             else if (Model.Status == "Shipping")
             {
-
                 <span class="text-primary fw-bold">Đang giao hàng</span>
             }
             else if (Model.Status == "Completed")
             {
-
                 <span class="text-success fw-bold">Giao hàng thành công</span>
+            }
+            else if (Model.Status == "Cancelled")
+            {
+                <span class="text-danger fw-bold">Đã hủy</span>
             }
         </div>
     </div>
@@ -77,16 +83,11 @@
             <i class="fas fa-times me-1"></i> Hủy đơn hàng
         </button>
     }
-
-    @if (Model.Status == "Shipping")
+    else if (Model.Status == "Shipping")
     {
-        <form asp-action="CompleteOrder" method="post"
-            onsubmit="return confirm('Xác nhận khách đã nhận hàng và thanh toán thành công?');">
-            <input type="hidden" name="id" value="@Model.OrderId" />
-            <button type="submit" class="btn btn-success">
-                <i class="fas fa-check-double me-1"></i> Hoàn thành đơn
-            </button>
-        </form>
+        <button type="button" class="btn btn-success" onclick="confirmReceived(@Model.OrderId)">
+            <i class="fas fa-check me-1"></i> Xác nhận nhận hàng
+        </button>
     }
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
 </div>
