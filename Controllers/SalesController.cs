@@ -58,7 +58,7 @@ namespace BookstoreManagement.Controllers
             DateTime? toDate,
             string sortBy = "OrderDate",
             string sortOrder = "desc",
-            int pageNumber = 1,
+            int pageNumber = 1, 
             int pageSize = 10)
         {
             ViewData["CurrentFilter"] = searchString;
@@ -112,23 +112,23 @@ namespace BookstoreManagement.Controllers
             // Apply sorting
             query = sortBy?.ToLower() switch
             {
-                "orderid" => sortOrder == "asc"
-                    ? query.OrderBy(o => o.OrderId)
+                "orderid" => sortOrder == "asc" 
+                    ? query.OrderBy(o => o.OrderId) 
                     : query.OrderByDescending(o => o.OrderId),
-                "orderdate" => sortOrder == "asc"
-                    ? query.OrderBy(o => o.OrderDate)
+                "orderdate" => sortOrder == "asc" 
+                    ? query.OrderBy(o => o.OrderDate) 
                     : query.OrderByDescending(o => o.OrderDate),
-                "customer" => sortOrder == "asc"
-                    ? query.OrderBy(o => o.Customer.FullName)
+                "customer" => sortOrder == "asc" 
+                    ? query.OrderBy(o => o.Customer.FullName) 
                     : query.OrderByDescending(o => o.Customer.FullName),
-                "user" => sortOrder == "asc"
-                    ? query.OrderBy(o => o.User.FullName)
+                "user" => sortOrder == "asc" 
+                    ? query.OrderBy(o => o.User.FullName) 
                     : query.OrderByDescending(o => o.User.FullName),
-                "finalamount" => sortOrder == "asc"
-                    ? query.OrderBy(o => o.FinalAmount)
+                "finalamount" => sortOrder == "asc" 
+                    ? query.OrderBy(o => o.FinalAmount) 
                     : query.OrderByDescending(o => o.FinalAmount),
-                "status" => sortOrder == "asc"
-                    ? query.OrderBy(o => o.Status)
+                "status" => sortOrder == "asc" 
+                    ? query.OrderBy(o => o.Status) 
                     : query.OrderByDescending(o => o.Status),
                 _ => query.OrderByDescending(o => o.OrderDate)
             };
@@ -207,8 +207,7 @@ namespace BookstoreManagement.Controllers
                         && (p.StartDate == null || p.StartDate <= today)
                         && (p.EndDate == null || p.EndDate >= today)
                         // --- THÊM ĐIỀU KIỆN LỌC KÊNH ---
-                        && (p.ApplyChannel == "All" || p.ApplyChannel == "InStore")// Chỉ lấy Tại quầy hoặc Tất cả
-                        && (p.ApplyType == "Order"))
+                        && (p.ApplyChannel == "All" || p.ApplyChannel == "InStore")) // Chỉ lấy Tại quầy hoặc Tất cả
                 .Select(p => new
                 {
                     id = p.PromotionId,

@@ -21,7 +21,7 @@ namespace BookstoreManagement.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate)
+        public async Task<IActionResult> Index()
         {
             TempData["CurrentFeature"] = "Report";
 
@@ -31,17 +31,7 @@ namespace BookstoreManagement.Controllers
             ViewBag.TopBooks = await _reportService.GetTopBestSellersAsync(10);
             ViewBag.Last12Months = await _reportService.GetRevenueLast12MonthsAsync();
 
-            // Mặc định: Lấy dữ liệu tháng hiện tại nếu không chọn ngày
-            var end = toDate ?? DateTime.Today;
-            var start = fromDate ?? new DateTime(end.Year, end.Month, 1); // Đầu tháng
-
-            // Gọi Service tính toán toàn bộ
-            var model = await _reportService.GetReportDataAsync(start, end);
-
-            // Các dữ liệu phụ (Top sách, danh mục)
-            ViewBag.TopBooks = await _reportService.GetTopBestSellersAsync(10);
-
-            return View(model);
+            return View();
         }
 
         /// <summary>
