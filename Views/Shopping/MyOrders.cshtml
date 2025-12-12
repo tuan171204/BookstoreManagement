@@ -4,6 +4,8 @@
     Layout = "~/Views/Shared/_LayoutClient.cshtml";
 }
 
+@Html.AntiForgeryToken()
+
 <div class="container py-5">
     <div class="row">
         <div class="col-md-3 mb-4">
@@ -51,18 +53,19 @@
                                         }
                                         else if (item.Status == "Shipping")
                                         {
-
                                             <span class="badge bg-primary rounded-pill p-2 w-75">Đang
                                                 giao hàng</span>
                                         }
+                                        else if (item.Status == "Approved")
+                                        {
+                                            <span class="badge bg-info rounded-pill p-2 w-75">Đã duyệt</span>
+                                        }
                                         else if (item.Status == "Pending")
                                         {
-
                                             <span class="badge bg-warning text-dark rounded-pill p-2 w-75">Chờ xử lý</span>
                                         }
                                         else if (item.Status == "Cancelled")
                                         {
-
                                             <span class="badge bg-danger rounded-pill p-2 w-75">Đã hủy</span>
                                         }
                                     </td>
@@ -71,6 +74,20 @@
                                             onclick="showOrderDetails(@item.OrderId)">
                                             Xem chi tiết
                                         </button>
+                                        @if (item.Status == "Pending")
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger rounded-pill px-3 ms-2"
+                                                onclick="requestCancelOrder(@item.OrderId)">
+                                                Hủy đơn
+                                            </button>
+                                        }
+                                        else if (item.Status == "Shipping")
+                                        {
+                                            <button class="btn btn-sm btn-success rounded-pill px-3 ms-2"
+                                                onclick="confirmReceived(@item.OrderId)">
+                                                Xác nhận nhận hàng
+                                            </button>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -164,12 +181,75 @@
             });
         }
 
-        // Hàm xử lý hủy đơn (Placeholder)
-        function requestCancelOrder(orderId) {
-            if (confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
-                alert("Tính năng hủy đơn hàng đang được phát triển.");
-                // Sau này gọi AJAX tới /Shopping/CancelOrder
+        // Hàm xử lý xác nhận nhận hàng
+        function confirmReceived(orderId) {
+            if (!confirm("Bạn đã nhận được hàng chưa? Xác nhận để hoàn tất đơn hàng.")) {
+                return;
             }
+
+            var token = $('input[name="__RequestVerificationToken"]').val();
+            
+            $.ajax({
+                url: '/Shopping/ConfirmReceived',
+                type: 'POST',
+                data: {
+                    id: orderId,
+                    __RequestVerificationToken: token
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.message);
+                        var modalElement = document.getElementById('orderDetailModal');
+                        if (modalElement) {
+                            var modal = bootstrap.Modal.getInstance(modalElement);
+                            if (modal) modal.hide();
+                        }
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    alert("Có lỗi xảy ra khi xác nhận nhận hàng. Vui lòng thử lại.");
+                }
+            });
+        }
+
+        // Hàm xử lý hủy đơn (dùng chung cho cả table và modal)
+        function requestCancelOrder(orderId) {
+            if (!confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
+                return;
+            }
+
+            // Lấy anti-forgery token từ page
+            var token = $('input[name="__RequestVerificationToken"]').val();
+            
+            $.ajax({
+                url: '/Shopping/CancelOrder',
+                type: 'POST',
+                data: {
+                    id: orderId,
+                    __RequestVerificationToken: token
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.message);
+                        // Đóng modal nếu đang mở
+                        var modalElement = document.getElementById('orderDetailModal');
+                        if (modalElement) {
+                            var modal = bootstrap.Modal.getInstance(modalElement);
+                            if (modal) modal.hide();
+                        }
+                        // Reload trang để cập nhật danh sách
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    alert("Có lỗi xảy ra khi hủy đơn hàng. Vui lòng thử lại.");
+                }
+            });
         }
     </script>
 }

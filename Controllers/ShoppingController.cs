@@ -633,13 +633,13 @@ namespace BookstoreManagement.Controllers
 
                 int paymentMethodId = paymentCode?.CodeId ?? 1;
 
-                // B. TẠO ĐƠN HÀNG (ORDER)
+                // B. TẠO ĐƠN HÀNG (ORDER) - Chưa trừ kho, chờ admin approve
                 var order = new Order
                 {
                     CustomerId = customerId,
                     UserId = userId, // Người tạo đơn (Khách hàng nếu đã login, hoặc Admin/Bot)
                     OrderDate = DateTime.Now,
-                    Status = "Pending", // Đơn online thường là Pending (Chờ xử lý) thay vì Completed ngay
+                    Status = "Pending", // Chờ admin approve (sẽ trừ kho khi approve)
                     PaymentMethodId = paymentMethodId, // 1: Cash (COD), 2: Transfer
                     TotalAmount = 0,
                     FinalAmount = 0,
@@ -649,13 +649,13 @@ namespace BookstoreManagement.Controllers
                 _context.Orders.Add(order);
                 await _context.SaveChangesAsync();
 
-                // C. TẠO PHIẾU XUẤT KHO (EXPORT TICKET) - Logic tự động trừ kho
+                // C. TẠO PHIẾU XUẤT KHO (EXPORT TICKET) - Tạo nhưng chưa trừ kho, status = Pending
                 var exportTicket = new ExportTicket
                 {
                     UserId = userId,
                     ReferenceId = order.OrderId,
                     Date = DateTime.Now,
-                    Status = "Completed", // Xuất kho luôn để giữ hàng
+                    Status = "Pending", // Chưa trừ kho, chờ client xác nhận
                     Reason = "Bán hàng Online",
                     DocumentNumber = $"EX-OL-{DateTimeOffset.Now.ToUnixTimeSeconds()}",
                     CreatedAt = DateTime.Now,
@@ -663,7 +663,7 @@ namespace BookstoreManagement.Controllers
                 };
                 _context.ExportTickets.Add(exportTicket);
 
-                // D. XỬ LÝ CHI TIẾT & KHUYẾN MÃI SẢN PHẨM
+                // D. XỬ LÝ CHI TIẾT & KHUYẾN MÃI SẢN PHẨM (KHÔNG TRỪ KHO - chờ xác nhận)
                 decimal subTotal = 0;
                 int totalQty = 0;
                 var now = DateTime.Now;
@@ -673,11 +673,11 @@ namespace BookstoreManagement.Controllers
                     var book = await _context.Books.FindAsync(item.BookId);
 
                     if (book == null) throw new Exception($"Sách ID {item.BookId} không tồn tại");
+                    // Chỉ kiểm tra tồn kho, chưa trừ kho
                     if ((book.StockQuantity ?? 0) < item.Quantity)
                         throw new Exception($"Sách '{book.Title}' không đủ hàng (Còn: {book.StockQuantity})");
 
-                    // Trừ tồn kho
-                    book.StockQuantity -= item.Quantity;
+                    // KHÔNG trừ tồn kho ở đây - sẽ trừ khi client xác nhận đơn
 
                     // --- TÍNH GIÁ ITEM (Lọc kênh Online/All) ---
                     decimal finalItemPrice = book.Price;
@@ -887,6 +887,113 @@ namespace BookstoreManagement.Controllers
             if (order == null) return NotFound();
 
             return PartialView("_OrderDetailsModal", order);
+        }
+
+        // POST: /Shopping/CancelOrder/5 (Client hủy đơn hàng)
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelOrder(int id)
+        {
+            // Kiểm tra role: Chỉ cho phép Customer
+            if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                await _signInManager.SignOutAsync();
+                return RedirectToAction("ClientLogin", "Account");
+            }
+
+            var userId = _userManager.GetUserId(User);
+
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Book)
+                .FirstOrDefaultAsync(o => o.OrderId == id && o.UserId == userId);
+
+            if (order == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy đơn hàng." });
+            }
+
+            // Chỉ cho phép hủy khi đơn ở trạng thái Pending (chưa được admin approve, chưa trừ kho)
+            if (order.Status != "Pending")
+            {
+                return Json(new { success = false, message = "Chỉ có thể hủy đơn hàng đang chờ xử lý (Pending)." });
+            }
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // KHÔNG cần hoàn lại kho vì chưa trừ kho (chỉ trừ khi admin approve)
+
+                // Cập nhật trạng thái đơn hàng
+                order.Status = "Cancelled";
+                order.UpdatedAt = DateTime.Now;
+                _context.Orders.Update(order);
+
+                // Cập nhật phiếu xuất kho nếu có
+                var exportTicket = await _context.ExportTickets
+                    .FirstOrDefaultAsync(e => e.ReferenceId == order.OrderId && e.Reason == "Bán hàng Online");
+                if (exportTicket != null)
+                {
+                    exportTicket.Status = "Cancelled";
+                    exportTicket.UpdatedAt = DateTime.Now;
+                    _context.ExportTickets.Update(exportTicket);
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Json(new { success = true, message = "Đã hủy đơn hàng thành công!" });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return Json(new { success = false, message = "Lỗi khi hủy đơn hàng: " + ex.Message });
+            }
+        }
+
+        // POST: /Shopping/ConfirmReceived/5 (Client xác nhận nhận hàng)
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmReceived(int id)
+        {
+            // Kiểm tra role: Chỉ cho phép Customer
+            if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                await _signInManager.SignOutAsync();
+                return RedirectToAction("ClientLogin", "Account");
+            }
+
+            var userId = _userManager.GetUserId(User);
+
+            var order = await _context.Orders
+                .FirstOrDefaultAsync(o => o.OrderId == id && o.UserId == userId);
+
+            if (order == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy đơn hàng." });
+            }
+
+            if (order.Status != "Shipping")
+            {
+                return Json(new { success = false, message = "Chỉ có thể xác nhận nhận hàng khi đơn đang giao hàng." });
+            }
+
+            try
+            {
+                order.Status = "Completed";
+                order.UpdatedAt = DateTime.Now;
+                _context.Orders.Update(order);
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Đã xác nhận nhận hàng thành công! Cảm ơn bạn đã mua sắm!" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi xác nhận nhận hàng: " + ex.Message });
+            }
         }
 
         // GET: /Shopping/MyAccount

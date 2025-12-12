@@ -146,9 +146,94 @@ namespace BookstoreManagement.Controllers
                 return NotFound();
             }
 
+            // Kiểm tra xem đơn có đủ hàng để approve không (chỉ cho đơn Pending)
+            if (order.Status == "Pending")
+            {
+                var stockIssues = new List<string>();
+                foreach (var detail in order.OrderDetails)
+                {
+                    var book = detail.Book;
+                    if (book != null && (book.StockQuantity ?? 0) < detail.Quantity)
+                    {
+                        stockIssues.Add($"'{book.Title}': Còn {book.StockQuantity}, Yêu cầu {detail.Quantity}");
+                    }
+                }
+                ViewBag.StockIssues = stockIssues;
+                ViewBag.CanApprove = stockIssues.Count == 0;
+            }
+
             return View(order);
         }
 
+        // 1. Action: Duyệt đơn hàng (Pending -> Approved) - TRỪ KHO KHI NÀY
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApproveOrder(int id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Book)
+                .FirstOrDefaultAsync(o => o.OrderId == id);
+
+            if (order == null) return NotFound();
+
+            if (order.Status != "Pending")
+            {
+                TempData["ErrorMessage"] = "Chỉ đơn hàng đã được client xác nhận (Pending) mới có thể duyệt.";
+            }
+            else
+            {
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                try
+                {
+                    // TRỪ KHO KHI ADMIN APPROVE
+                    foreach (var detail in order.OrderDetails)
+                    {
+                        var book = detail.Book;
+                        if (book == null) throw new Exception($"Sách ID {detail.BookId} không tồn tại.");
+                        
+                        // Kiểm tra lại tồn kho trước khi trừ
+                        if ((book.StockQuantity ?? 0) < detail.Quantity)
+                        {
+                            throw new Exception($"Không thể duyệt! Sách '{book.Title}' không đủ hàng (Còn: {book.StockQuantity}, Yêu cầu: {detail.Quantity}).");
+                        }
+
+                        book.StockQuantity = (book.StockQuantity ?? 0) - detail.Quantity;
+                        book.UpdatedAt = DateTime.Now;
+                        _context.Books.Update(book);
+                    }
+
+                    // Cập nhật trạng thái đơn hàng
+                    order.Status = "Approved";
+                    order.UpdatedAt = DateTime.Now;
+                    _context.Orders.Update(order);
+
+                    // Cập nhật phiếu xuất kho sang Completed
+                    var exportTicket = await _context.ExportTickets
+                        .FirstOrDefaultAsync(e => e.ReferenceId == order.OrderId && e.Reason == "Bán hàng Online");
+                    if (exportTicket != null)
+                    {
+                        exportTicket.Status = "Completed";
+                        exportTicket.UpdatedAt = DateTime.Now;
+                        _context.ExportTickets.Update(exportTicket);
+                    }
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    TempData["SuccessMessage"] = "Đã duyệt đơn hàng và trừ kho thành công!";
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    TempData["ErrorMessage"] = "Lỗi khi duyệt đơn hàng: " + ex.Message;
+                }
+            }
+
+            return RedirectToAction(nameof(Details), new { id = id });
+        }
+
+        // 2. Action: Bắt đầu giao hàng (Approved -> Shipping)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> StartShipping(int id)
@@ -156,9 +241,9 @@ namespace BookstoreManagement.Controllers
             var order = await _context.Orders.FindAsync(id);
             if (order == null) return NotFound();
 
-            if (order.Status != "Pending")
+            if (order.Status != "Approved")
             {
-                TempData["ErrorMessage"] = "Chỉ đơn hàng đang chờ xử lý mới có thể chuyển sang giao hàng.";
+                TempData["ErrorMessage"] = "Chỉ đơn hàng đã được duyệt mới có thể chuyển sang giao hàng.";
             }
             else
             {
@@ -172,31 +257,8 @@ namespace BookstoreManagement.Controllers
             return RedirectToAction(nameof(Details), new { id = id });
         }
 
-        // 2. Action: Chuyển từ "Shipping" -> "Completed"
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CompleteOrder(int id)
-        {
-            var order = await _context.Orders.FindAsync(id);
-            if (order == null) return NotFound();
-
-            if (order.Status != "Shipping")
-            {
-                TempData["ErrorMessage"] = "Chỉ đơn hàng đang giao mới có thể xác nhận hoàn thành.";
-            }
-            else
-            {
-                order.Status = "Completed"; // Trạng thái cuối: Hoàn thành
-                order.UpdatedAt = DateTime.Now;
-                _context.Update(order);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Đơn hàng đã hoàn thành!";
-            }
-
-            return RedirectToAction(nameof(Details), new { id = id });
-        }
-
         // 3. Action Hủy (Giữ nguyên, chỉ cho hủy khi Pending)
+        // Lưu ý: Chỉ client mới xác nhận nhận hàng (Shipping -> Completed) qua action ConfirmReceived trong ShoppingController
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CancelOrder(int id)
