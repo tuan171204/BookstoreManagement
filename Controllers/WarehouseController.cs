@@ -24,62 +24,19 @@ public class WarehouseController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(string searchString, string typeFilter, string statusFilter, string fromDate, string toDate, string sortBy = "Date", string sortOrder = "desc", int pageNumber = 1, int pageSize = 10)
+    public async Task<IActionResult> Index(string searchString, string typeFilter, string statusFilter, string sortBy = "Date", string sortOrder = "desc", int pageNumber = 1, int pageSize = 10)
     {
         ViewBag.TypeFilter = new SelectList(new[] { "Phiếu Nhập", "Phiếu Xuất" }, typeFilter);
         ViewBag.StatusFilter = new SelectList(new[] { "Completed", "Pending", "Cancelled" }, statusFilter);
         ViewData["CurrentFilter"] = searchString;
         ViewData["TypeFilter"] = typeFilter;
         ViewData["StatusFilter"] = statusFilter;
-        ViewData["FromDateFilter"] = fromDate;
-        ViewData["ToDateFilter"] = toDate;
         ViewData["SortBy"] = sortBy;
         ViewData["SortOrder"] = sortOrder;
 
-        // Parse date filters
-        DateTime? fromDateParsed = null;
-        DateTime? toDateParsed = null;
-        
-        if (!String.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out DateTime fromDateValue))
-        {
-            fromDateParsed = fromDateValue.Date;
-        }
-        
-        if (!String.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out DateTime toDateValue))
-        {
-            toDateParsed = toDateValue.Date.AddDays(1).AddTicks(-1); // End of day
-        }
 
-        var importBaseQuery = _context.ImportTickets
+        var importQuery = _context.ImportTickets
             .Include(t => t.Supplier)
-            .AsQueryable();
-
-        var exportBaseQuery = _context.ExportTickets
-            .Include(t => t.Reference)
-            .AsQueryable();
-
-        // Apply date filters at database level
-        if (fromDateParsed.HasValue)
-        {
-            importBaseQuery = importBaseQuery.Where(t => t.Date >= fromDateParsed.Value);
-            exportBaseQuery = exportBaseQuery.Where(t => t.Date >= fromDateParsed.Value);
-        }
-
-        if (toDateParsed.HasValue)
-        {
-            importBaseQuery = importBaseQuery.Where(t => t.Date <= toDateParsed.Value);
-            exportBaseQuery = exportBaseQuery.Where(t => t.Date <= toDateParsed.Value);
-        }
-
-        // Apply status filter at database level
-        if (!String.IsNullOrEmpty(statusFilter))
-        {
-            importBaseQuery = importBaseQuery.Where(t => t.Status == statusFilter);
-            exportBaseQuery = exportBaseQuery.Where(t => t.Status == statusFilter);
-        }
-
-        // Now select into ViewModel
-        var importQuery = importBaseQuery
             .Select(t => new WarehouseTicketViewModel
             {
                 Id = t.ImportId,
@@ -92,20 +49,23 @@ public class WarehouseController : Controller
                 Status = t.Status
             });
 
-        var exportQuery = exportBaseQuery
+
+        var exportQuery = _context.ExportTickets
+            .Include(t => t.Reference)
             .Select(t => new WarehouseTicketViewModel
             {
                 Id = t.ExportId,
                 Type = "Export",
                 DocumentNumber = t.DocumentNumber,
                 Date = t.Date,
+
                 Reference = t.Reason == "Sale" && t.Reference != null ? "ĐH: " + t.Reference.OrderId : t.Reason,
                 TotalQuantity = t.TotalQuantity,
                 TotalCost = t.TotalPrice, // Export không có TotalCost thì gán 0
                 Status = t.Status
             });
 
-        // Apply search filter after select (on ViewModel properties)
+
         if (!String.IsNullOrEmpty(searchString))
         {
             importQuery = importQuery.Where(t => t.DocumentNumber.Contains(searchString) || t.Reference.Contains(searchString));
@@ -137,8 +97,11 @@ public class WarehouseController : Controller
             finalQuery = importQuery.Union(exportQuery);
         }
 
-        var importList = new List<WarehouseTicketViewModel>();
-        var exportList = new List<WarehouseTicketViewModel>();
+        if (!String.IsNullOrEmpty(statusFilter))
+        {
+            importQuery = importQuery.Where(t => t.Status == statusFilter);
+            exportQuery = exportQuery.Where(t => t.Status == statusFilter);
+        }
 
 
         if (string.IsNullOrEmpty(typeFilter) || typeFilter == "Phiếu Xuất")
