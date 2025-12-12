@@ -38,17 +38,6 @@
                 </form>
             }
 
-            @if (Model.Status == "Shipping")
-            {
-                <form asp-action="CompleteOrder" method="post"
-                    onsubmit="return confirm('Xác nhận khách đã nhận hàng và thanh toán thành công?');">
-                    <input type="hidden" name="id" value="@Model.OrderId" />
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-check-double me-1"></i> Hoàn thành đơn
-                    </button>
-                </form>
-            }
-
             <button onclick="window.print()" class="btn btn-outline-dark"><i class="fas fa-print"></i> In Hóa
                 Đơn</button>
         </div>

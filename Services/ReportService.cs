@@ -1,4 +1,5 @@
 using BookstoreManagement.Models;
+using BookstoreManagement.ViewModels.Report;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -32,8 +33,8 @@ namespace BookstoreManagement.Services
             var revenue = await GetRevenueAsync(firstDay, lastDay);
             var cost = await _context.ImportTickets
                 .Where(i => i.Date >= firstDay && i.Date <= lastDay && i.Status == "Completed")
-                .SumAsync(i => i.TotalCost ?? 0m); 
-            return revenue - cost; 
+                .SumAsync(i => i.TotalCost ?? 0m);
+            return revenue - cost;
         }
 
         public async Task<object> GetCurrentMonthSummaryAsync()
@@ -216,6 +217,106 @@ namespace BookstoreManagement.Services
             }).Cast<object>().ToList();
 
             return result;
+        }
+
+        public async Task<ReportViewModel> GetReportDataAsync(DateTime fromDate, DateTime toDate)
+        {
+            // Chuẩn hóa thời gian: Từ 00:00:00 ngày đầu đến 23:59:59 ngày cuối
+            var start = fromDate.Date;
+            var end = toDate.Date.AddDays(1).AddSeconds(-1);
+
+            // 1. Lấy danh sách đơn hàng hoàn thành trong kỳ
+            // Include OrderDetails và Book để tính giá vốn
+            var orders = await _context.Orders
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Book)
+                .Where(o => o.OrderDate >= start && o.OrderDate <= end && o.Status == "Completed")
+                .ToListAsync();
+
+            // 2. Tính toán các chỉ số
+            int totalOrders = orders.Count;
+            decimal revenue = orders.Sum(o => o.FinalAmount);
+
+            // Tính tổng số lượng sách bán
+            int productsSold = orders.SelectMany(o => o.OrderDetails).Sum(od => od.Quantity);
+
+            // Tính Giá vốn hàng bán (COGS)
+            // Logic: Số lượng bán * Giá vốn (CostPrice) của sách đó
+            decimal cogs = orders.SelectMany(o => o.OrderDetails)
+                                 .Sum(od => od.Quantity * od.Book.CostPrice);
+
+            // 3. Tính chi phí nhập hàng (Cashflow Out) - Để tham khảo
+            decimal importCost = await _context.ImportTickets
+                .Where(i => i.Date >= start && i.Date <= end && i.Status == "Completed")
+                .SumAsync(i => i.TotalCost ?? 0);
+
+            // 4. Chuẩn bị dữ liệu biểu đồ (Group theo ngày)
+            // Gom nhóm orders theo ngày để vẽ biểu đồ
+            var chartData = orders
+                .GroupBy(o => o.OrderDate.Value.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    DailyRevenue = g.Sum(x => x.FinalAmount),
+                    // Tính lợi nhuận ngày = Doanh thu ngày - Giá vốn ngày
+                    DailyProfit = g.Sum(x => x.FinalAmount) - g.SelectMany(x => x.OrderDetails).Sum(od => od.Quantity * od.Book.CostPrice)
+                })
+                .OrderBy(x => x.Date)
+                .ToList();
+
+            // Nếu khoảng thời gian dài (> 31 ngày), gom theo tháng cho đỡ rối
+            bool groupByMonth = (end - start).TotalDays > 31;
+
+            // Xử lý labels và data cho ChartJS
+            var labels = new List<string>();
+            var revenueData = new List<decimal>();
+            var profitData = new List<decimal>();
+
+            if (groupByMonth)
+            {
+                var monthlyData = chartData
+                    .GroupBy(x => new { x.Date.Year, x.Date.Month })
+                    .Select(g => new
+                    {
+                        Label = $"{g.Key.Month}/{g.Key.Year}",
+                        Revenue = g.Sum(x => x.DailyRevenue),
+                        Profit = g.Sum(x => x.DailyProfit)
+                    });
+
+                foreach (var item in monthlyData)
+                {
+                    labels.Add(item.Label);
+                    revenueData.Add(item.Revenue);
+                    profitData.Add(item.Profit);
+                }
+            }
+            else
+            {
+                // Lấp đầy các ngày trống (ngày không bán được hàng) để biểu đồ liền mạch
+                for (var day = start; day <= end.Date; day = day.AddDays(1))
+                {
+                    labels.Add(day.ToString("dd/MM"));
+                    var dataPoint = chartData.FirstOrDefault(x => x.Date == day);
+                    revenueData.Add(dataPoint?.DailyRevenue ?? 0);
+                    profitData.Add(dataPoint?.DailyProfit ?? 0);
+                }
+            }
+
+            return new ReportViewModel
+            {
+                FromDate = start,
+                ToDate = end,
+                TotalOrders = totalOrders,
+                ProductsSold = productsSold,
+                Revenue = revenue,
+                COGS = cogs,
+                TotalImportCost = importCost,
+
+                // Serialize dữ liệu biểu đồ sang JSON string để View dùng
+                ChartLabels = System.Text.Json.JsonSerializer.Serialize(labels),
+                ChartRevenueData = System.Text.Json.JsonSerializer.Serialize(revenueData),
+                ChartProfitData = System.Text.Json.JsonSerializer.Serialize(profitData)
+            };
         }
     }
 }
